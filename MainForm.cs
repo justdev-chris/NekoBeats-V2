@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using NAudio.Wave;
 using NAudio.Dsp;
@@ -22,7 +23,6 @@ public class NekoBeats : Form
         this.BackColor = Color.Black;
         this.Paint += OnPaint;
         
-        // Theme selector
         var themeBtn = new Button 
         { 
             Text = "Switch Theme", 
@@ -32,12 +32,10 @@ public class NekoBeats : Form
         themeBtn.Click += (s, e) => { themeIndex = (themeIndex + 1) % themes.Length; };
         this.Controls.Add(themeBtn);
         
-        // Start audio
         capture = new WasapiLoopbackCapture();
         capture.DataAvailable += OnData;
         capture.StartRecording();
         
-        // Animation timer
         var timer = new Timer { Interval = 16 };
         timer.Tick += (s, e) => this.Invalidate();
         timer.Start();
@@ -80,11 +78,11 @@ public class NekoBeats : Form
     {
         return themeIndex switch
         {
-            0 => new[] { Color.Cyan, Color.Magenta, Color.Lime }, // Neon
-            1 => new[] { Color.Red, Color.Orange, Color.Yellow }, // Fire
-            2 => new[] { Color.Blue, Color.Cyan, Color.Teal },   // Ocean
-            3 => new[] { Color.Green, Color.Lime, Color.White }, // Matrix
-            _ => new[] { Color.Pink, Color.Lavender, Color.PeachPuff } // Pastel
+            0 => new[] { Color.Cyan, Color.Magenta, Color.Lime },
+            1 => new[] { Color.Red, Color.Orange, Color.Yellow },
+            2 => new[] { Color.Blue, Color.Cyan, Color.Teal },
+            3 => new[] { Color.Green, Color.Lime, Color.White },
+            _ => new[] { Color.Pink, Color.Lavender, Color.PeachPuff }
         };
     }
     
@@ -96,14 +94,12 @@ public class NekoBeats : Form
         float barWidth = this.ClientSize.Width / 64f;
         var colors = GetThemeColors();
         
-        // Draw bars with theme
         for (int i = 0; i < 64; i++)
         {
             float height = barValues[i] * (this.ClientSize.Height - 50);
             var rect = new RectangleF(i * barWidth, this.ClientSize.Height - height - 20, 
                                      barWidth - 1, height);
             
-            // Gradient based on height
             using (var brush = new LinearGradientBrush(
                 rect, 
                 colors[0], 
@@ -113,13 +109,11 @@ public class NekoBeats : Form
                 g.FillRectangle(brush, rect);
             }
             
-            // Glow effect
             rect.Inflate(2, 0);
             using (var pen = new Pen(colors[2], 0.5f))
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
         }
         
-        // Draw theme name
         using (var font = new Font("Arial", 16, FontStyle.Bold))
         using (var brush = new SolidBrush(colors[0]))
         {
@@ -127,7 +121,6 @@ public class NekoBeats : Form
                         font, brush, this.ClientSize.Width - 300, 10);
         }
         
-        // Draw peak circles
         for (int i = 0; i < 64; i += 4)
         {
             if (barValues[i] > 0.8f)
