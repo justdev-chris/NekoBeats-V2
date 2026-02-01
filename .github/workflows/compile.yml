@@ -23,4 +23,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: NekoBeats
-        path: bin/Release/net8.0-windows/NekoBeats.exe
+        path: bin/Release/net8.0-windows/win-x64/publish/NekoBeats.exe
