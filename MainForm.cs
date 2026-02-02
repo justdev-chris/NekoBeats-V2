@@ -10,33 +10,49 @@ public class NekoBeats : Form
     private float[] fftBuffer = new float[2048];
     private Complex[] fftComplex = new Complex[2048];
     private int fftPos = 0;
-    private float[] barValues = new float[64];
+    private float[] barValues = new float[256]; // More bars for full width
     private Color[] themes = { 
-        Color.Cyan, Color.Red, Color.Blue, Color.Lime, Color.Magenta 
+        Color.Cyan, Color.Red, Color.Blue, Color.Lime, Color.Magenta,
+        Color.Orange, Color.Pink, Color.Yellow, Color.White
     };
     private int themeIndex = 0;
-    private ContextMenuStrip menu;
+    private Form controlPanel;
     
     public NekoBeats()
     {
+        // Fullscreen bars window
         this.Text = "NekoBeats";
-        this.Size = new Size(1000, 400);
-        this.DoubleBuffered = true;
+        this.WindowState = FormWindowState.Maximized;
         this.FormBorderStyle = FormBorderStyle.None;
         this.BackColor = Color.Magenta;
         this.TransparencyKey = Color.Magenta;
         this.TopMost = true;
+        this.DoubleBuffered = true;
         this.Paint += OnPaint;
         
-        // Right-click menu
-        menu = new ContextMenuStrip();
-        menu.Items.Add("Next Theme", null, (s, e) => themeIndex = (themeIndex + 1) % themes.Length);
-        menu.Items.Add("Exit", null, (s, e) => this.Close());
-        this.ContextMenuStrip = menu;
+        // Control panel window (separate)
+        controlPanel = new Form
+        {
+            Text = "NekoBeats Control",
+            Size = new Size(300, 200),
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(50, 50),
+            FormBorderStyle = FormBorderStyle.FixedToolWindow
+        };
         
-        // Drag to move
-        this.MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) DragWindow(); };
+        var themeBtn = new Button { Text = "Next Theme", Location = new Point(20, 20), Width = 100 };
+        themeBtn.Click += (s, e) => { themeIndex = (themeIndex + 1) % themes.Length; };
         
+        var exitBtn = new Button { Text = "Exit", Location = new Point(20, 60), Width = 100 };
+        exitBtn.Click += (s, e) => Application.Exit();
+        
+        var opacityTrack = new TrackBar { Minimum = 10, Maximum = 100, Value = 100, Location = new Point(20, 100), Width = 200 };
+        opacityTrack.ValueChanged += (s, e) => this.Opacity = opacityTrack.Value / 100.0;
+        
+        controlPanel.Controls.AddRange(new Control[] { themeBtn, exitBtn, opacityTrack });
+        controlPanel.Show();
+        
+        // Audio capture
         capture = new WasapiLoopbackCapture();
         capture.DataAvailable += OnData;
         capture.StartRecording();
@@ -48,7 +64,8 @@ public class NekoBeats : Form
         this.FormClosing += (s, e) => 
         { 
             capture?.StopRecording(); 
-            capture?.Dispose(); 
+            capture?.Dispose();
+            controlPanel.Close();
         };
     }
     
@@ -70,49 +87,34 @@ public class NekoBeats : Form
         }
         FastFourierTransform.FFT(true, 11, fftComplex);
         
-        for (int i = 0; i < 64; i++)
+        for (int i = 0; i < 256; i++)
         {
             float mag = (float)Math.Sqrt(fftComplex[i].X * fftComplex[i].X + 
                                         fftComplex[i].Y * fftComplex[i].Y);
-            barValues[i] = Math.Min(mag * 150, 1.0f);
+            barValues[i] = Math.Min(mag * 200, 1.0f);
         }
         fftPos = 0;
     }
-    
-    private void DragWindow()
-    {
-        ReleaseCapture();
-        SendMessage(this.Handle, 0xA1, 0x2, 0);
-    }
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
     
     private void OnPaint(object sender, PaintEventArgs e)
     {
         var g = e.Graphics;
         g.Clear(Color.Magenta);
         
-        float barWidth = this.ClientSize.Width / 64f;
+        float barWidth = this.ClientSize.Width / 256f;
         Color barColor = themes[themeIndex];
+        int bottom = this.ClientSize.Height;
         
-        for (int i = 0; i < 64; i++)
+        for (int i = 0; i < 256; i++)
         {
-            float height = barValues[i] * (this.ClientSize.Height - 10);
+            float height = barValues[i] * (this.ClientSize.Height * 0.8f);
             if (height < 2) height = 2;
             
-            var rect = new RectangleF(i * barWidth, this.ClientSize.Height - height, 
-                                     barWidth - 1, height);
+            float y = bottom - height;
+            var rect = new RectangleF(i * barWidth, y, barWidth, height);
             
             using (var brush = new SolidBrush(barColor))
                 g.FillRectangle(brush, rect);
-                
-            // Glow effect
-            using (var pen = new Pen(Color.FromArgb(100, Color.White), 1))
-                g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
         }
     }
     
