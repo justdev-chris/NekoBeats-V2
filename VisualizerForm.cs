@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using NAudio.Wave;
@@ -131,7 +132,7 @@ namespace NekoBeats
             };
         }
         
-        private void InitializeParticles()
+        public void InitializeParticles()
         {
             particles.Clear();
             for (int i = 0; i < particleCount; i++)
@@ -161,7 +162,7 @@ namespace NekoBeats
             }
         }
         
-        private void MakeClickThrough(bool enable)
+        public void MakeClickThrough(bool enable)
         {
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             if (enable)
@@ -459,30 +460,19 @@ namespace NekoBeats
         {
             if (bloomBuffer == null) return;
             
-            var blur = new Bitmap(bloomBuffer);
-            using (var attributes = new ImageAttributes())
+            // Simple blur effect
+            for (int i = 0; i < bloomIntensity / 5; i++)
             {
-                float blurAmount = bloomIntensity / 100f;
-                float[][] matrix = {
-                    new float[] {blurAmount, blurAmount, blurAmount, 0, 0},
-                    new float[] {blurAmount, 1 - blurAmount*3, blurAmount, 0, 0},
-                    new float[] {blurAmount, blurAmount, blurAmount, 0, 0},
-                    new float[] {0, 0, 0, 1, 0},
-                    new float[] {0, 0, 0, 0, 1}
-                };
-                
-                var colorMatrix = new ColorMatrix(matrix);
-                attributes.SetColorMatrix(colorMatrix);
-                
-                e.Graphics.DrawImage(
-                    blur,
-                    new Rectangle(0, 0, this.ClientSize.Width, this.ClientSize.Height),
-                    0, 0, blur.Width, blur.Height,
-                    GraphicsUnit.Pixel,
-                    attributes
-                );
+                var blur = new Bitmap(bloomBuffer);
+                using (var g = Graphics.FromImage(bloomBuffer))
+                {
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(blur, 1, 1, blur.Width - 2, blur.Height - 2);
+                    g.DrawImage(blur, -1, -1, blur.Width + 2, blur.Height + 2);
+                }
             }
             
+            e.Graphics.DrawImage(bloomBuffer, 0, 0);
             bloomGraphics.Clear(Color.Transparent);
         }
         
