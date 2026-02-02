@@ -11,10 +11,4 @@
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Include="Program.cs" />
-    <Compile Include="VisualizerForm.cs" />
-    <Compile Include="ControlPanel.cs" />
-  </ItemGroup>
 </Project>
