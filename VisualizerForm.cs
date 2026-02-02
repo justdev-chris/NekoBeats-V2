@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Imaging; // Added
 using System.Collections.Generic;
 using System.Windows.Forms;
 using NAudio.Wave;
@@ -48,6 +47,13 @@ namespace NekoBeats
         public bool circleMode = false;
         public float circleRadius = 200f;
         
+        // Phase 3
+        public enum PanelTheme { Dark, Light, Colorful }
+        public enum AnimationStyle { Bars, Pulse, Wave, Bounce, Glitch }
+        
+        public PanelTheme panelTheme = PanelTheme.Dark;
+        public AnimationStyle animationStyle = AnimationStyle.Bars;
+        
         private Timer renderTimer;
         private float hue = 0;
         private Point dragStart;
@@ -57,12 +63,19 @@ namespace NekoBeats
         private Bitmap bloomBuffer;
         private Graphics bloomGraphics;
         
+        // Animation variables
+        private float pulsePhase = 0;
+        private float waveOffset = 0;
+        private float[] bounceHeights;
+        private Random glitchRandom = new Random();
+        
         public VisualizerForm()
         {
             InitializeForm();
             InitializeAudio();
             InitializeTimer();
             InitializeParticles();
+            bounceHeights = new float[512];
             
             controlPanel = new ControlPanel(this);
             controlPanel.Show();
@@ -87,15 +100,6 @@ namespace NekoBeats
             MakeClickThrough(clickThrough);
         }
         
-        public void MakeClickThrough(bool enable) // Changed to public
-        {
-            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-            if (enable)
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-            else
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-        }
-        
         private void OnResize(object sender, EventArgs e)
         {
             InitializeBloomBuffer();
@@ -116,7 +120,7 @@ namespace NekoBeats
             renderTimer.Start();
         }
         
-        public void UpdateFPSTimer() // Changed to public
+        public void UpdateFPSTimer()
         {
             renderTimer.Interval = fpsLimit switch
             {
@@ -127,21 +131,18 @@ namespace NekoBeats
             };
         }
         
-        public void InitializeParticles() // Changed to public
+        private void InitializeParticles()
         {
             particles.Clear();
-            int width = Math.Max(1, this.ClientSize.Width);
-            int height = Math.Max(1, this.ClientSize.Height);
-            
             for (int i = 0; i < particleCount; i++)
             {
                 particles.Add(new Particle
                 {
-                    X = random.Next(0, width),
-                    Y = random.Next(0, height),
+                    X = random.Next(0, Math.Max(1, this.ClientSize.Width)),
+                    Y = random.Next(0, Math.Max(1, this.ClientSize.Height)),
                     Size = random.Next(2, 6),
-                    SpeedX = (float)(random.NextDouble() - 0.5) * 2,
-                    SpeedY = (float)(random.NextDouble() - 0.5) * 2,
+                    SpeedX = (random.NextSingle() - 0.5f) * 2,
+                    SpeedY = (random.NextSingle() - 0.5f) * 2,
                     Color = Color.White,
                     Life = random.Next(50, 200)
                 });
@@ -158,6 +159,15 @@ namespace NekoBeats
                 bloomBuffer = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
                 bloomGraphics = Graphics.FromImage(bloomBuffer);
             }
+        }
+        
+        private void MakeClickThrough(bool enable)
+        {
+            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+            if (enable)
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+            else
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
         }
         
         private void OnMouseDown(object sender, MouseEventArgs e)
@@ -216,16 +226,49 @@ namespace NekoBeats
                 barColor = ColorFromHSV(hue * 360, 1.0f, 1.0f);
             }
             
-            if (circleMode)
-                DrawCircleVisualizer(g);
-            else
-                DrawBarVisualizer(g);
+            UpdateAnimations();
+            
+            switch (animationStyle)
+            {
+                case AnimationStyle.Pulse:
+                    DrawPulseVisualizer(g);
+                    break;
+                case AnimationStyle.Wave:
+                    DrawWaveVisualizer(g);
+                    break;
+                case AnimationStyle.Bounce:
+                    DrawBounceVisualizer(g);
+                    break;
+                case AnimationStyle.Glitch:
+                    DrawGlitchVisualizer(g);
+                    break;
+                default:
+                    if (circleMode)
+                        DrawCircleVisualizer(g);
+                    else
+                        DrawBarVisualizer(g);
+                    break;
+            }
             
             if (particlesEnabled)
                 DrawParticles(g);
             
             if (bloomEnabled && bloomGraphics != null)
                 ApplyBloomEffect(e);
+        }
+        
+        private void UpdateAnimations()
+        {
+            pulsePhase += 0.05f;
+            waveOffset += 0.02f;
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                if (barValues[i] > bounceHeights[i])
+                    bounceHeights[i] = barValues[i];
+                else
+                    bounceHeights[i] = Math.Max(0, bounceHeights[i] - 0.02f);
+            }
         }
         
         private void DrawBarVisualizer(Graphics g)
@@ -281,6 +324,93 @@ namespace NekoBeats
             }
         }
         
+        private void DrawPulseVisualizer(Graphics g)
+        {
+            float pulse = (float)(Math.Sin(pulsePhase) * 0.3 + 0.7);
+            float barWidth = this.ClientSize.Width / barCount;
+            int bottom = this.ClientSize.Height;
+            float heightMultiplier = barHeight / 100f;
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * pulse;
+                if (height < 2) height = 2;
+                
+                float y = bottom - height;
+                var rect = new RectangleF(i * barWidth, y, barWidth, height);
+                
+                using (var brush = new SolidBrush(barColor))
+                    g.FillRectangle(brush, rect);
+            }
+        }
+        
+        private void DrawWaveVisualizer(Graphics g)
+        {
+            float barWidth = this.ClientSize.Width / barCount;
+            int bottom = this.ClientSize.Height;
+            float heightMultiplier = barHeight / 100f;
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                float wave = (float)Math.Sin(waveOffset + i * 0.2) * 0.5f + 0.5f;
+                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * wave;
+                if (height < 2) height = 2;
+                
+                float y = bottom - height;
+                var rect = new RectangleF(i * barWidth, y, barWidth, height);
+                
+                using (var brush = new SolidBrush(barColor))
+                    g.FillRectangle(brush, rect);
+            }
+        }
+        
+        private void DrawBounceVisualizer(Graphics g)
+        {
+            float barWidth = this.ClientSize.Width / barCount;
+            int bottom = this.ClientSize.Height;
+            float heightMultiplier = barHeight / 100f;
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                float height = bounceHeights[i] * (this.ClientSize.Height * heightMultiplier);
+                if (height < 2) height = 2;
+                
+                float y = bottom - height;
+                var rect = new RectangleF(i * barWidth, y, barWidth, height);
+                
+                using (var brush = new SolidBrush(barColor))
+                    g.FillRectangle(brush, rect);
+            }
+        }
+        
+        private void DrawGlitchVisualizer(Graphics g)
+        {
+            float barWidth = this.ClientSize.Width / barCount;
+            int bottom = this.ClientSize.Height;
+            float heightMultiplier = barHeight / 100f;
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                float glitch = glitchRandom.NextSingle() * 0.5f + 0.5f;
+                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
+                if (height < 2) height = 2;
+                
+                float xOffset = glitchRandom.Next(-3, 3);
+                float y = bottom - height;
+                var rect = new RectangleF(i * barWidth + xOffset, y, barWidth, height);
+                
+                Color glitchColor = Color.FromArgb(
+                    barColor.A,
+                    Math.Clamp(barColor.R + glitchRandom.Next(-30, 30), 0, 255),
+                    Math.Clamp(barColor.G + glitchRandom.Next(-30, 30), 0, 255),
+                    Math.Clamp(barColor.B + glitchRandom.Next(-30, 30), 0, 255)
+                );
+                
+                using (var brush = new SolidBrush(glitchColor))
+                    g.FillRectangle(brush, rect);
+            }
+        }
+        
         private void DrawParticles(Graphics g)
         {
             float bass = GetBassLevel();
@@ -292,7 +422,7 @@ namespace NekoBeats
                 if (bass > 0.3f)
                 {
                     p.SpeedY -= bass * 0.5f;
-                    p.Size = (int)(3 + bass * 5); // Fixed: added cast
+                    p.Size = 3 + bass * 5;
                 }
                 
                 p.X += p.SpeedX;
@@ -342,7 +472,7 @@ namespace NekoBeats
                 };
                 
                 var colorMatrix = new ColorMatrix(matrix);
-                attributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                attributes.SetColorMatrix(colorMatrix);
                 
                 e.Graphics.DrawImage(
                     blur,
@@ -405,7 +535,9 @@ namespace NekoBeats
                 particlesEnabled,
                 particleCount,
                 circleMode,
-                circleRadius
+                circleRadius,
+                panelTheme = (int)panelTheme,
+                animationStyle = (int)animationStyle
             };
             
             var json = JsonSerializer.Serialize(preset);
@@ -435,6 +567,8 @@ namespace NekoBeats
             particleCount = root.GetProperty("particleCount").GetInt32();
             circleMode = root.GetProperty("circleMode").GetBoolean();
             circleRadius = root.GetProperty("circleRadius").GetSingle();
+            panelTheme = (PanelTheme)root.GetProperty("panelTheme").GetInt32();
+            animationStyle = (AnimationStyle)root.GetProperty("animationStyle").GetInt32();
             
             MakeClickThrough(clickThrough);
             UpdateFPSTimer();
