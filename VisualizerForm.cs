@@ -402,9 +402,9 @@ namespace NekoBeats
                 
                 Color glitchColor = Color.FromArgb(
                     barColor.A,
-                    Math.Clamp(barColor.R + glitchRandom.Next(-30, 30), 0, 255),
-                    Math.Clamp(barColor.G + glitchRandom.Next(-30, 30), 0, 255),
-                    Math.Clamp(barColor.B + glitchRandom.Next(-30, 30), 0, 255)
+                    (int)Math.Clamp(barColor.R + glitchRandom.Next(-30, 30), 0, 255),
+                    (int)Math.Clamp(barColor.G + glitchRandom.Next(-30, 30), 0, 255),
+                    (int)Math.Clamp(barColor.B + glitchRandom.Next(-30, 30), 0, 255)
                 );
                 
                 using (var brush = new SolidBrush(glitchColor))
