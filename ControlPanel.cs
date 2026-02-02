@@ -12,7 +12,7 @@ namespace NekoBeats
         private TrackBar opacityTrack, barHeightTrack, barCountTrack, colorSpeedTrack;
         private CheckBox clickThroughCheck, draggableCheck, colorCycleCheck;
         private ComboBox fpsCombo, themeCombo, styleCombo;
-        private Button colorBtn, saveBtn, loadBtn, miniBtn, applyThemeBtn;
+        private Button colorBtn, saveBtn, loadBtn, miniBtn, applyThemeBtn, exitBtn;
         
         // Phase 2 controls
         private CheckBox bloomCheck, particlesCheck, circleModeCheck;
@@ -27,7 +27,7 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(500, 700); // Larger window
+            this.Size = new Size(500, 700);
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(50, 50);
             
@@ -214,7 +214,7 @@ namespace NekoBeats
             this.Controls.Add(loadBtn);
             
             // Exit button
-            var exitBtn = new Button { Text = "Exit", Location = new Point(col2X + 110, buttonY), Width = 100, Height = 35 };
+            exitBtn = new Button { Text = "Exit", Location = new Point(col2X + 110, buttonY), Width = 100, Height = 35 };
             exitBtn.Click += (s, e) => Environment.Exit(0);
             this.Controls.Add(exitBtn);
             
