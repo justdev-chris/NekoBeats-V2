@@ -97,7 +97,7 @@ namespace NekoBeats
             };
         }
         
-        private void MakeClickThrough(bool enable)
+        public void MakeClickThrough(bool enable)
         {
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             if (enable)
