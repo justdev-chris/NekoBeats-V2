@@ -272,30 +272,33 @@ namespace NekoBeats
             }
         }
         
-        private void DrawBarVisualizer(Graphics g)
-        {
-            float barWidth = this.ClientSize.Width / barCount;
-            int bottom = this.ClientSize.Height;
-            float heightMultiplier = barHeight / 100f;
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier);
-                if (height < 2) height = 2;
-                
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
-                
-                if (bloomEnabled && bloomGraphics != null)
-                {
-                    using (var bloomBrush = new SolidBrush(Color.FromArgb(100, barColor)))
-                        bloomGraphics.FillRectangle(bloomBrush, rect);
-                }
-            }
-        }
+private void DrawGlitchVisualizer(Graphics g)
+{
+    float barWidth = this.ClientSize.Width / barCount;
+    int bottom = this.ClientSize.Height;
+    float heightMultiplier = barHeight / 100f;
+    
+    for (int i = 0; i < barCount; i++)
+    {
+        float glitch = glitchRandom.NextSingle() * 0.5f + 0.5f;
+        float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
+        if (height < 2) height = 2;
+        
+        float xOffset = glitchRandom.Next(-3, 3);
+        float y = bottom - height;
+        var rect = new RectangleF(i * barWidth + xOffset, y, barWidth, height);
+        
+        // Fixed color variation with explicit casting
+        int r = Math.Clamp(barColor.R + glitchRandom.Next(-30, 31), 0, 255);
+        int gColor = Math.Clamp(barColor.G + glitchRandom.Next(-30, 31), 0, 255);
+        int b = Math.Clamp(barColor.B + glitchRandom.Next(-30, 31), 0, 255);
+        
+        Color glitchColor = Color.FromArgb(barColor.A, r, gColor, b);
+        
+        using (var brush = new SolidBrush(glitchColor))
+            g.FillRectangle(brush, rect);
+    }
+}
         
         private void DrawCircleVisualizer(Graphics g)
         {
@@ -416,7 +419,7 @@ namespace NekoBeats
                 if (bass > 0.3f)
                 {
                     p.SpeedY -= bass * 0.5f;
-                    p.Size = 3 + bass * 5;
+                    p.Size = (int)(3 + bass * 5);
                 }
                 
                 p.X += p.SpeedX;
