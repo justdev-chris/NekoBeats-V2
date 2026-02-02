@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Imaging; // Added
 using System.Collections.Generic;
 using System.Windows.Forms;
 using NAudio.Wave;
@@ -86,6 +87,15 @@ namespace NekoBeats
             MakeClickThrough(clickThrough);
         }
         
+        public void MakeClickThrough(bool enable) // Changed to public
+        {
+            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+            if (enable)
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+            else
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+        }
+        
         private void OnResize(object sender, EventArgs e)
         {
             InitializeBloomBuffer();
@@ -106,7 +116,7 @@ namespace NekoBeats
             renderTimer.Start();
         }
         
-        public void UpdateFPSTimer()
+        public void UpdateFPSTimer() // Changed to public
         {
             renderTimer.Interval = fpsLimit switch
             {
@@ -117,18 +127,21 @@ namespace NekoBeats
             };
         }
         
-        private void InitializeParticles()
+        public void InitializeParticles() // Changed to public
         {
             particles.Clear();
+            int width = Math.Max(1, this.ClientSize.Width);
+            int height = Math.Max(1, this.ClientSize.Height);
+            
             for (int i = 0; i < particleCount; i++)
             {
                 particles.Add(new Particle
                 {
-                    X = random.Next(0, Math.Max(1, this.ClientSize.Width)),
-                    Y = random.Next(0, Math.Max(1, this.ClientSize.Height)),
+                    X = random.Next(0, width),
+                    Y = random.Next(0, height),
                     Size = random.Next(2, 6),
-                    SpeedX = (random.NextSingle() - 0.5f) * 2,
-                    SpeedY = (random.NextSingle() - 0.5f) * 2,
+                    SpeedX = (float)(random.NextDouble() - 0.5) * 2,
+                    SpeedY = (float)(random.NextDouble() - 0.5) * 2,
                     Color = Color.White,
                     Life = random.Next(50, 200)
                 });
@@ -145,15 +158,6 @@ namespace NekoBeats
                 bloomBuffer = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
                 bloomGraphics = Graphics.FromImage(bloomBuffer);
             }
-        }
-        
-        private void MakeClickThrough(bool enable)
-        {
-            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-            if (enable)
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-            else
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
         }
         
         private void OnMouseDown(object sender, MouseEventArgs e)
@@ -288,7 +292,7 @@ namespace NekoBeats
                 if (bass > 0.3f)
                 {
                     p.SpeedY -= bass * 0.5f;
-                    p.Size = 3 + bass * 5;
+                    p.Size = (int)(3 + bass * 5); // Fixed: added cast
                 }
                 
                 p.X += p.SpeedX;
@@ -338,7 +342,7 @@ namespace NekoBeats
                 };
                 
                 var colorMatrix = new ColorMatrix(matrix);
-                attributes.SetColorMatrix(colorMatrix);
+                attributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
                 
                 e.Graphics.DrawImage(
                     blur,
