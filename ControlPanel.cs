@@ -7,11 +7,16 @@ namespace NekoBeats
     public class ControlPanel : Form
     {
         private VisualizerForm visualizer;
+        
+        // Phase 1 controls
         private TrackBar opacityTrack, barHeightTrack, barCountTrack, colorSpeedTrack;
         private CheckBox clickThroughCheck, draggableCheck, colorCycleCheck;
         private ComboBox fpsCombo;
         private Button colorBtn, saveBtn, loadBtn;
-        private ColorDialog colorDialog;
+        
+        // Phase 2 controls
+        private CheckBox bloomCheck, particlesCheck, circleModeCheck;
+        private TrackBar bloomIntensityTrack, particleCountTrack, circleRadiusTrack;
         
         public ControlPanel(VisualizerForm visualizer)
         {
@@ -22,7 +27,7 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(400, 450);
+            this.Size = new Size(400, 500);
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(50, 50);
             this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -42,8 +47,8 @@ namespace NekoBeats
             
             // Color speed
             this.Controls.Add(new Label { Text = "Color Speed:", Location = new Point(20, y), Width = 80 });
-            colorSpeedTrack = new TrackBar { Minimum = 1, Maximum = 10, Value = 5, Location = new Point(100, y - 5), Width = 200 };
-            colorSpeedTrack.ValueChanged += (s, e) => visualizer.colorSpeed = colorSpeedTrack.Value / 5f;
+            colorSpeedTrack = new TrackBar { Minimum = 1, Maximum = 20, Value = 10, Location = new Point(100, y - 5), Width = 200 };
+            colorSpeedTrack.ValueChanged += (s, e) => visualizer.colorSpeed = colorSpeedTrack.Value / 10f;
             y += 40;
             
             // FPS limit
@@ -99,6 +104,9 @@ namespace NekoBeats
             draggableCheck.CheckedChanged += (s, e) => visualizer.draggable = draggableCheck.Checked;
             y += 40;
             
+            // Phase 2 controls
+            AddPhase2Controls(ref y);
+            
             // Preset buttons
             saveBtn = new Button { Text = "Save Preset", Location = new Point(20, y), Width = 100 };
             saveBtn.Click += (s, e) => 
@@ -133,13 +141,54 @@ namespace NekoBeats
             UpdateControlsFromVisualizer();
         }
         
+        private void AddPhase2Controls(ref int y)
+        {
+            // Bloom effect
+            bloomCheck = new CheckBox { Text = "Bloom Effect", Location = new Point(200, 10), Width = 120 };
+            bloomCheck.CheckedChanged += (s, e) => visualizer.bloomEnabled = bloomCheck.Checked;
+            this.Controls.Add(bloomCheck);
+            
+            this.Controls.Add(new Label { Text = "Bloom:", Location = new Point(200, 35), Width = 80 });
+            bloomIntensityTrack = new TrackBar { Minimum = 5, Maximum = 30, Value = 10, Location = new Point(280, 30), Width = 100 };
+            bloomIntensityTrack.ValueChanged += (s, e) => visualizer.bloomIntensity = bloomIntensityTrack.Value;
+            this.Controls.Add(bloomIntensityTrack);
+            
+            // Particles
+            particlesCheck = new CheckBox { Text = "Particles", Location = new Point(200, 70), Width = 100 };
+            particlesCheck.CheckedChanged += (s, e) => 
+            {
+                visualizer.particlesEnabled = particlesCheck.Checked;
+                if (particlesCheck.Checked) visualizer.InitializeParticles();
+            };
+            this.Controls.Add(particlesCheck);
+            
+            this.Controls.Add(new Label { Text = "Count:", Location = new Point(200, 95), Width = 80 });
+            particleCountTrack = new TrackBar { Minimum = 20, Maximum = 500, Value = 100, Location = new Point(280, 90), Width = 100 };
+            particleCountTrack.ValueChanged += (s, e) => 
+            {
+                visualizer.particleCount = particleCountTrack.Value;
+                if (particlesCheck.Checked) visualizer.InitializeParticles();
+            };
+            this.Controls.Add(particleCountTrack);
+            
+            // Circle mode
+            circleModeCheck = new CheckBox { Text = "Circle Mode", Location = new Point(200, 130), Width = 120 };
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.circleMode = circleModeCheck.Checked;
+            this.Controls.Add(circleModeCheck);
+            
+            this.Controls.Add(new Label { Text = "Radius:", Location = new Point(200, 155), Width = 80 });
+            circleRadiusTrack = new TrackBar { Minimum = 50, Maximum = 500, Value = 200, Location = new Point(280, 150), Width = 100 };
+            circleRadiusTrack.ValueChanged += (s, e) => visualizer.circleRadius = circleRadiusTrack.Value;
+            this.Controls.Add(circleRadiusTrack);
+        }
+        
         private void ShowColorDialog()
         {
-            colorDialog = new ColorDialog { Color = visualizer.barColor };
+            using var colorDialog = new ColorDialog { Color = visualizer.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
                 visualizer.barColor = colorDialog.Color;
-                colorCycleCheck.Checked = false; // Disable cycling when picking solid color
+                colorCycleCheck.Checked = false;
             }
         }
         
@@ -151,7 +200,7 @@ namespace NekoBeats
             clickThroughCheck.Checked = visualizer.clickThrough;
             draggableCheck.Checked = visualizer.draggable;
             colorCycleCheck.Checked = visualizer.colorCycling;
-            colorSpeedTrack.Value = (int)(visualizer.colorSpeed * 5);
+            colorSpeedTrack.Value = (int)(visualizer.colorSpeed * 10);
             
             fpsCombo.SelectedIndex = visualizer.fpsLimit switch
             {
@@ -160,6 +209,13 @@ namespace NekoBeats
                 120 => 2,
                 _ => 3
             };
+            
+            bloomCheck.Checked = visualizer.bloomEnabled;
+            bloomIntensityTrack.Value = visualizer.bloomIntensity;
+            particlesCheck.Checked = visualizer.particlesEnabled;
+            particleCountTrack.Value = visualizer.particleCount;
+            circleModeCheck.Checked = visualizer.circleMode;
+            circleRadiusTrack.Value = (int)visualizer.circleRadius;
         }
     }
 }
