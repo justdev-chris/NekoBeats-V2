@@ -21,13 +21,12 @@ public class NekoBeats : Form
     private float[] fftBuffer = new float[2048];
     private Complex[] fftComplex = new Complex[2048];
     private int fftPos = 0;
-    private float[] barValues = new float[256];
+    private float[] barValues = new float[512];
     private Color barColor = Color.Cyan;
     private Form controlPanel;
     private TrackBar opacityTrack, barHeightTrack, barCountTrack;
     private CheckBox clickThroughCheck, draggableCheck;
     private Button colorBtn;
-    private bool isDraggable = false;
     private Point dragStart;
     
     public NekoBeats()
@@ -44,7 +43,7 @@ public class NekoBeats : Form
         this.MouseDown += OnMouseDown;
         this.MouseMove += OnMouseMove;
         
-        // Click-through initially
+        // Make click-through
         MakeClickThrough(true);
         
         // Control panel
@@ -95,7 +94,7 @@ public class NekoBeats : Form
         
         // Exit button
         var exitBtn = new Button { Text = "Exit", Location = new Point(20, y), Width = 100 };
-        exitBtn.Click += (s, e) => Application.Exit();
+        exitBtn.Click += (s, e) => Environment.Exit(0);
         
         controlPanel.Controls.AddRange(new Control[] {
             colorBtn, opacityTrack, barHeightTrack, barCountTrack,
