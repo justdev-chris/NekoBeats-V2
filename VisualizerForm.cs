@@ -400,13 +400,6 @@ namespace NekoBeats
                 float y = bottom - height;
                 var rect = new RectangleF(i * barWidth + xOffset, y, barWidth, height);
                 
-                Color glitchColor = Color.FromArgb(
-                    barColor.A,
-                    (int)Math.Clamp(barColor.R + glitchRandom.Next(-30, 30), 0, 255),
-                    (int)Math.Clamp(barColor.G + glitchRandom.Next(-30, 30), 0, 255),
-                    (int)Math.Clamp(barColor.B + glitchRandom.Next(-30, 30), 0, 255)
-                );
-                
                 using (var brush = new SolidBrush(glitchColor))
                     g.FillRectangle(brush, rect);
             }
