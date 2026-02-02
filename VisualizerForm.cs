@@ -387,27 +387,6 @@ private void DrawGlitchVisualizer(Graphics g)
             }
         }
         
-        private void DrawGlitchVisualizer(Graphics g)
-        {
-            float barWidth = this.ClientSize.Width / barCount;
-            int bottom = this.ClientSize.Height;
-            float heightMultiplier = barHeight / 100f;
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                float glitch = glitchRandom.NextSingle() * 0.5f + 0.5f;
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
-                if (height < 2) height = 2;
-                
-                float xOffset = glitchRandom.Next(-3, 3);
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth + xOffset, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(glitchColor))
-                    g.FillRectangle(brush, rect);
-            }
-        }
-        
         private void DrawParticles(Graphics g)
         {
             float bass = GetBassLevel();
