@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace NekoBeats
 {
@@ -8,33 +9,70 @@ namespace NekoBeats
     {
         private VisualizerForm mainForm;
         private FlowLayoutPanel layout;
+        
+        // Custom Colors for the UI
+        private Color accentColor = Color.Cyan;
+        private Color bgColor = Color.FromArgb(20, 20, 20);
+        private Color cardColor = Color.FromArgb(35, 35, 35);
+        private Color textColor = Color.White;
 
         public ControlPanel(VisualizerForm form)
         {
             mainForm = form;
             InitializeComponent();
-            ApplyTheme();
         }
 
         private void InitializeComponent()
         {
-            this.Text = "NekoBeats Controller";
-            this.Size = new Size(350, 650);
+            this.Text = "NekoBeats Control Center";
+            this.Size = new Size(380, 700);
             this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            this.BackColor = bgColor;
             this.TopMost = true;
-            this.BackColor = Color.FromArgb(30, 30, 30);
 
             layout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 AutoScroll = true,
-                Padding = new Padding(15)
+                Padding = new Padding(20),
+                WrapContents = false
             };
 
-            // --- Visual Style Section ---
+            // --- HEADER ---
+            Label title = new Label {
+                Text = "NEKO BEATS v2.0",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = accentColor,
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 20)
+            };
+            layout.Controls.Add(title);
+
+            // --- ENGINE & AUDIO SECTION ---
+            CreateSectionLabel("ENGINE & AUDIO");
+
+            AddLabel("Audio Sensitivity");
+            layout.Controls.Add(CreateSlider(1, 100, (int)(mainForm.sensitivity * 10), (val) => {
+                mainForm.sensitivity = val / 10f;
+            }));
+
+            AddLabel("Smoothing Speed (Lerp)");
+            layout.Controls.Add(CreateSlider(1, 100, (int)(mainForm.smoothSpeed * 100), (val) => {
+                mainForm.smoothSpeed = val / 100f;
+            }));
+
+            // --- VISUALS SECTION ---
+            CreateSectionLabel("VISUAL CONFIG");
+
             AddLabel("Animation Style");
-            var styleCombo = new ComboBox { Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
+            ComboBox styleCombo = new ComboBox { 
+                Width = 300, 
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = cardColor,
+                ForeColor = textColor,
+                FlatStyle = FlatStyle.Flat
+            };
             styleCombo.Items.AddRange(Enum.GetNames(typeof(VisualizerForm.AnimationStyle)));
             styleCombo.SelectedItem = mainForm.animationStyle.ToString();
             styleCombo.SelectedIndexChanged += (s, e) => {
@@ -42,137 +80,123 @@ namespace NekoBeats
             };
             layout.Controls.Add(styleCombo);
 
-            // --- Audio & Engine Section ---
-            AddLabel("Sensitivity (Boost)");
-            layout.Controls.Add(CreateSlider(1, 10, (int)(mainForm.sensitivity * 2), (val) => {
-                mainForm.sensitivity = val / 2.0f;
-            }));
-
-            AddLabel("Smoothing (Lerp)");
-            layout.Controls.Add(CreateSlider(1, 100, (int)(mainForm.smoothSpeed * 100), (val) => {
-                mainForm.smoothSpeed = val / 100f;
-            }));
-
-            // --- Bar Settings ---
             AddLabel("Bar Count");
-            layout.Controls.Add(CreateSlider(32, 512, mainForm.barCount, (val) => {
+            layout.Controls.Add(CreateSlider(16, 512, mainForm.barCount, (val) => {
                 mainForm.barCount = val;
             }));
 
-            AddLabel("Bar Height %");
-            layout.Controls.Add(CreateSlider(10, 100, mainForm.barHeight, (val) => {
+            AddLabel("Bar Height Scale");
+            layout.Controls.Add(CreateSlider(10, 200, mainForm.barHeight, (val) => {
                 mainForm.barHeight = val;
             }));
 
-            // --- Particles Section ---
-            var particleCheck = CreateCheckBox("Enable Particles", mainForm.particlesEnabled, (val) => {
-                mainForm.particlesEnabled = val;
-                if (val) mainForm.InitializeParticles();
-            });
-            layout.Controls.Add(particleCheck);
+            // --- PARTICLES SECTION ---
+            CreateSectionLabel("PARTICLE SYSTEM");
 
-            AddLabel("Particle Count");
-            layout.Controls.Add(CreateSlider(10, 500, mainForm.particleCount, (val) => {
-                mainForm.particleCount = val;
-                mainForm.InitializeParticles();
+            layout.Controls.Add(CreateCheckBox("Enable Particles", mainForm.particlesEnabled, (val) => {
+                mainForm.particlesEnabled = val;
+                if(val) mainForm.InitializeParticles();
             }));
 
-            // --- Colors & FX ---
-            var colorCycleCheck = CreateCheckBox("Rainbow Mode", mainForm.colorCycling, (val) => {
-                mainForm.colorCycling = val;
-            });
-            layout.Controls.Add(colorCycleCheck);
+            AddLabel("Particle Density"); // This is your Particle Count
+            layout.Controls.Add(CreateSlider(10, 1000, mainForm.particleCount, (val) => {
+                mainForm.particleCount = val;
+                mainForm.InitializeParticles(); // Reset system to apply new count
+            }));
 
-            var bloomCheck = CreateCheckBox("Bloom Effect", mainForm.bloomEnabled, (val) => {
-                mainForm.bloomEnabled = val;
-            });
-            layout.Controls.Add(bloomCheck);
+            // --- EFFECTS SECTION ---
+            CreateSectionLabel("EFFECTS");
 
-            var circleCheck = CreateCheckBox("Circle Mode", mainForm.circleMode, (val) => {
-                mainForm.circleMode = val;
-            });
-            layout.Controls.Add(circleCheck);
+            layout.Controls.Add(CreateCheckBox("Bloom Glow", mainForm.bloomEnabled, (val) => mainForm.bloomEnabled = val));
+            layout.Controls.Add(CreateCheckBox("Rainbow Cycle", mainForm.colorCycling, (val) => mainForm.colorCycling = val));
+            layout.Controls.Add(CreateCheckBox("Circle Mode", mainForm.circleMode, (val) => mainForm.circleMode = val));
 
-            // --- Window Logic ---
-            var clickCheck = CreateCheckBox("Click-Through", mainForm.clickThrough, (val) => {
+            // --- WINDOW CONTROLS ---
+            CreateSectionLabel("WINDOW");
+            layout.Controls.Add(CreateCheckBox("Click-Through", mainForm.clickThrough, (val) => {
                 mainForm.clickThrough = val;
                 mainForm.MakeClickThrough(val);
-            });
-            layout.Controls.Add(clickCheck);
+            }));
+            layout.Controls.Add(CreateCheckBox("Draggable Mode", mainForm.draggable, (val) => mainForm.draggable = val));
 
-            var dragCheck = CreateCheckBox("Draggable", mainForm.draggable, (val) => {
-                mainForm.draggable = val;
-            });
-            layout.Controls.Add(dragCheck);
-
-            // --- Save/Load Buttons ---
-            var btnTable = new TableLayoutPanel { Width = 280, Height = 40, ColumnCount = 2 };
-            btnTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-            btnTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-
-            var saveBtn = new Button { Text = "Save Preset", Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat, ForeColor = Color.White };
-            saveBtn.Click += (s, e) => mainForm.SavePreset("default.json");
+            // --- FOOTER BUTTONS ---
+            FlowLayoutPanel btnPanel = new FlowLayoutPanel { Width = 320, Height = 100, Margin = new Padding(0, 20, 0, 0) };
             
-            var loadBtn = new Button { Text = "Load Preset", Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat, ForeColor = Color.White };
-            loadBtn.Click += (s, e) => mainForm.LoadPreset("default.json");
+            Button saveBtn = CreateStyledButton("SAVE PRESET", Color.SeaGreen);
+            saveBtn.Click += (s, e) => mainForm.SavePreset("user_config.json");
+            
+            Button loadBtn = CreateStyledButton("LOAD PRESET", Color.RoyalBlue);
+            loadBtn.Click += (s, e) => mainForm.LoadPreset("user_config.json");
 
-            btnTable.Controls.Add(saveBtn, 0, 0);
-            btnTable.Controls.Add(loadBtn, 1, 0);
-            layout.Controls.Add(btnTable);
+            btnPanel.Controls.Add(saveBtn);
+            btnPanel.Controls.Add(loadBtn);
+            layout.Controls.Add(btnPanel);
 
             this.Controls.Add(layout);
+        }
+
+        private void CreateSectionLabel(string text)
+        {
+            layout.Controls.Add(new Label {
+                Text = $"--- {text} ---",
+                ForeColor = Color.Gray,
+                Font = new Font("Segoe UI", 7, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(0, 15, 0, 5)
+            });
         }
 
         private void AddLabel(string text)
         {
             layout.Controls.Add(new Label { 
                 Text = text, 
-                ForeColor = Color.Cyan, 
+                ForeColor = textColor, 
                 AutoSize = true, 
                 Margin = new Padding(0, 10, 0, 0),
-                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+                Font = new Font("Segoe UI", 9)
             });
         }
 
         private TrackBar CreateSlider(int min, int max, int value, Action<int> onChange)
         {
-            var t = new TrackBar { 
-                Minimum = min, 
-                Maximum = max, 
-                Value = value, 
-                Width = 280,
-                TickStyle = TickStyle.None
+            TrackBar tb = new TrackBar {
+                Minimum = min,
+                Maximum = max,
+                Value = Math.Clamp(value, min, max),
+                Width = 300,
+                TickStyle = TickStyle.None,
+                BackColor = bgColor
             };
-            t.Scroll += (s, e) => onChange(t.Value);
-            return t;
+            tb.Scroll += (s, e) => onChange(tb.Value);
+            return tb;
         }
 
         private CheckBox CreateCheckBox(string text, bool isChecked, Action<bool> onChange)
         {
-            var c = new CheckBox { 
-                Text = text, 
-                Checked = isChecked, 
-                ForeColor = Color.White, 
-                Width = 280,
-                Margin = new Padding(0, 5, 0, 0)
+            CheckBox cb = new CheckBox {
+                Text = text,
+                Checked = isChecked,
+                ForeColor = textColor,
+                Width = 300,
+                FlatStyle = FlatStyle.Flat,
+                Margin = new Padding(0, 5, 0, 5)
             };
-            c.CheckedChanged += (s, e) => onChange(c.Checked);
-            return c;
+            cb.CheckedChanged += (s, e) => onChange(cb.Checked);
+            return cb;
         }
 
-        private void ApplyTheme()
+        private Button CreateStyledButton(string text, Color color)
         {
-            foreach (Control c in layout.Controls)
-            {
-                if (c is Button b) {
-                    b.BackColor = Color.FromArgb(60, 60, 60);
-                    b.FlatAppearance.BorderSize = 0;
-                }
-                if (c is ComboBox cb) {
-                    cb.BackColor = Color.FromArgb(45, 45, 45);
-                    cb.ForeColor = Color.White;
-                }
-            }
+            return new Button {
+                Text = text,
+                Width = 145,
+                Height = 40,
+                BackColor = color,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
         }
     }
 }
