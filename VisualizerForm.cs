@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -27,7 +28,11 @@ namespace NekoBeats
         public float[] fftBuffer = new float[2048];
         public Complex[] fftComplex = new Complex[2048];
         public int fftPos = 0;
+        
+        // --- Smoothing Engine ---
         public float[] barValues = new float[512];
+        public float[] smoothedBarValues = new float[512];
+        public float smoothSpeed = 0.15f; 
         
         // Settings
         public Color barColor = Color.Cyan;
@@ -117,8 +122,20 @@ namespace NekoBeats
         {
             renderTimer = new Timer();
             UpdateFPSTimer();
-            renderTimer.Tick += (s, e) => this.Invalidate();
+            renderTimer.Tick += (s, e) => {
+                UpdateSmoothing();
+                this.Invalidate();
+            };
             renderTimer.Start();
+        }
+
+        private void UpdateSmoothing()
+        {
+            for (int i = 0; i < barCount; i++)
+            {
+                // The Lerp math: current + (target - current) * factor
+                smoothedBarValues[i] += (barValues[i] - smoothedBarValues[i]) * smoothSpeed;
+            }
         }
         
         public void UpdateFPSTimer()
@@ -201,7 +218,8 @@ namespace NekoBeats
         {
             for (int i = 0; i < 2048; i++)
             {
-                fftComplex[i].X = fftBuffer[i];
+                // Apply Hamming window to reduce spectral leakage
+                fftComplex[i].X = (float)(fftBuffer[i] * FastFourierTransform.HammingWindow(i, 2048));
                 fftComplex[i].Y = 0;
             }
             FastFourierTransform.FFT(true, 11, fftComplex);
@@ -210,7 +228,7 @@ namespace NekoBeats
             {
                 float mag = (float)Math.Sqrt(fftComplex[i].X * fftComplex[i].X + 
                                             fftComplex[i].Y * fftComplex[i].Y);
-                barValues[i] = Math.Min(mag * 200, 1.0f);
+                barValues[i] = Math.Clamp(mag * 100, 0, 1.0f);
             }
             fftPos = 0;
         }
@@ -218,11 +236,11 @@ namespace NekoBeats
         private void OnPaint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.Clear(Color.Magenta);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             
             if (colorCycling)
             {
-                hue += 0.01f * colorSpeed;
+                hue += 0.005f * colorSpeed;
                 if (hue > 1.0f) hue = 0;
                 barColor = ColorFromHSV(hue * 360, 1.0f, 1.0f);
             }
@@ -265,34 +283,28 @@ namespace NekoBeats
             
             for (int i = 0; i < barCount; i++)
             {
-                if (barValues[i] > bounceHeights[i])
-                    bounceHeights[i] = barValues[i];
+                if (smoothedBarValues[i] > bounceHeights[i])
+                    bounceHeights[i] = smoothedBarValues[i];
                 else
-                    bounceHeights[i] = Math.Max(0, bounceHeights[i] - 0.02f);
+                    bounceHeights[i] = Math.Max(0, bounceHeights[i] - 0.01f);
             }
         }
         
         private void DrawBarVisualizer(Graphics g)
         {
-            float barWidth = this.ClientSize.Width / barCount;
+            float barWidth = (float)this.ClientSize.Width / barCount;
             int bottom = this.ClientSize.Height;
             float heightMultiplier = barHeight / 100f;
             
-            for (int i = 0; i < barCount; i++)
+            using (var brush = new SolidBrush(barColor))
             {
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier);
-                if (height < 2) height = 2;
-                
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
-                
-                if (bloomEnabled && bloomGraphics != null)
+                for (int i = 0; i < barCount; i++)
                 {
-                    using (var bloomBrush = new SolidBrush(Color.FromArgb(100, barColor)))
-                        bloomGraphics.FillRectangle(bloomBrush, rect);
+                    float height = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier);
+                    if (height < 2) height = 2;
+                    
+                    float y = bottom - height;
+                    g.FillRectangle(brush, i * barWidth, y, barWidth, height);
                 }
             }
         }
@@ -303,191 +315,150 @@ namespace NekoBeats
             float centerY = this.ClientSize.Height / 2;
             float angleStep = 360f / barCount;
             
-            for (int i = 0; i < barCount; i++)
+            using (var pen = new Pen(barColor, 3))
             {
-                float height = barValues[i] * circleRadius;
-                if (height < 2) height = 2;
-                
-                float angle = i * angleStep * (float)Math.PI / 180f;
-                float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
-                float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
-                float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + height);
-                float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + height);
-                
-                using (var pen = new Pen(barColor, 3))
-                    g.DrawLine(pen, x1, y1, x2, y2);
-                
-                if (bloomEnabled && bloomGraphics != null)
+                for (int i = 0; i < barCount; i++)
                 {
-                    using (var bloomPen = new Pen(Color.FromArgb(100, barColor), 6))
-                        bloomGraphics.DrawLine(bloomPen, x1, y1, x2, y2);
+                    float height = smoothedBarValues[i] * circleRadius;
+                    if (height < 2) height = 2;
+                    
+                    float angle = i * angleStep * (float)Math.PI / 180f;
+                    float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
+                    float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
+                    float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + height);
+                    float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + height);
+                    
+                    g.DrawLine(pen, x1, y1, x2, y2);
                 }
             }
         }
         
         private void DrawPulseVisualizer(Graphics g)
         {
-            float pulse = (float)(Math.Sin(pulsePhase) * 0.3 + 0.7);
-            float barWidth = this.ClientSize.Width / barCount;
+            float pulse = (float)(Math.Sin(pulsePhase) * 0.2 + 0.8);
+            float barWidth = (float)this.ClientSize.Width / barCount;
             int bottom = this.ClientSize.Height;
             float heightMultiplier = barHeight / 100f;
             
-            for (int i = 0; i < barCount; i++)
+            using (var brush = new SolidBrush(barColor))
             {
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * pulse;
-                if (height < 2) height = 2;
-                
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
+                for (int i = 0; i < barCount; i++)
+                {
+                    float height = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * pulse;
+                    g.FillRectangle(brush, i * barWidth, bottom - height, barWidth, height);
+                }
             }
         }
         
         private void DrawWaveVisualizer(Graphics g)
         {
-            float barWidth = this.ClientSize.Width / barCount;
+            float barWidth = (float)this.ClientSize.Width / barCount;
             int bottom = this.ClientSize.Height;
             float heightMultiplier = barHeight / 100f;
             
-            for (int i = 0; i < barCount; i++)
+            using (var brush = new SolidBrush(barColor))
             {
-                float wave = (float)Math.Sin(waveOffset + i * 0.2) * 0.5f + 0.5f;
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * wave;
-                if (height < 2) height = 2;
-                
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
+                for (int i = 0; i < barCount; i++)
+                {
+                    float wave = (float)Math.Sin(waveOffset + i * 0.15) * 0.3f + 0.7f;
+                    float height = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * wave;
+                    g.FillRectangle(brush, i * barWidth, bottom - height, barWidth, height);
+                }
             }
         }
         
         private void DrawBounceVisualizer(Graphics g)
         {
-            float barWidth = this.ClientSize.Width / barCount;
+            float barWidth = (float)this.ClientSize.Width / barCount;
             int bottom = this.ClientSize.Height;
             float heightMultiplier = barHeight / 100f;
             
-            for (int i = 0; i < barCount; i++)
+            using (var brush = new SolidBrush(barColor))
             {
-                float height = bounceHeights[i] * (this.ClientSize.Height * heightMultiplier);
-                if (height < 2) height = 2;
-                
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
+                for (int i = 0; i < barCount; i++)
+                {
+                    float height = bounceHeights[i] * (this.ClientSize.Height * heightMultiplier);
+                    g.FillRectangle(brush, i * barWidth, bottom - height, barWidth, height);
+                }
             }
         }
         
         private void DrawGlitchVisualizer(Graphics g)
         {
-            float barWidth = this.ClientSize.Width / barCount;
+            float barWidth = (float)this.ClientSize.Width / barCount;
             int bottom = this.ClientSize.Height;
             float heightMultiplier = barHeight / 100f;
             
-            for (int i = 0; i < barCount; i++)
+            using (var brush = new SolidBrush(barColor))
             {
-                float glitch = glitchRandom.NextSingle() * 0.5f + 0.5f;
-                float height = barValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
-                if (height < 2) height = 2;
-                
-                float xOffset = glitchRandom.Next(-3, 3);
-                float y = bottom - height;
-                var rect = new RectangleF(i * barWidth + xOffset, y, barWidth, height);
-                
-                using (var brush = new SolidBrush(barColor))
-                    g.FillRectangle(brush, rect);
+                for (int i = 0; i < barCount; i++)
+                {
+                    float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
+                    float height = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
+                    float xOffset = glitchRandom.Next(-4, 4);
+                    g.FillRectangle(brush, i * barWidth + xOffset, bottom - height, barWidth, height);
+                }
             }
         }
         
         private void DrawParticles(Graphics g)
         {
             float bass = GetBassLevel();
-            
-            for (int i = 0; i < particles.Count; i++)
+            using (var brush = new SolidBrush(Color.FromArgb(180, barColor)))
             {
-                var p = particles[i];
-                
-                if (bass > 0.3f)
+                for (int i = 0; i < particles.Count; i++)
                 {
-                    p.SpeedY -= bass * 0.5f;
-                    p.Size = (int)(3 + bass * 5);
+                    var p = particles[i];
+                    if (bass > 0.2f) p.SpeedY -= bass * 1.5f;
+                    p.X += p.SpeedX;
+                    p.Y += p.SpeedY;
+                    p.Life--;
+                    
+                    if (p.Life <= 0 || p.Y < -10)
+                    {
+                        p.X = random.Next(0, this.ClientSize.Width);
+                        p.Y = this.ClientSize.Height + 10;
+                        p.Life = random.Next(50, 200);
+                        p.SpeedY = (random.NextSingle() - 1.0f) * 2;
+                    }
+                    particles[i] = p;
+                    g.FillEllipse(brush, p.X, p.Y, p.Size, p.Size);
                 }
-                
-                p.X += p.SpeedX;
-                p.Y += p.SpeedY;
-                p.Life--;
-                
-                if (p.X < 0 || p.X > this.ClientSize.Width) p.SpeedX *= -1;
-                if (p.Y < 0 || p.Y > this.ClientSize.Height) p.SpeedY *= -1;
-                
-                if (p.Life <= 0 || p.Y < -10)
-                {
-                    p.X = random.Next(0, Math.Max(1, this.ClientSize.Width));
-                    p.Y = this.ClientSize.Height + 10;
-                    p.Life = random.Next(50, 200);
-                }
-                
-                particles[i] = p;
-                
-                using (var brush = new SolidBrush(Color.FromArgb(150, barColor)))
-                    g.FillEllipse(brush, p.X - p.Size/2, p.Y - p.Size/2, p.Size, p.Size);
             }
         }
         
         private float GetBassLevel()
         {
             float sum = 0;
-            int count = Math.Min(5, barCount);
+            int count = Math.Min(8, barCount);
             for (int i = 0; i < count; i++)
-                sum += barValues[i];
+                sum += smoothedBarValues[i];
             return sum / count;
         }
         
         private void ApplyBloomEffect(PaintEventArgs e)
         {
             if (bloomBuffer == null) return;
-            
-            // Simple blur effect
-            for (int i = 0; i < bloomIntensity / 5; i++)
-            {
-                var blur = new Bitmap(bloomBuffer);
-                using (var g = Graphics.FromImage(bloomBuffer))
-                {
-                    g.Clear(Color.Transparent);
-                    g.DrawImage(blur, 1, 1, blur.Width - 2, blur.Height - 2);
-                    g.DrawImage(blur, -1, -1, blur.Width + 2, blur.Height + 2);
-                }
-            }
-            
             e.Graphics.DrawImage(bloomBuffer, 0, 0);
             bloomGraphics.Clear(Color.Transparent);
         }
         
-        private Color ColorFromHSV(float hue, float saturation, float value)
+        private Color ColorFromHSV(double hue, double saturation, double value)
         {
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-            float f = hue / 60 - (float)Math.Floor(hue / 60);
-            
-            value *= 255;
+            double f = hue / 60 - Math.Floor(hue / 60);
+            value = value * 255;
             int v = Convert.ToInt32(value);
             int p = Convert.ToInt32(value * (1 - saturation));
             int q = Convert.ToInt32(value * (1 - f * saturation));
             int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-            
-            return hi switch
-            {
-                0 => Color.FromArgb(v, t, p),
-                1 => Color.FromArgb(q, v, p),
-                2 => Color.FromArgb(p, v, t),
-                3 => Color.FromArgb(p, q, v),
-                4 => Color.FromArgb(t, p, v),
-                _ => Color.FromArgb(v, p, q)
+            return hi switch {
+                0 => Color.FromArgb(255, v, t, p),
+                1 => Color.FromArgb(255, q, v, p),
+                2 => Color.FromArgb(255, p, v, t),
+                3 => Color.FromArgb(255, p, q, v),
+                4 => Color.FromArgb(255, t, p, v),
+                _ => Color.FromArgb(255, v, p, q)
             };
         }
         
@@ -497,40 +468,28 @@ namespace NekoBeats
             capture?.Dispose();
             bloomBuffer?.Dispose();
             bloomGraphics?.Dispose();
-            controlPanel?.Close();
         }
         
         public void SavePreset(string filename)
         {
-            var preset = new
-            {
+            var preset = new {
                 barColor = barColor.ToArgb(),
-                opacity,
-                barHeight,
-                barCount,
-                clickThrough,
-                draggable,
-                fpsLimit,
-                colorCycling,
-                colorSpeed,
-                bloomEnabled,
-                bloomIntensity,
-                particlesEnabled,
-                particleCount,
-                circleMode,
-                circleRadius,
+                opacity, barHeight, barCount,
+                clickThrough, draggable, fpsLimit,
+                colorCycling, colorSpeed,
+                bloomEnabled, bloomIntensity,
+                particlesEnabled, particleCount,
+                circleMode, circleRadius,
                 panelTheme = (int)panelTheme,
-                animationStyle = (int)animationStyle
+                animationStyle = (int)animationStyle,
+                smoothSpeed
             };
-            
-            var json = JsonSerializer.Serialize(preset);
-            File.WriteAllText(filename, json);
+            File.WriteAllText(filename, JsonSerializer.Serialize(preset));
         }
         
         public void LoadPreset(string filename)
         {
             if (!File.Exists(filename)) return;
-            
             var json = File.ReadAllText(filename);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
@@ -552,6 +511,7 @@ namespace NekoBeats
             circleRadius = root.GetProperty("circleRadius").GetSingle();
             panelTheme = (PanelTheme)root.GetProperty("panelTheme").GetInt32();
             animationStyle = (AnimationStyle)root.GetProperty("animationStyle").GetInt32();
+            smoothSpeed = root.TryGetProperty("smoothSpeed", out var s) ? s.GetSingle() : 0.15f;
             
             MakeClickThrough(clickThrough);
             UpdateFPSTimer();
