@@ -12,8 +12,8 @@ namespace NekoBeats
         private NotifyIcon trayIcon;
         
         private TrackBar opacityTrack, barHeightTrack, barCountTrack, colorSpeedTrack;
-        private CheckBox clickThroughCheck, draggableCheck, colorCycleCheck, bloomCheck, particlesCheck;
-        private TrackBar bloomIntensityTrack, particleCountTrack;
+        private CheckBox clickThroughCheck, draggableCheck, colorCycleCheck, bloomCheck, particlesCheck, circleModeCheck;
+        private TrackBar bloomIntensityTrack, particleCountTrack, circleRadiusTrack;
         private ComboBox fpsCombo, themeCombo, styleCombo;
         private Button colorBtn, saveBtn, loadBtn, resetBtn, exitBtn;
 
@@ -27,7 +27,7 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(540, 500);
+            this.Size = new Size(540, 580); // Increased height to fit EVERYTHING
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = true;
@@ -64,61 +64,57 @@ namespace NekoBeats
             AddTrackBar(groupBars, "Opacity", 120, opacityTrack = new TrackBar { Minimum = 10, Maximum = 100 });
             opacityTrack.ValueChanged += (s, e) => { visualizer.opacity = opacityTrack.Value / 100f; visualizer.Opacity = visualizer.opacity; };
 
-            // --- GROUP 3: EFFECTS ---
-            GroupBox groupEffects = new GroupBox { Text = "Effects", Location = new Point(270, 10), Size = new Size(250, 180) };
+            // --- GROUP 3: EFFECTS & CIRCLE ---
+            GroupBox groupEffects = new GroupBox { Text = "Effects", Location = new Point(270, 10), Size = new Size(250, 240) };
             bloomCheck = new CheckBox { Text = "Bloom", Location = new Point(10, 25), Width = 70 };
             bloomCheck.CheckedChanged += (s, e) => visualizer.bloomEnabled = bloomCheck.Checked;
-            AddTrackBar(groupEffects, "Inten.", 55, bloomIntensityTrack = new TrackBar { Minimum = 5, Maximum = 30 });
+            AddTrackBar(groupEffects, "Inten.", 50, bloomIntensityTrack = new TrackBar { Minimum = 5, Maximum = 30 });
             bloomIntensityTrack.ValueChanged += (s, e) => visualizer.bloomIntensity = bloomIntensityTrack.Value;
-            particlesCheck = new CheckBox { Text = "Particles", Location = new Point(10, 100), Width = 80 };
+            
+            particlesCheck = new CheckBox { Text = "Particles", Location = new Point(10, 95), Width = 80 };
             particlesCheck.CheckedChanged += (s, e) => { visualizer.particlesEnabled = particlesCheck.Checked; if(visualizer.particlesEnabled) visualizer.InitializeParticles(); };
-            AddTrackBar(groupEffects, "P-Count", 130, particleCountTrack = new TrackBar { Minimum = 20, Maximum = 500 });
+            AddTrackBar(groupEffects, "P-Count", 120, particleCountTrack = new TrackBar { Minimum = 20, Maximum = 500 });
             particleCountTrack.ValueChanged += (s, e) => { visualizer.particleCount = particleCountTrack.Value; visualizer.InitializeParticles(); };
-            groupEffects.Controls.AddRange(new Control[] { bloomCheck, particlesCheck });
+
+            circleModeCheck = new CheckBox { Text = "Circle Mode", Location = new Point(10, 165), Width = 100 };
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.circleMode = circleModeCheck.Checked;
+            AddTrackBar(groupEffects, "Radius", 190, circleRadiusTrack = new TrackBar { Minimum = 50, Maximum = 500 });
+            circleRadiusTrack.ValueChanged += (s, e) => visualizer.circleRadius = circleRadiusTrack.Value;
+            groupEffects.Controls.AddRange(new Control[] { bloomCheck, particlesCheck, circleModeCheck });
 
             // --- GROUP 4: WINDOW SETTINGS ---
-            GroupBox groupWin = new GroupBox { Text = "Window Settings", Location = new Point(270, 200), Size = new Size(250, 170) };
-            clickThroughCheck = new CheckBox { Text = "Click Through", Location = new Point(10, 30), Width = 120 };
+            GroupBox groupWin = new GroupBox { Text = "Window Settings", Location = new Point(270, 260), Size = new Size(250, 110) };
+            clickThroughCheck = new CheckBox { Text = "Click Through", Location = new Point(10, 20), Width = 110 };
             clickThroughCheck.CheckedChanged += (s, e) => visualizer.MakeClickThrough(clickThroughCheck.Checked);
-            draggableCheck = new CheckBox { Text = "Draggable", Location = new Point(10, 60), Width = 120 };
+            draggableCheck = new CheckBox { Text = "Draggable", Location = new Point(130, 20), Width = 110 };
             draggableCheck.CheckedChanged += (s, e) => visualizer.draggable = draggableCheck.Checked;
-            groupWin.Controls.Add(new Label { Text = "Theme:", Location = new Point(10, 100), Width = 60 });
-            themeCombo = new ComboBox { Location = new Point(70, 97), Width = 160, DropDownStyle = ComboBoxStyle.DropDownList };
+            groupWin.Controls.Add(new Label { Text = "Theme:", Location = new Point(10, 65), Width = 50 });
+            themeCombo = new ComboBox { Location = new Point(65, 62), Width = 165, DropDownStyle = ComboBoxStyle.DropDownList };
             themeCombo.Items.AddRange(new object[] { "Dark", "Light", "Colorful" });
             themeCombo.SelectedIndexChanged += (s, e) => ApplyTheme();
             groupWin.Controls.AddRange(new Control[] { clickThroughCheck, draggableCheck, themeCombo });
 
             // --- BOTTOM BUTTONS ---
-            saveBtn = new Button { Text = "Save Preset", Location = new Point(10, 390), Width = 120, Height = 40 };
+            int btnY = 470;
+            saveBtn = new Button { Text = "Save Preset", Location = new Point(10, btnY), Width = 120, Height = 40 };
             saveBtn.Click += (s, e) => SavePreset();
-            loadBtn = new Button { Text = "Load Preset", Location = new Point(140, 390), Width = 120, Height = 40 };
+            loadBtn = new Button { Text = "Load Preset", Location = new Point(140, btnY), Width = 120, Height = 40 };
             loadBtn.Click += (s, e) => LoadPreset();
-            resetBtn = new Button { Text = "Reset", Location = new Point(270, 390), Width = 120, Height = 40 };
+            resetBtn = new Button { Text = "Reset", Location = new Point(270, btnY), Width = 120, Height = 40 };
             resetBtn.Click += (s, e) => ResetToDefaults();
-            exitBtn = new Button { Text = "Exit App", Location = new Point(400, 390), Width = 115, Height = 40, BackColor = Color.Maroon, ForeColor = Color.White };
+            exitBtn = new Button { Text = "Exit App", Location = new Point(400, btnY), Width = 115, Height = 40, BackColor = Color.Maroon, ForeColor = Color.White };
             exitBtn.Click += (s, e) => Application.Exit();
 
             this.Controls.AddRange(new Control[] { groupVisuals, groupBars, groupEffects, groupWin, saveBtn, loadBtn, resetBtn, exitBtn });
+            this.FormClosing += (s, e) => { if (e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; this.Hide(); } };
             
-            this.FormClosing += (s, e) => {
-                if (e.CloseReason == CloseReason.UserClosing) {
-                    e.Cancel = true;
-                    this.Hide();
-                }
-            };
-
             UpdateControlsFromVisualizer();
             themeCombo.SelectedIndex = 0; 
         }
 
         private void SetupTray()
         {
-            trayIcon = new NotifyIcon() {
-                Icon = SystemIcons.Application, // Replace with your .ico file
-                ContextMenuStrip = new ContextMenuStrip(),
-                Text = "NekoBeats Control",
-                Visible = true
-            };
+            trayIcon = new NotifyIcon() { Icon = SystemIcons.Application, ContextMenuStrip = new ContextMenuStrip(), Text = "NekoBeats Control", Visible = true };
             trayIcon.DoubleClick += (s, e) => this.Show();
             trayIcon.ContextMenuStrip.Items.Add("Show Control Panel", null, (s, e) => this.Show());
             trayIcon.ContextMenuStrip.Items.Add("Exit", null, (s, e) => Application.Exit());
@@ -133,15 +129,17 @@ namespace NekoBeats
 
         private void ResetToDefaults() {
             visualizer.barHeight = 80; visualizer.barCount = 256; visualizer.opacity = 1.0f;
-            visualizer.colorCycling = true; visualizer.bloomEnabled = false;
-            visualizer.animationStyle = VisualizerForm.AnimationStyle.Bars;
+            visualizer.colorCycling = true; visualizer.bloomEnabled = false; visualizer.circleMode = false;
             UpdateControlsFromVisualizer();
         }
 
         private void SavePreset() {
             using var sfd = new SaveFileDialog { Filter = "Neko Preset|*.nbp" };
             if (sfd.ShowDialog() == DialogResult.OK) {
-                var data = new PresetData { barHeight = visualizer.barHeight, barCount = visualizer.barCount, opacity = visualizer.opacity, colorCycling = visualizer.colorCycling, bloomEnabled = visualizer.bloomEnabled };
+                var data = new PresetData { 
+                    barHeight = visualizer.barHeight, barCount = visualizer.barCount, opacity = visualizer.opacity, 
+                    colorCycling = visualizer.colorCycling, bloomEnabled = visualizer.bloomEnabled, circleMode = visualizer.circleMode 
+                };
                 File.WriteAllText(sfd.FileName, JsonSerializer.Serialize(data));
             }
         }
@@ -150,7 +148,8 @@ namespace NekoBeats
             using var ofd = new OpenFileDialog { Filter = "Neko Preset|*.nbp" };
             if (ofd.ShowDialog() == DialogResult.OK) {
                 var data = JsonSerializer.Deserialize<PresetData>(File.ReadAllText(ofd.FileName));
-                visualizer.barHeight = data.barHeight; visualizer.barCount = data.barCount; visualizer.opacity = data.opacity; visualizer.colorCycling = data.colorCycling; visualizer.bloomEnabled = data.bloomEnabled;
+                visualizer.barHeight = data.barHeight; visualizer.barCount = data.barCount; visualizer.opacity = data.opacity; 
+                visualizer.colorCycling = data.colorCycling; visualizer.bloomEnabled = data.bloomEnabled; visualizer.circleMode = data.circleMode;
                 UpdateControlsFromVisualizer();
             }
         }
@@ -173,6 +172,7 @@ namespace NekoBeats
             opacityTrack.Value = (int)(Math.Clamp(visualizer.opacity, 0.1f, 1.0f) * 100);
             colorCycleCheck.Checked = visualizer.colorCycling;
             bloomCheck.Checked = visualizer.bloomEnabled;
+            circleModeCheck.Checked = visualizer.circleMode;
             styleCombo.SelectedIndex = (int)visualizer.animationStyle;
         }
     }
@@ -183,5 +183,6 @@ namespace NekoBeats
         public float opacity { get; set; }
         public bool colorCycling { get; set; }
         public bool bloomEnabled { get; set; }
+        public bool circleMode { get; set; }
     }
 }
