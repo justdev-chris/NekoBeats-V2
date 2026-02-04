@@ -18,13 +18,12 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(450, 700);
+            this.Size = new Size(450, 800);
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(50, 50);
             this.BackColor = Color.FromArgb(30, 30, 30);
             this.ForeColor = Color.White;
             
-            // Normal window with minimize/maximize/close
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.MinimizeBox = true;
             this.MaximizeBox = true;
@@ -139,6 +138,44 @@ namespace NekoBeats
             
             this.Controls.Add(visGroup);
             y += 190;
+            
+            // === AUDIO PROCESSING GROUP ===
+            var audioGroup = new GroupBox {
+                Text = "Audio Processing",
+                Location = new Point(10, y),
+                Size = new Size(420, 100),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
+            };
+            
+            // Sensitivity
+            audioGroup.Controls.Add(new Label { Text = "Sensitivity:", Location = new Point(10, 25), Size = new Size(80, 20), ForeColor = Color.White });
+            var sensitivityTrack = new TrackBar { 
+                Location = new Point(100, 20), 
+                Size = new Size(200, 45),
+                Minimum = 10,
+                Maximum = 300,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            sensitivityTrack.ValueChanged += (s, e) => visualizer.sensitivity = sensitivityTrack.Value / 100f;
+            audioGroup.Controls.Add(sensitivityTrack);
+            
+            // Smooth Speed
+            audioGroup.Controls.Add(new Label { Text = "Smoothing:", Location = new Point(10, 55), Size = new Size(80, 20), ForeColor = Color.White });
+            var smoothSpeedTrack = new TrackBar { 
+                Location = new Point(100, 50), 
+                Size = new Size(200, 45),
+                Minimum = 1,
+                Maximum = 50,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            smoothSpeedTrack.ValueChanged += (s, e) => visualizer.smoothSpeed = smoothSpeedTrack.Value / 100f;
+            audioGroup.Controls.Add(smoothSpeedTrack);
+            
+            this.Controls.Add(audioGroup);
+            y += 110;
             
             // === EFFECTS GROUP ===
             var effectsGroup = new GroupBox {
@@ -369,7 +406,7 @@ namespace NekoBeats
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
                 visualizer.barColor = colorDialog.Color;
-                // Uncheck color cycling when picking a solid color
+                // Find and uncheck color cycling checkbox
                 foreach (Control c in this.Controls)
                     if (c is GroupBox gb)
                         foreach (Control c2 in gb.Controls)
@@ -388,13 +425,25 @@ namespace NekoBeats
                     {
                         if (c2 is TrackBar track)
                         {
-                            if (track.Minimum == 32 && track.Maximum == 512) track.Value = visualizer.barCount;
-                            else if (track.Minimum == 10 && track.Maximum == 200) track.Value = visualizer.barHeight;
-                            else if (track.Minimum == 10 && track.Maximum == 100) track.Value = (int)(visualizer.opacity * 100);
-                            else if (track.Minimum == 5 && track.Maximum == 30) track.Value = visualizer.bloomIntensity;
-                            else if (track.Minimum == 20 && track.Maximum == 500 && track.Location.Y > 100) track.Value = visualizer.particleCount;
-                            else if (track.Minimum == 50 && track.Maximum == 500) track.Value = (int)visualizer.circleRadius;
-                            else if (track.Minimum == 1 && track.Maximum == 20 && track.Location.Y > 200) track.Value = (int)(visualizer.colorSpeed * 10);
+                            // Match tracks by their ranges
+                            if (track.Minimum == 32 && track.Maximum == 512) 
+                                track.Value = visualizer.barCount;
+                            else if (track.Minimum == 10 && track.Maximum == 200 && gb.Text == "Visualizer Settings") 
+                                track.Value = visualizer.barHeight;
+                            else if (track.Minimum == 10 && track.Maximum == 100) 
+                                track.Value = (int)(visualizer.opacity * 100);
+                            else if (track.Minimum == 10 && track.Maximum == 300) 
+                                track.Value = (int)(visualizer.sensitivity * 100);
+                            else if (track.Minimum == 1 && track.Maximum == 50 && gb.Text == "Audio Processing") 
+                                track.Value = (int)(visualizer.smoothSpeed * 100);
+                            else if (track.Minimum == 5 && track.Maximum == 30) 
+                                track.Value = visualizer.bloomIntensity;
+                            else if (track.Minimum == 20 && track.Maximum == 500 && track.Location.Y > 100) 
+                                track.Value = visualizer.particleCount;
+                            else if (track.Minimum == 50 && track.Maximum == 500) 
+                                track.Value = (int)visualizer.circleRadius;
+                            else if (track.Minimum == 1 && track.Maximum == 20 && gb.Text == "Performance") 
+                                track.Value = (int)(visualizer.colorSpeed * 10);
                         }
                         else if (c2 is CheckBox cb)
                         {
@@ -417,7 +466,7 @@ namespace NekoBeats
                                     _ => 3
                                 };
                             }
-                            else // Style combo
+                            else if (combo.Items.Count > 4) // Style combo
                             {
                                 combo.SelectedIndex = (int)visualizer.animationStyle;
                             }
