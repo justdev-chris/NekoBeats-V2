@@ -24,6 +24,7 @@ namespace NekoBeats
         private const int WS_EX_LAYERED = 0x80000;
         private const int WS_EX_TRANSPARENT = 0x20;
         
+        // Audio
         public WasapiLoopbackCapture capture;
         public float[] fftBuffer = new float[2048];
         public Complex[] fftComplex = new Complex[2048];
@@ -35,7 +36,7 @@ namespace NekoBeats
         public float smoothSpeed = 0.15f;
         public float sensitivity = 1.5f;
         
-        // Core settings
+        // Core visualizer
         public Color barColor = Color.Cyan;
         public float opacity = 1.0f;
         public int barHeight = 80;
@@ -46,7 +47,7 @@ namespace NekoBeats
         public bool colorCycling = false;
         public float colorSpeed = 1.0f;
         
-        // Visual effects
+        // Effects
         public bool bloomEnabled = false;
         public int bloomIntensity = 10;
         public bool particlesEnabled = false;
@@ -61,7 +62,7 @@ namespace NekoBeats
         public PanelTheme panelTheme = PanelTheme.Dark;
         public AnimationStyle animationStyle = AnimationStyle.Bars;
         
-        // Internal state
+        // Internal
         private Timer renderTimer;
         private float hue = 0;
         private Point dragStart;
@@ -103,9 +104,14 @@ namespace NekoBeats
             this.MouseDown += OnMouseDown;
             this.MouseMove += OnMouseMove;
             this.FormClosing += OnFormClosing;
-            this.Resize += (s, e) => InitializeBloomBuffer();
+            this.Resize += OnResize;
             
             MakeClickThrough(clickThrough);
+        }
+        
+        private void OnResize(object sender, EventArgs e)
+        {
+            InitializeBloomBuffer();
         }
         
         private void InitializeAudio()
@@ -250,10 +256,11 @@ namespace NekoBeats
             
             UpdateAnimations();
             
-            // Draw bloom buffer first if enabled
-            if (bloomEnabled && bloomBuffer != null)
+            // Draw to bloom buffer if enabled
+            if (bloomEnabled && bloomGraphics != null)
             {
-                ApplyBloomEffect(e);
+                bloomGraphics.Clear(Color.Transparent);
+                DrawToBloomBuffer();
             }
             
             // Draw main visualization
@@ -281,6 +288,39 @@ namespace NekoBeats
             
             if (particlesEnabled)
                 DrawParticles(g);
+            
+            // Apply bloom effect
+            if (bloomEnabled && bloomBuffer != null)
+            {
+                ApplyBloomEffect(e);
+            }
+        }
+        
+        private void DrawToBloomBuffer()
+        {
+            if (bloomGraphics == null) return;
+            
+            switch (animationStyle)
+            {
+                case AnimationStyle.Pulse:
+                    DrawPulseVisualizer(bloomGraphics);
+                    break;
+                case AnimationStyle.Wave:
+                    DrawWaveVisualizer(bloomGraphics);
+                    break;
+                case AnimationStyle.Bounce:
+                    DrawBounceVisualizer(bloomGraphics);
+                    break;
+                case AnimationStyle.Glitch:
+                    DrawGlitchVisualizer(bloomGraphics);
+                    break;
+                default:
+                    if (circleMode)
+                        DrawCircleVisualizer(bloomGraphics);
+                    else
+                        DrawBarVisualizer(bloomGraphics);
+                    break;
+            }
         }
         
         private void UpdateAnimations()
@@ -350,6 +390,7 @@ namespace NekoBeats
                 for (int i = 0; i < barCount; i++)
                 {
                     float h = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * pulse;
+                    if (h < 2) h = 2;
                     g.FillRectangle(brush, i * barWidth, this.ClientSize.Height - h, barWidth - 1, h);
                 }
             }
@@ -366,6 +407,7 @@ namespace NekoBeats
                 {
                     float wave = (float)Math.Sin(waveOffset + (i * 0.15f)) * 0.3f + 0.7f;
                     float h = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * wave;
+                    if (h < 2) h = 2;
                     g.FillRectangle(brush, i * barWidth, this.ClientSize.Height - h, barWidth - 1, h);
                 }
             }
@@ -381,6 +423,7 @@ namespace NekoBeats
                 for (int i = 0; i < barCount; i++)
                 {
                     float h = bounceHeights[i] * (this.ClientSize.Height * heightMultiplier);
+                    if (h < 2) h = 2;
                     g.FillRectangle(brush, i * barWidth, this.ClientSize.Height - h, barWidth - 1, h);
                 }
             }
@@ -397,6 +440,7 @@ namespace NekoBeats
                 {
                     float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
                     float h = smoothedBarValues[i] * (this.ClientSize.Height * heightMultiplier) * glitch;
+                    if (h < 2) h = 2;
                     float xOffset = glitchRandom.Next(-5, 5);
                     g.FillRectangle(brush, (i * barWidth) + xOffset, this.ClientSize.Height - h, barWidth - 1, h);
                 }
@@ -459,7 +503,6 @@ namespace NekoBeats
             }
             
             e.Graphics.DrawImage(bloomBuffer, 0, 0, this.ClientSize.Width, this.ClientSize.Height);
-            bloomGraphics.Clear(Color.Transparent);
         }
         
         private Color ColorFromHSV(double hue, double saturation, double value)
@@ -519,7 +562,7 @@ namespace NekoBeats
                     draggable
                 };
                 
-                string json = JsonSerializer.Serialize(preset);
+                string json = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(filename, json);
             }
             catch (Exception ex)
