@@ -6,409 +6,425 @@ namespace NekoBeats
 {
     public class ControlPanel : Form
     {
-        private VisualizerForm mainForm;
-        private FlowLayoutPanel layout;
+        private VisualizerForm visualizer;
         
-        // Custom Colors for the UI
-        private Color accentColor = Color.Cyan;
-        private Color bgColor = Color.FromArgb(20, 20, 20);
-        private Color cardColor = Color.FromArgb(35, 35, 35);
-        private Color textColor = Color.White;
-
-        // Controls that need to be accessed
-        private TrackBar sensitivityTrack, smoothSpeedTrack, barCountTrack, barHeightTrack;
-        private TrackBar particleCountTrack, colorSpeedTrack, opacityTrack, circleRadiusTrack;
-        private CheckBox particlesCheck, bloomCheck, colorCycleCheck, circleModeCheck;
-        private CheckBox clickThroughCheck, draggableCheck;
-        private ComboBox styleCombo, fpsCombo;
-        private Button colorBtn;
-
-        public ControlPanel(VisualizerForm form)
+        public ControlPanel(VisualizerForm visualizer)
         {
-            mainForm = form;
-            InitializeComponent();
-            ApplyTheme();
+            this.visualizer = visualizer;
+            InitializeComponents();
+            UpdateControlsFromVisualizer();
         }
-
-        private void InitializeComponent()
+        
+        private void InitializeComponents()
         {
-            this.Text = "NekoBeats Control Center";
-            this.Size = new Size(420, 720);
+            this.Text = "NekoBeats Control";
+            this.Size = new Size(450, 700);
             this.StartPosition = FormStartPosition.Manual;
-            this.Location = new Point(100, 50);
-            this.FormBorderStyle = FormBorderStyle.SizableToolWindow;
+            this.Location = new Point(50, 50);
+            this.BackColor = Color.FromArgb(30, 30, 30);
+            this.ForeColor = Color.White;
+            
+            // Normal window with minimize/maximize/close
+            this.FormBorderStyle = FormBorderStyle.Sizable;
             this.MinimizeBox = true;
-            this.MaximizeBox = false;
-            this.BackColor = bgColor;
-
-            layout = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                AutoScroll = true,
-                Padding = new Padding(20),
-                WrapContents = false
+            this.MaximizeBox = true;
+            
+            int y = 10;
+            
+            // === COLOR GROUP ===
+            var colorGroup = new GroupBox {
+                Text = "Color Settings",
+                Location = new Point(10, y),
+                Size = new Size(420, 100),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
             };
-
-            // --- HEADER ---
-            Label title = new Label {
-                Text = "NEKO BEATS v2.0",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = accentColor,
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 20)
-            };
-            layout.Controls.Add(title);
-
-            // --- VISUALS SECTION ---
-            CreateSectionLabel("VISUAL CONFIG");
-
-            // Bar Color
-            colorBtn = new Button { 
-                Text = "Change Bar Color", 
-                Width = 300,
-                Height = 30,
-                BackColor = cardColor,
-                ForeColor = textColor,
+            
+            var colorBtn = new Button { 
+                Text = "Bar Color", 
+                Location = new Point(10, 20),
+                Size = new Size(100, 30),
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
             colorBtn.Click += (s, e) => ShowColorDialog();
-            layout.Controls.Add(colorBtn);
-            layout.SetFlowBreak(colorBtn, true);
-
-            // Color Cycling
-            colorCycleCheck = CreateCheckBox("Rainbow Cycle", mainForm.colorCycling, (val) => {
-                mainForm.colorCycling = val;
-            });
-            layout.Controls.Add(colorCycleCheck);
-            layout.SetFlowBreak(colorCycleCheck, true);
-
-            // Color Speed
-            AddLabel("Color Speed");
-            colorSpeedTrack = CreateSlider(1, 100, (int)(mainForm.colorSpeed * 20), (val) => {
-                mainForm.colorSpeed = val / 20f;
-            });
-            layout.Controls.Add(colorSpeedTrack);
-            layout.SetFlowBreak(colorSpeedTrack, true);
-
+            
+            var colorCycleCheck = new CheckBox {
+                Text = "Color Cycling",
+                Location = new Point(120, 25),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            colorCycleCheck.CheckedChanged += (s, e) => visualizer.colorCycling = colorCycleCheck.Checked;
+            
+            colorGroup.Controls.Add(colorBtn);
+            colorGroup.Controls.Add(colorCycleCheck);
+            this.Controls.Add(colorGroup);
+            y += 110;
+            
+            // === VISUALIZER GROUP ===
+            var visGroup = new GroupBox {
+                Text = "Visualizer Settings",
+                Location = new Point(10, y),
+                Size = new Size(420, 180),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
+            };
+            
+            int gy = 20;
+            
             // Animation Style
-            AddLabel("Animation Style");
-            styleCombo = new ComboBox { 
-                Width = 300, 
+            visGroup.Controls.Add(new Label { Text = "Animation:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
+            var styleCombo = new ComboBox { 
+                Location = new Point(100, gy - 3), 
+                Size = new Size(150, 25),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = cardColor,
-                ForeColor = textColor,
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
             styleCombo.Items.AddRange(Enum.GetNames(typeof(VisualizerForm.AnimationStyle)));
-            styleCombo.SelectedItem = mainForm.animationStyle.ToString();
-            styleCombo.SelectedIndexChanged += (s, e) => {
-                if (styleCombo.SelectedItem != null)
-                    mainForm.animationStyle = (VisualizerForm.AnimationStyle)Enum.Parse(typeof(VisualizerForm.AnimationStyle), styleCombo.SelectedItem.ToString());
+            styleCombo.SelectedIndexChanged += (s, e) => 
+            {
+                visualizer.animationStyle = (VisualizerForm.AnimationStyle)styleCombo.SelectedIndex;
             };
-            layout.Controls.Add(styleCombo);
-            layout.SetFlowBreak(styleCombo, true);
-
+            visGroup.Controls.Add(styleCombo);
+            gy += 30;
+            
             // Bar Count
-            AddLabel("Bar Count");
-            barCountTrack = CreateSlider(16, 512, mainForm.barCount, (val) => {
-                mainForm.barCount = val;
-            });
-            layout.Controls.Add(barCountTrack);
-            layout.SetFlowBreak(barCountTrack, true);
-
+            visGroup.Controls.Add(new Label { Text = "Bar Count:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
+            var barCountTrack = new TrackBar { 
+                Location = new Point(100, gy - 5), 
+                Size = new Size(200, 45),
+                Minimum = 32,
+                Maximum = 512,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            barCountTrack.ValueChanged += (s, e) => visualizer.barCount = barCountTrack.Value;
+            visGroup.Controls.Add(barCountTrack);
+            gy += 40;
+            
             // Bar Height
-            AddLabel("Bar Height Scale");
-            barHeightTrack = CreateSlider(10, 200, mainForm.barHeight, (val) => {
-                mainForm.barHeight = val;
-            });
-            layout.Controls.Add(barHeightTrack);
-            layout.SetFlowBreak(barHeightTrack, true);
-
+            visGroup.Controls.Add(new Label { Text = "Bar Height:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
+            var barHeightTrack = new TrackBar { 
+                Location = new Point(100, gy - 5), 
+                Size = new Size(200, 45),
+                Minimum = 10,
+                Maximum = 200,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            barHeightTrack.ValueChanged += (s, e) => visualizer.barHeight = barHeightTrack.Value;
+            visGroup.Controls.Add(barHeightTrack);
+            gy += 40;
+            
             // Opacity
-            AddLabel("Opacity");
-            opacityTrack = CreateSlider(10, 100, (int)(mainForm.opacity * 100), (val) => {
-                mainForm.opacity = val / 100f;
-                mainForm.Opacity = mainForm.opacity;
-            });
-            layout.Controls.Add(opacityTrack);
-            layout.SetFlowBreak(opacityTrack, true);
-
-            // --- AUDIO SECTION ---
-            CreateSectionLabel("AUDIO PROCESSING");
-
-            // Sensitivity
-            AddLabel("Audio Sensitivity");
-            sensitivityTrack = CreateSlider(5, 200, (int)(mainForm.sensitivity * 100), (val) => {
-                mainForm.sensitivity = val / 100f;
-            });
-            layout.Controls.Add(sensitivityTrack);
-            layout.SetFlowBreak(sensitivityTrack, true);
-
-            // Smoothing
-            AddLabel("Smoothing Speed");
-            smoothSpeedTrack = CreateSlider(1, 50, (int)(mainForm.smoothSpeed * 100), (val) => {
-                mainForm.smoothSpeed = val / 100f;
-            });
-            layout.Controls.Add(smoothSpeedTrack);
-            layout.SetFlowBreak(smoothSpeedTrack, true);
-
-            // --- EFFECTS SECTION ---
-            CreateSectionLabel("EFFECTS");
-
+            visGroup.Controls.Add(new Label { Text = "Opacity:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
+            var opacityTrack = new TrackBar { 
+                Location = new Point(100, gy - 5), 
+                Size = new Size(200, 45),
+                Minimum = 10,
+                Maximum = 100,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            opacityTrack.ValueChanged += (s, e) => 
+            {
+                visualizer.opacity = opacityTrack.Value / 100f;
+                visualizer.Opacity = visualizer.opacity;
+            };
+            visGroup.Controls.Add(opacityTrack);
+            
+            this.Controls.Add(visGroup);
+            y += 190;
+            
+            // === EFFECTS GROUP ===
+            var effectsGroup = new GroupBox {
+                Text = "Effects",
+                Location = new Point(10, y),
+                Size = new Size(420, 150),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
+            };
+            
+            gy = 20;
+            
             // Bloom
-            bloomCheck = CreateCheckBox("Bloom Glow", mainForm.bloomEnabled, (val) => mainForm.bloomEnabled = val);
-            layout.Controls.Add(bloomCheck);
-            layout.SetFlowBreak(bloomCheck, true);
-
+            var bloomCheck = new CheckBox {
+                Text = "Bloom Effect",
+                Location = new Point(10, gy),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            bloomCheck.CheckedChanged += (s, e) => visualizer.bloomEnabled = bloomCheck.Checked;
+            effectsGroup.Controls.Add(bloomCheck);
+            
+            effectsGroup.Controls.Add(new Label { Text = "Intensity:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
+            var bloomIntensityTrack = new TrackBar { 
+                Location = new Point(210, gy - 2), 
+                Size = new Size(100, 45),
+                Minimum = 5,
+                Maximum = 30,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            bloomIntensityTrack.ValueChanged += (s, e) => visualizer.bloomIntensity = bloomIntensityTrack.Value;
+            effectsGroup.Controls.Add(bloomIntensityTrack);
+            gy += 35;
+            
+            // Particles
+            var particlesCheck = new CheckBox {
+                Text = "Particles",
+                Location = new Point(10, gy),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            particlesCheck.CheckedChanged += (s, e) => 
+            {
+                visualizer.particlesEnabled = particlesCheck.Checked;
+                if (particlesCheck.Checked) visualizer.InitializeParticles();
+            };
+            effectsGroup.Controls.Add(particlesCheck);
+            
+            effectsGroup.Controls.Add(new Label { Text = "Count:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
+            var particleCountTrack = new TrackBar { 
+                Location = new Point(210, gy - 2), 
+                Size = new Size(100, 45),
+                Minimum = 20,
+                Maximum = 500,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            particleCountTrack.ValueChanged += (s, e) => 
+            {
+                visualizer.particleCount = particleCountTrack.Value;
+                if (particlesCheck.Checked) visualizer.InitializeParticles();
+            };
+            effectsGroup.Controls.Add(particleCountTrack);
+            gy += 35;
+            
             // Circle Mode
-            circleModeCheck = CreateCheckBox("Circle Mode", mainForm.circleMode, (val) => mainForm.circleMode = val);
-            layout.Controls.Add(circleModeCheck);
-            layout.SetFlowBreak(circleModeCheck, true);
-
-            // Circle Radius
-            AddLabel("Circle Radius");
-            circleRadiusTrack = CreateSlider(50, 500, (int)mainForm.circleRadius, (val) => {
-                mainForm.circleRadius = val;
-            });
-            layout.Controls.Add(circleRadiusTrack);
-            layout.SetFlowBreak(circleRadiusTrack, true);
-
-            // --- PARTICLES SECTION ---
-            CreateSectionLabel("PARTICLE SYSTEM");
-
-            // Enable Particles
-            particlesCheck = CreateCheckBox("Enable Particles", mainForm.particlesEnabled, (val) => {
-                mainForm.particlesEnabled = val;
-                if (val) mainForm.InitializeParticles();
-            });
-            layout.Controls.Add(particlesCheck);
-            layout.SetFlowBreak(particlesCheck, true);
-
-            // Particle Count
-            AddLabel("Particle Density");
-            particleCountTrack = CreateSlider(10, 1000, mainForm.particleCount, (val) => {
-                mainForm.particleCount = val;
-                if (mainForm.particlesEnabled) mainForm.InitializeParticles();
-            });
-            layout.Controls.Add(particleCountTrack);
-            layout.SetFlowBreak(particleCountTrack, true);
-
-            // --- PERFORMANCE SECTION ---
-            CreateSectionLabel("PERFORMANCE");
-
+            var circleModeCheck = new CheckBox {
+                Text = "Circle Mode",
+                Location = new Point(10, gy),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.circleMode = circleModeCheck.Checked;
+            effectsGroup.Controls.Add(circleModeCheck);
+            
+            effectsGroup.Controls.Add(new Label { Text = "Radius:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
+            var circleRadiusTrack = new TrackBar { 
+                Location = new Point(210, gy - 2), 
+                Size = new Size(100, 45),
+                Minimum = 50,
+                Maximum = 500,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            circleRadiusTrack.ValueChanged += (s, e) => visualizer.circleRadius = circleRadiusTrack.Value;
+            effectsGroup.Controls.Add(circleRadiusTrack);
+            
+            this.Controls.Add(effectsGroup);
+            y += 160;
+            
+            // === PERFORMANCE GROUP ===
+            var perfGroup = new GroupBox {
+                Text = "Performance",
+                Location = new Point(10, y),
+                Size = new Size(420, 90),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
+            };
+            
             // FPS Limit
-            AddLabel("FPS Limit");
-            fpsCombo = new ComboBox { 
-                Width = 300, 
+            perfGroup.Controls.Add(new Label { Text = "FPS Limit:", Location = new Point(10, 25), Size = new Size(80, 20), ForeColor = Color.White });
+            var fpsCombo = new ComboBox { 
+                Location = new Point(100, 22), 
+                Size = new Size(150, 25),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = cardColor,
-                ForeColor = textColor,
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
             fpsCombo.Items.AddRange(new string[] { "30 FPS", "60 FPS", "120 FPS", "Uncapped" });
-            fpsCombo.SelectedIndex = mainForm.fpsLimit switch
-            {
-                30 => 0,
-                60 => 1,
-                120 => 2,
-                _ => 3
-            };
+            fpsCombo.SelectedIndex = 1;
             fpsCombo.SelectedIndexChanged += (s, e) => 
             {
-                mainForm.fpsLimit = fpsCombo.Text switch
+                visualizer.fpsLimit = fpsCombo.Text switch
                 {
                     "30 FPS" => 30,
                     "60 FPS" => 60,
                     "120 FPS" => 120,
                     _ => 999
                 };
-                mainForm.UpdateFPSTimer();
+                visualizer.UpdateFPSTimer();
             };
-            layout.Controls.Add(fpsCombo);
-            layout.SetFlowBreak(fpsCombo, true);
-
-            // --- WINDOW CONTROLS ---
-            CreateSectionLabel("WINDOW");
-
-            // Click Through
-            clickThroughCheck = CreateCheckBox("Click-Through", mainForm.clickThrough, (val) => {
-                mainForm.clickThrough = val;
-                mainForm.MakeClickThrough(val);
-            });
-            layout.Controls.Add(clickThroughCheck);
-            layout.SetFlowBreak(clickThroughCheck, true);
-
-            // Draggable
-            draggableCheck = CreateCheckBox("Draggable Mode", mainForm.draggable, (val) => mainForm.draggable = val);
-            layout.Controls.Add(draggableCheck);
-            layout.SetFlowBreak(draggableCheck, true);
-
-            // --- FOOTER BUTTONS ---
-            CreateSectionLabel("PRESETS");
-
-            FlowLayoutPanel btnPanel = new FlowLayoutPanel { 
-                Width = 340, 
-                Height = 50, 
-                Margin = new Padding(0, 10, 0, 0),
-                FlowDirection = FlowDirection.LeftToRight
+            perfGroup.Controls.Add(fpsCombo);
+            
+            // Color Speed
+            perfGroup.Controls.Add(new Label { Text = "Color Speed:", Location = new Point(10, 55), Size = new Size(80, 20), ForeColor = Color.White });
+            var colorSpeedTrack = new TrackBar { 
+                Location = new Point(100, 50), 
+                Size = new Size(200, 45),
+                Minimum = 1,
+                Maximum = 20,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            colorSpeedTrack.ValueChanged += (s, e) => visualizer.colorSpeed = colorSpeedTrack.Value / 10f;
+            perfGroup.Controls.Add(colorSpeedTrack);
+            
+            this.Controls.Add(perfGroup);
+            y += 100;
+            
+            // === WINDOW GROUP ===
+            var windowGroup = new GroupBox {
+                Text = "Window Settings",
+                Location = new Point(10, y),
+                Size = new Size(420, 80),
+                ForeColor = Color.Cyan,
+                FlatStyle = FlatStyle.Flat
             };
             
-            Button saveBtn = CreateStyledButton("SAVE PRESET", Color.SeaGreen, 160);
-            saveBtn.Click += (s, e) => {
+            var clickThroughCheck = new CheckBox {
+                Text = "Click Through",
+                Location = new Point(10, 25),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            clickThroughCheck.CheckedChanged += (s, e) => 
+            {
+                visualizer.clickThrough = clickThroughCheck.Checked;
+                visualizer.MakeClickThrough(visualizer.clickThrough);
+            };
+            windowGroup.Controls.Add(clickThroughCheck);
+            
+            var draggableCheck = new CheckBox {
+                Text = "Draggable",
+                Location = new Point(140, 25),
+                Size = new Size(120, 25),
+                ForeColor = Color.White
+            };
+            draggableCheck.CheckedChanged += (s, e) => visualizer.draggable = draggableCheck.Checked;
+            windowGroup.Controls.Add(draggableCheck);
+            
+            this.Controls.Add(windowGroup);
+            y += 90;
+            
+            // === BUTTONS ===
+            var saveBtn = new Button { 
+                Text = "Save Preset", 
+                Location = new Point(10, y),
+                Size = new Size(100, 35),
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            saveBtn.Click += (s, e) => 
+            {
                 var dialog = new SaveFileDialog { Filter = "NekoBeats Preset (*.nbp)|*.nbp" };
                 if (dialog.ShowDialog() == DialogResult.OK)
-                    mainForm.SavePreset(dialog.FileName);
+                    visualizer.SavePreset(dialog.FileName);
             };
             
-            Button loadBtn = CreateStyledButton("LOAD PRESET", Color.RoyalBlue, 160);
-            loadBtn.Click += (s, e) => {
+            var loadBtn = new Button { 
+                Text = "Load Preset", 
+                Location = new Point(120, y),
+                Size = new Size(100, 35),
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            loadBtn.Click += (s, e) => 
+            {
                 var dialog = new OpenFileDialog { Filter = "NekoBeats Preset (*.nbp)|*.nbp" };
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    mainForm.LoadPreset(dialog.FileName);
+                    visualizer.LoadPreset(dialog.FileName);
                     UpdateControlsFromVisualizer();
                 }
             };
-
-            btnPanel.Controls.Add(saveBtn);
-            btnPanel.Controls.Add(loadBtn);
-            layout.Controls.Add(btnPanel);
-
-            // Exit button
-            Button exitBtn = CreateStyledButton("EXIT", Color.Crimson, 340);
-            exitBtn.Margin = new Padding(0, 10, 0, 0);
-            exitBtn.Click += (s, e) => Environment.Exit(0);
-            layout.Controls.Add(exitBtn);
-
-            this.Controls.Add(layout);
-            this.Resize += (s, e) => layout.Width = this.ClientSize.Width - 40;
-        }
-
-        private void ApplyTheme()
-        {
-            // Apply colors to all controls
-            foreach (Control control in layout.Controls)
-            {
-                if (control is Label label && !label.Text.Contains("---"))
-                {
-                    label.ForeColor = textColor;
-                }
-                else if (control is TrackBar track)
-                {
-                    track.BackColor = bgColor;
-                }
-            }
-        }
-
-        private void CreateSectionLabel(string text)
-        {
-            var label = new Label {
-                Text = $"--- {text} ---",
-                ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 7, FontStyle.Bold),
-                AutoSize = true,
-                Margin = new Padding(0, 15, 0, 5)
-            };
-            layout.Controls.Add(label);
-            layout.SetFlowBreak(label, true);
-        }
-
-        private void AddLabel(string text)
-        {
-            var label = new Label { 
-                Text = text, 
-                ForeColor = textColor, 
-                AutoSize = true, 
-                Margin = new Padding(0, 10, 0, 5),
-                Font = new Font("Segoe UI", 9)
-            };
-            layout.Controls.Add(label);
-        }
-
-        private TrackBar CreateSlider(int min, int max, int value, Action<int> onChange)
-        {
-            TrackBar tb = new TrackBar {
-                Minimum = min,
-                Maximum = max,
-                Value = Math.Clamp(value, min, max),
-                Width = 300,
-                TickStyle = TickStyle.None,
-                BackColor = cardColor,
-                Margin = new Padding(0, 0, 0, 10)
-            };
-            tb.Scroll += (s, e) => onChange(tb.Value);
-            return tb;
-        }
-
-        private CheckBox CreateCheckBox(string text, bool isChecked, Action<bool> onChange)
-        {
-            CheckBox cb = new CheckBox {
-                Text = text,
-                Checked = isChecked,
-                ForeColor = textColor,
-                Width = 300,
-                FlatStyle = FlatStyle.Flat,
-                Margin = new Padding(0, 5, 0, 5),
-                BackColor = Color.Transparent
-            };
-            cb.CheckedChanged += (s, e) => onChange(cb.Checked);
-            return cb;
-        }
-
-        private Button CreateStyledButton(string text, Color color, int width)
-        {
-            return new Button {
-                Text = text,
-                Width = width,
-                Height = 40,
-                BackColor = color,
+            
+            var exitBtn = new Button { 
+                Text = "Exit", 
+                Location = new Point(230, y),
+                Size = new Size(100, 35),
+                BackColor = Color.FromArgb(80, 0, 0),
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Margin = new Padding(0, 5, 10, 5)
+                FlatStyle = FlatStyle.Flat
             };
+            exitBtn.Click += (s, e) => Environment.Exit(0);
+            
+            this.Controls.Add(saveBtn);
+            this.Controls.Add(loadBtn);
+            this.Controls.Add(exitBtn);
         }
-
+        
         private void ShowColorDialog()
         {
-            using var colorDialog = new ColorDialog { Color = mainForm.barColor };
+            using var colorDialog = new ColorDialog { Color = visualizer.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
-                mainForm.barColor = colorDialog.Color;
-                colorCycleCheck.Checked = false;
+                visualizer.barColor = colorDialog.Color;
+                // Uncheck color cycling when picking a solid color
+                foreach (Control c in this.Controls)
+                    if (c is GroupBox gb)
+                        foreach (Control c2 in gb.Controls)
+                            if (c2 is CheckBox cb && cb.Text == "Color Cycling")
+                                cb.Checked = false;
             }
         }
-
+        
         private void UpdateControlsFromVisualizer()
         {
-            // Update all controls from visualizer settings
-            sensitivityTrack.Value = (int)(mainForm.sensitivity * 100);
-            smoothSpeedTrack.Value = (int)(mainForm.smoothSpeed * 100);
-            barCountTrack.Value = mainForm.barCount;
-            barHeightTrack.Value = mainForm.barHeight;
-            opacityTrack.Value = (int)(mainForm.opacity * 100);
-            colorSpeedTrack.Value = (int)(mainForm.colorSpeed * 20);
-            particleCountTrack.Value = mainForm.particleCount;
-            circleRadiusTrack.Value = (int)mainForm.circleRadius;
-            
-            particlesCheck.Checked = mainForm.particlesEnabled;
-            bloomCheck.Checked = mainForm.bloomEnabled;
-            colorCycleCheck.Checked = mainForm.colorCycling;
-            circleModeCheck.Checked = mainForm.circleMode;
-            clickThroughCheck.Checked = mainForm.clickThrough;
-            draggableCheck.Checked = mainForm.draggable;
-            
-            styleCombo.SelectedItem = mainForm.animationStyle.ToString();
-            
-            fpsCombo.SelectedIndex = mainForm.fpsLimit switch
+            foreach (Control c in this.Controls)
             {
-                30 => 0,
-                60 => 1,
-                120 => 2,
-                _ => 3
-            };
+                if (c is GroupBox gb)
+                {
+                    foreach (Control c2 in gb.Controls)
+                    {
+                        if (c2 is TrackBar track)
+                        {
+                            if (track.Minimum == 32 && track.Maximum == 512) track.Value = visualizer.barCount;
+                            else if (track.Minimum == 10 && track.Maximum == 200) track.Value = visualizer.barHeight;
+                            else if (track.Minimum == 10 && track.Maximum == 100) track.Value = (int)(visualizer.opacity * 100);
+                            else if (track.Minimum == 5 && track.Maximum == 30) track.Value = visualizer.bloomIntensity;
+                            else if (track.Minimum == 20 && track.Maximum == 500 && track.Location.Y > 100) track.Value = visualizer.particleCount;
+                            else if (track.Minimum == 50 && track.Maximum == 500) track.Value = (int)visualizer.circleRadius;
+                            else if (track.Minimum == 1 && track.Maximum == 20 && track.Location.Y > 200) track.Value = (int)(visualizer.colorSpeed * 10);
+                        }
+                        else if (c2 is CheckBox cb)
+                        {
+                            if (cb.Text == "Color Cycling") cb.Checked = visualizer.colorCycling;
+                            else if (cb.Text == "Bloom Effect") cb.Checked = visualizer.bloomEnabled;
+                            else if (cb.Text == "Particles") cb.Checked = visualizer.particlesEnabled;
+                            else if (cb.Text == "Circle Mode") cb.Checked = visualizer.circleMode;
+                            else if (cb.Text == "Click Through") cb.Checked = visualizer.clickThrough;
+                            else if (cb.Text == "Draggable") cb.Checked = visualizer.draggable;
+                        }
+                        else if (c2 is ComboBox combo)
+                        {
+                            if (combo.Items.Count == 4) // FPS combo
+                            {
+                                combo.SelectedIndex = visualizer.fpsLimit switch
+                                {
+                                    30 => 0,
+                                    60 => 1,
+                                    120 => 2,
+                                    _ => 3
+                                };
+                            }
+                            else // Style combo
+                            {
+                                combo.SelectedIndex = (int)visualizer.animationStyle;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
