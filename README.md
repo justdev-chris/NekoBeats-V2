@@ -29,7 +29,7 @@ A sleek audio visualizer that turns your music into floating light bars. Revived
 | **Exit** | Close the application |
 
 ## Installation ⚡
-1. Download the latest `NekoBeats.exe` from [Releases]
+1. Download the latest `NekoBeats.zip` from [Releases]
 2. Run it (requires Windows 10/11)
 3. Play some music 🎶
 4. Adjust settings in the control panel
