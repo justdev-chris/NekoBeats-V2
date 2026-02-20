@@ -41,7 +41,7 @@ namespace NekoBeats
             // Create tray icon
             trayIcon = new NotifyIcon
             {
-                Icon = SystemIcons.Application, // You might want to use a custom icon here
+                Icon = SystemIcons.Application,
                 Text = "NekoBeats Visualizer",
                 ContextMenuStrip = trayMenu,
                 Visible = true
@@ -51,7 +51,13 @@ namespace NekoBeats
             trayIcon.DoubleClick += (s, e) => ShowControlPanel();
             
             // Ensure tray icon is disposed on exit
-            Application.ApplicationExit += (s, e) => trayIcon?.Dispose();
+            Application.ApplicationExit += (s, e) => {
+                if (trayIcon != null)
+                {
+                    trayIcon.Visible = false;
+                    trayIcon.Dispose();
+                }
+            };
         }
         
         private static void ShowControlPanel()
@@ -72,15 +78,18 @@ namespace NekoBeats
         private static void ExitApplication()
         {
             // Clean up resources
-            trayIcon?.Visible = false;
-            trayIcon?.Dispose();
+            if (trayIcon != null)
+            {
+                trayIcon.Visible = false;
+                trayIcon.Dispose();
+            }
             
             // Close forms
-            controlPanel?.Close();
-            controlPanel?.Dispose();
+            if (controlPanel != null && !controlPanel.IsDisposed)
+                controlPanel.Close();
             
-            mainForm?.Close();
-            mainForm?.Dispose();
+            if (mainForm != null && !mainForm.IsDisposed)
+                mainForm.Close();
             
             // Exit application
             Application.Exit();
