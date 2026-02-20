@@ -42,12 +42,12 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(650, 500);
+            this.Size = new Size(650, 550);
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(50, 50);
             this.BackColor = Color.FromArgb(30, 30, 30);
             this.ForeColor = Color.White;
-            this.MinimumSize = new Size(600, 450);
+            this.MinimumSize = new Size(600, 500);
             
             var mainPanel = new Panel
             {
@@ -58,7 +58,7 @@ namespace NekoBeats
             var tabControl = new TabControl
             {
                 Location = new Point(10, 10),
-                Size = new Size(610, 380),
+                Size = new Size(610, 430),
                 Dock = DockStyle.Top
             };
             
@@ -245,7 +245,7 @@ namespace NekoBeats
                 Location = new Point(20, y),
                 Size = new Size(120, 25),
                 ForeColor = Color.White,
-                Checked = true
+                Checked = false
             };
             edgeGlowCheck.CheckedChanged += (s, e) => visualizer.Logic.edgeGlowEnabled = edgeGlowCheck.Checked;
             effectsTab.Controls.Add(edgeGlowCheck);
@@ -426,12 +426,93 @@ namespace NekoBeats
             draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
             windowTab.Controls.Add(draggableCheck);
             
+            // === CREDITS TAB ===
+            var creditsTab = new TabPage("Credits");
+            creditsTab.BackColor = Color.FromArgb(40, 40, 40);
+
+            // Add logo to credits
+            if (File.Exists("NekoBeatsLogo.png"))
+            {
+                var creditsLogo = new PictureBox
+                {
+                    Image = Image.FromFile("NekoBeatsLogo.png"),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Location = new Point(200, 30),
+                    Size = new Size(150, 150),
+                    BackColor = Color.Transparent
+                };
+                creditsTab.Controls.Add(creditsLogo);
+            }
+
+            // Created by
+            var createdBy = new Label
+            {
+                Text = "Created by:",
+                Font = new Font("Arial", 10, FontStyle.Bold),
+                ForeColor = Color.Cyan,
+                Location = new Point(150, 190),
+                Size = new Size(300, 20),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            creditsTab.Controls.Add(createdBy);
+
+            // Developer alias
+            var devName = new Label
+            {
+                Text = "justdev-chris",
+                Font = new Font("Arial", 16, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(150, 215),
+                Size = new Size(300, 30),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            creditsTab.Controls.Add(devName);
+
+            // Version
+            var version = new Label
+            {
+                Text = "NekoBeats V2.1",
+                Font = new Font("Arial", 12, FontStyle.Italic),
+                ForeColor = Color.LightGray,
+                Location = new Point(150, 255),
+                Size = new Size(300, 25),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            creditsTab.Controls.Add(version);
+
+            // Thanks message
+            var thanks = new Label
+            {
+                Text = "Thanks for using NekoBeats! 🐱",
+                Font = new Font("Arial", 10),
+                ForeColor = Color.Cyan,
+                Location = new Point(150, 295),
+                Size = new Size(300, 25),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            creditsTab.Controls.Add(thanks);
+
+            // GitHub link
+            var social = new Label
+            {
+                Text = "github.com/justdev-chris",
+                Font = new Font("Arial", 9, FontStyle.Underline),
+                ForeColor = Color.LightBlue,
+                Location = new Point(150, 330),
+                Size = new Size(300, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor = Cursors.Hand
+            };
+            social.Click += (s, e) => System.Diagnostics.Process.Start("https://github.com/justdev-chris");
+            creditsTab.Controls.Add(social);
+            
             // Add all tabs
             tabControl.TabPages.Add(colorsTab);
             tabControl.TabPages.Add(visTab);
             tabControl.TabPages.Add(effectsTab);
             tabControl.TabPages.Add(audioTab);
             tabControl.TabPages.Add(windowTab);
+            tabControl.TabPages.Add(creditsTab);
             
             mainPanel.Controls.Add(tabControl);
             
