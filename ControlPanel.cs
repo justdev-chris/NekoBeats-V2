@@ -8,6 +8,12 @@ namespace NekoBeats
     {
         private VisualizerForm visualizer;
         
+        // Controls we need to reference
+        private CheckBox rainbowCheck;
+        private TrackBar spacingTrack;
+        private CheckBox edgeGlowCheck;
+        private TrackBar edgeGlowIntensityTrack;
+        
         public ControlPanel(VisualizerForm visualizer)
         {
             this.visualizer = visualizer;
@@ -18,7 +24,7 @@ namespace NekoBeats
         private void InitializeComponents()
         {
             this.Text = "NekoBeats Control";
-            this.Size = new Size(450, 800);
+            this.Size = new Size(450, 900);
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(50, 50);
             this.BackColor = Color.FromArgb(30, 30, 30);
@@ -34,7 +40,7 @@ namespace NekoBeats
             var colorGroup = new GroupBox {
                 Text = "Color Settings",
                 Location = new Point(10, y),
-                Size = new Size(420, 100),
+                Size = new Size(420, 130),
                 ForeColor = Color.Cyan,
                 FlatStyle = FlatStyle.Flat
             };
@@ -57,16 +63,26 @@ namespace NekoBeats
             };
             colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
             
+            rainbowCheck = new CheckBox {
+                Text = "Rainbow Bars",
+                Location = new Point(10, 60),
+                Size = new Size(120, 25),
+                ForeColor = Color.White,
+                Checked = true
+            };
+            rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
+            
             colorGroup.Controls.Add(colorBtn);
             colorGroup.Controls.Add(colorCycleCheck);
+            colorGroup.Controls.Add(rainbowCheck);
             this.Controls.Add(colorGroup);
-            y += 110;
+            y += 140;
             
             // === VISUALIZER GROUP ===
             var visGroup = new GroupBox {
                 Text = "Visualizer Settings",
                 Location = new Point(10, y),
-                Size = new Size(420, 180),
+                Size = new Size(420, 220),
                 ForeColor = Color.Cyan,
                 FlatStyle = FlatStyle.Flat
             };
@@ -119,6 +135,20 @@ namespace NekoBeats
             visGroup.Controls.Add(barHeightTrack);
             gy += 40;
             
+            // Bar Spacing
+            visGroup.Controls.Add(new Label { Text = "Bar Spacing:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
+            spacingTrack = new TrackBar { 
+                Location = new Point(100, gy - 5), 
+                Size = new Size(200, 45),
+                Minimum = 0,
+                Maximum = 20,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            spacingTrack.ValueChanged += (s, e) => visualizer.Logic.barSpacing = spacingTrack.Value;
+            visGroup.Controls.Add(spacingTrack);
+            gy += 40;
+            
             // Opacity
             visGroup.Controls.Add(new Label { Text = "Opacity:", Location = new Point(10, gy), Size = new Size(80, 20), ForeColor = Color.White });
             var opacityTrack = new TrackBar { 
@@ -137,7 +167,7 @@ namespace NekoBeats
             visGroup.Controls.Add(opacityTrack);
             
             this.Controls.Add(visGroup);
-            y += 190;
+            y += 230;
             
             // === AUDIO PROCESSING GROUP ===
             var audioGroup = new GroupBox {
@@ -181,7 +211,7 @@ namespace NekoBeats
             var effectsGroup = new GroupBox {
                 Text = "Effects",
                 Location = new Point(10, y),
-                Size = new Size(420, 150),
+                Size = new Size(420, 190),
                 ForeColor = Color.Cyan,
                 FlatStyle = FlatStyle.Flat
             };
@@ -211,6 +241,30 @@ namespace NekoBeats
             effectsGroup.Controls.Add(bloomIntensityTrack);
             gy += 35;
             
+            // Edge Glow
+            edgeGlowCheck = new CheckBox {
+                Text = "Edge Glow",
+                Location = new Point(10, gy),
+                Size = new Size(120, 25),
+                ForeColor = Color.White,
+                Checked = true
+            };
+            edgeGlowCheck.CheckedChanged += (s, e) => visualizer.Logic.edgeGlowEnabled = edgeGlowCheck.Checked;
+            effectsGroup.Controls.Add(edgeGlowCheck);
+            
+            effectsGroup.Controls.Add(new Label { Text = "Glow:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
+            edgeGlowIntensityTrack = new TrackBar { 
+                Location = new Point(210, gy - 2), 
+                Size = new Size(100, 45),
+                Minimum = 1,
+                Maximum = 20,
+                TickStyle = TickStyle.None,
+                BackColor = Color.FromArgb(40, 40, 40)
+            };
+            edgeGlowIntensityTrack.ValueChanged += (s, e) => visualizer.Logic.edgeGlowIntensity = edgeGlowIntensityTrack.Value / 10f;
+            effectsGroup.Controls.Add(edgeGlowIntensityTrack);
+            gy += 35;
+            
             // Particles
             var particlesCheck = new CheckBox {
                 Text = "Particles",
@@ -223,7 +277,6 @@ namespace NekoBeats
                 visualizer.Logic.particlesEnabled = particlesCheck.Checked;
                 if (particlesCheck.Checked) 
                 {
-                    // Force particle reinitialization on next resize
                     visualizer.Logic.Resize(visualizer.ClientSize);
                 }
             };
@@ -272,7 +325,7 @@ namespace NekoBeats
             effectsGroup.Controls.Add(circleRadiusTrack);
             
             this.Controls.Add(effectsGroup);
-            y += 160;
+            y += 200;
             
             // === PERFORMANCE GROUP ===
             var perfGroup = new GroupBox {
@@ -413,12 +466,6 @@ namespace NekoBeats
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
                 visualizer.Logic.barColor = colorDialog.Color;
-                // Find and uncheck color cycling checkbox
-                foreach (Control c in this.Controls)
-                    if (c is GroupBox gb)
-                        foreach (Control c2 in gb.Controls)
-                            if (c2 is CheckBox cb && cb.Text == "Color Cycling")
-                                cb.Checked = false;
             }
         }
         
@@ -432,11 +479,12 @@ namespace NekoBeats
                     {
                         if (c2 is TrackBar track)
                         {
-                            // Match tracks by their ranges and group
                             if (track.Minimum == 32 && track.Maximum == 512) 
                                 track.Value = visualizer.Logic.barCount;
                             else if (track.Minimum == 10 && track.Maximum == 200 && gb.Text == "Visualizer Settings") 
                                 track.Value = visualizer.Logic.barHeight;
+                            else if (track.Minimum == 0 && track.Maximum == 20) 
+                                track.Value = visualizer.Logic.barSpacing;
                             else if (track.Minimum == 10 && track.Maximum == 100 && track.Location.Y > 100) 
                                 track.Value = (int)(visualizer.Logic.opacity * 100);
                             else if (track.Minimum == 10 && track.Maximum == 300) 
@@ -445,7 +493,9 @@ namespace NekoBeats
                                 track.Value = (int)(visualizer.Logic.smoothSpeed * 100);
                             else if (track.Minimum == 5 && track.Maximum == 30) 
                                 track.Value = visualizer.Logic.bloomIntensity;
-                            else if (track.Minimum == 20 && track.Maximum == 500 && track.Location.Y > 100) 
+                            else if (track.Minimum == 1 && track.Maximum == 20 && gb.Text == "Effects") 
+                                track.Value = (int)(visualizer.Logic.edgeGlowIntensity * 10);
+                            else if (track.Minimum == 20 && track.Maximum == 500) 
                                 track.Value = visualizer.Logic.particleCount;
                             else if (track.Minimum == 50 && track.Maximum == 500) 
                                 track.Value = (int)visualizer.Logic.circleRadius;
@@ -455,7 +505,9 @@ namespace NekoBeats
                         else if (c2 is CheckBox cb)
                         {
                             if (cb.Text == "Color Cycling") cb.Checked = visualizer.Logic.colorCycling;
+                            else if (cb.Text == "Rainbow Bars") cb.Checked = visualizer.Logic.rainbowBars;
                             else if (cb.Text == "Bloom Effect") cb.Checked = visualizer.Logic.bloomEnabled;
+                            else if (cb.Text == "Edge Glow") cb.Checked = visualizer.Logic.edgeGlowEnabled;
                             else if (cb.Text == "Particles") cb.Checked = visualizer.Logic.particlesEnabled;
                             else if (cb.Text == "Circle Mode") cb.Checked = visualizer.Logic.circleMode;
                             else if (cb.Text == "Click Through") cb.Checked = visualizer.Logic.clickThrough;
