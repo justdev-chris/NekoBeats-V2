@@ -503,8 +503,17 @@ namespace NekoBeats
                 TextAlign = ContentAlignment.MiddleCenter,
                 Cursor = Cursors.Hand
             };
-            social.Click += (s, e) => System.Diagnostics.Process.Start("https://github.com/justdev-chris");
-            creditsTab.Controls.Add(social);
+            social.Click += (s, e) => {
+    try {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "https://github.com/justdev-chris",
+            UseShellExecute = true
+        });
+    } catch (Exception ex) {
+        MessageBox.Show("Could not open browser: " + ex.Message);
+    }
+};
             
             // Add all tabs
             tabControl.TabPages.Add(colorsTab);
