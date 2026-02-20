@@ -6,10 +6,20 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationIcon>NekoBeatsLogo.ico</ApplicationIcon>
   </PropertyGroup>
   
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="NekoBeatsLogo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NekoBeatsLogo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
