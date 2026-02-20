@@ -1,4 +1,7 @@
 # NekoBeats V2 🎵✨
+<p align="center">
+  <img src="NekoBeatsLogo.png" width="150" height="150">
+</p>
 
 A sleek audio visualizer that turns your music into floating light bars. Revived and better than ever.
 
