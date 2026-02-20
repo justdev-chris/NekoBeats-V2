@@ -63,69 +63,81 @@ namespace NekoBeats
             };
             
             // === COLORS TAB ===
-            var colorsTab = new TabPage("Colors");
-            colorsTab.BackColor = Color.FromArgb(40, 40, 40);
-            colorsTab.ForeColor = Color.White;
-            
-            // Add logo
-            if (File.Exists("NekoBeatsLogo.png"))
-            {
-                var logoBox = new PictureBox
-                {
-                    Image = Image.FromFile("NekoBeatsLogo.png"),
-                    SizeMode = PictureBoxSizeMode.Zoom,
-                    Location = new Point(250, 20),
-                    Size = new Size(120, 120),
-                    BackColor = Color.Transparent
-                };
-                colorsTab.Controls.Add(logoBox);
-            }
-            else
-            {
-                // Fallback text if logo not found
-                var logoLabel = new Label
-                {
-                    Text = "🐱 NekoBeats",
-                    Font = new Font("Arial", 16, FontStyle.Bold),
-                    ForeColor = Color.Cyan,
-                    Location = new Point(250, 60),
-                    Size = new Size(150, 40),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                colorsTab.Controls.Add(logoLabel);
-            }
-            
-            var colorBtn = new Button { 
-                Text = "Choose Bar Color", 
-                Location = new Point(20, 20),
-                Size = new Size(150, 35),
-                BackColor = Color.FromArgb(50, 50, 50),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            colorBtn.Click += (s, e) => ShowColorDialog();
-            
-            colorCycleCheck = new CheckBox {
-                Text = "Color Cycling",
-                Location = new Point(20, 70),
-                Size = new Size(120, 25),
-                ForeColor = Color.White,
-                Checked = false
-            };
-            colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
-            
-            rainbowCheck = new CheckBox {
-                Text = "Rainbow Bars",
-                Location = new Point(20, 100),
-                Size = new Size(120, 25),
-                ForeColor = Color.White,
-                Checked = true
-            };
-            rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
-            
-            colorsTab.Controls.Add(colorBtn);
-            colorsTab.Controls.Add(colorCycleCheck);
-            colorsTab.Controls.Add(rainbowCheck);
+var colorsTab = new TabPage("Colors");
+colorsTab.BackColor = Color.FromArgb(40, 40, 40);
+colorsTab.ForeColor = Color.White;
+
+// App name above logo
+var appNameLabel = new Label
+{
+    Text = "NekoBeats v2.1",
+    Font = new Font("Arial", 14, FontStyle.Bold),
+    ForeColor = Color.Cyan,
+    Location = new Point(250, 5),
+    Size = new Size(150, 25),
+    TextAlign = ContentAlignment.MiddleCenter
+};
+colorsTab.Controls.Add(appNameLabel);
+
+// Add logo
+if (File.Exists("NekoBeatsLogo.png"))
+{
+    var logoBox = new PictureBox
+    {
+        Image = Image.FromFile("NekoBeatsLogo.png"),
+        SizeMode = PictureBoxSizeMode.Zoom,
+        Location = new Point(250, 30),
+        Size = new Size(120, 120),
+        BackColor = Color.Transparent
+    };
+    colorsTab.Controls.Add(logoBox);
+}
+else
+{
+    // Fallback text if logo not found
+    var logoLabel = new Label
+    {
+        Text = "🐱 NekoBeats",
+        Font = new Font("Arial", 16, FontStyle.Bold),
+        ForeColor = Color.Cyan,
+        Location = new Point(250, 60),
+        Size = new Size(150, 40),
+        TextAlign = ContentAlignment.MiddleCenter
+    };
+    colorsTab.Controls.Add(logoLabel);
+}
+
+var colorBtn = new Button { 
+    Text = "Choose Bar Color", 
+    Location = new Point(20, 20),
+    Size = new Size(150, 35),
+    BackColor = Color.FromArgb(50, 50, 50),
+    ForeColor = Color.White,
+    FlatStyle = FlatStyle.Flat
+};
+colorBtn.Click += (s, e) => ShowColorDialog();
+
+colorCycleCheck = new CheckBox {
+    Text = "Color Cycling",
+    Location = new Point(20, 70),
+    Size = new Size(120, 25),
+    ForeColor = Color.White,
+    Checked = false
+};
+colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
+
+rainbowCheck = new CheckBox {
+    Text = "Rainbow Bars",
+    Location = new Point(20, 100),
+    Size = new Size(120, 25),
+    ForeColor = Color.White,
+    Checked = true
+};
+rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
+
+colorsTab.Controls.Add(colorBtn);
+colorsTab.Controls.Add(colorCycleCheck);
+colorsTab.Controls.Add(rainbowCheck);
             
             // === VISUALIZER TAB ===
             var visTab = new TabPage("Visualizer");
