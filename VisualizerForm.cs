@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace NekoBeats
 {
@@ -27,6 +28,10 @@ namespace NekoBeats
             InitializeForm();
             InitializeLogic();
             InitializeTimer();
+            
+            // Set app icon
+            if (File.Exists("NekoBeatsLogo.ico"))
+                this.Icon = new Icon("NekoBeatsLogo.ico");
             
             controlPanel = new ControlPanel(this);
             controlPanel.Show();
@@ -62,7 +67,7 @@ namespace NekoBeats
         private void InitializeTimer()
         {
             renderTimer = new Timer();
-            renderTimer.Interval = 16; // ~60 FPS
+            renderTimer.Interval = 16;
             renderTimer.Tick += (s, e) => {
                 logic.UpdateSmoothing();
                 this.Invalidate();
@@ -123,10 +128,17 @@ namespace NekoBeats
             controlPanel?.Close();
         }
         
-        public void SavePreset(string filename) => logic.SavePreset(filename);
-        public void LoadPreset(string filename) => logic.LoadPreset(filename);
+        public void SavePreset(string filename)
+        {
+            logic.SavePreset(filename);
+        }
         
-        // Properties to expose logic settings
+        public void LoadPreset(string filename)
+        {
+            logic.LoadPreset(filename);
+            controlPanel?.UpdateControlsFromVisualizer();
+        }
+        
         public VisualizerLogic Logic => logic;
     }
 }
