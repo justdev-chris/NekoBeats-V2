@@ -36,6 +36,13 @@ namespace NekoBeats
         public bool colorCycling = false;
         public float colorSpeed = 1.0f;
         
+        // NEW FEATURES
+        public bool rainbowBars = true;
+        public int barSpacing = 1;
+        public bool edgeGlowEnabled = true;
+        public float edgeGlowIntensity = 0.5f;
+        private float currentGlowIntensity = 0;
+        
         // Effects
         public bool bloomEnabled = false;
         public int bloomIntensity = 10;
@@ -46,7 +53,29 @@ namespace NekoBeats
         
         // Enums
         public enum AnimationStyle { Bars, Pulse, Wave, Bounce, Glitch }
-        public AnimationStyle animationStyle = AnimationStyle.Bars;
+        
+        // Animation style with smooth transition
+        private AnimationStyle _animationStyle = AnimationStyle.Bars;
+        private AnimationStyle targetAnimationStyle;
+        private float transitionProgress = 1.0f;
+        private bool isTransitioning = false;
+        private DateTime transitionStartTime;
+        private float transitionDuration = 0.5f;
+        
+        public AnimationStyle animationStyle
+        {
+            get => _animationStyle;
+            set
+            {
+                if (_animationStyle != value)
+                {
+                    targetAnimationStyle = value;
+                    isTransitioning = true;
+                    transitionProgress = 0;
+                    transitionStartTime = DateTime.Now;
+                }
+            }
+        }
         
         // Internal
         private float hue = 0;
@@ -89,7 +118,6 @@ namespace NekoBeats
         private void InitializeParticles()
         {
             particles.Clear();
-            // Will be properly initialized when we have client size
         }
         
         private void InitializeBloomBuffer(Size clientSize)
@@ -161,6 +189,23 @@ namespace NekoBeats
             {
                 smoothedBarValues[i] += (barValues[i] - smoothedBarValues[i]) * smoothSpeed;
             }
+            
+            // Update transition
+            if (isTransitioning)
+            {
+                float elapsed = (float)(DateTime.Now - transitionStartTime).TotalSeconds;
+                transitionProgress = Math.Min(1.0f, elapsed / transitionDuration);
+                
+                if (transitionProgress >= 1.0f)
+                {
+                    isTransitioning = false;
+                    _animationStyle = targetAnimationStyle;
+                }
+            }
+            
+            // Update edge glow
+            float bass = GetBassLevel();
+            currentGlowIntensity = Math.Max(currentGlowIntensity * 0.9f, bass * edgeGlowIntensity * 2);
         }
         
         public void Render(Graphics g, Size clientSize)
@@ -190,6 +235,23 @@ namespace NekoBeats
             if (particlesEnabled)
                 DrawParticles(g, clientSize);
             
+            // Draw edge glow
+            if (edgeGlowEnabled && currentGlowIntensity > 0.05f)
+            {
+                int alpha = (int)(currentGlowIntensity * 150);
+                using (SolidBrush glowBrush = new SolidBrush(Color.FromArgb(alpha, barColor)))
+                {
+                    // Top glow
+                    g.FillRectangle(glowBrush, 0, 0, clientSize.Width, 30);
+                    // Bottom glow
+                    g.FillRectangle(glowBrush, 0, clientSize.Height - 30, clientSize.Width, 30);
+                    // Left glow
+                    g.FillRectangle(glowBrush, 0, 0, 30, clientSize.Height);
+                    // Right glow
+                    g.FillRectangle(glowBrush, clientSize.Width - 30, 0, 30, clientSize.Height);
+                }
+            }
+            
             // Apply bloom effect
             if (bloomEnabled && bloomBuffer != null)
             {
@@ -199,26 +261,65 @@ namespace NekoBeats
         
         private void DrawVisualization(Graphics g, Size clientSize)
         {
-            switch (animationStyle)
+            if (isTransitioning)
             {
-                case AnimationStyle.Pulse:
-                    DrawPulseVisualizer(g, clientSize);
-                    break;
-                case AnimationStyle.Wave:
-                    DrawWaveVisualizer(g, clientSize);
-                    break;
-                case AnimationStyle.Bounce:
-                    DrawBounceVisualizer(g, clientSize);
-                    break;
-                case AnimationStyle.Glitch:
-                    DrawGlitchVisualizer(g, clientSize);
-                    break;
-                default:
-                    if (circleMode)
-                        DrawCircleVisualizer(g, clientSize);
-                    else
-                        DrawBarVisualizer(g, clientSize);
-                    break;
+                // For transitions, we need a way to blend
+                // Simple approach: draw old style semi-transparent, then new style
+                if (circleMode)
+                {
+                    DrawCircleVisualizer(g, clientSize);
+                }
+                else
+                {
+                    // For now, just draw current style during transition
+                    // A full crossfade would require render targets
+                    switch (_animationStyle)
+                    {
+                        case AnimationStyle.Pulse:
+                            DrawPulseVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Wave:
+                            DrawWaveVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Bounce:
+                            DrawBounceVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Glitch:
+                            DrawGlitchVisualizer(g, clientSize);
+                            break;
+                        default:
+                            DrawBarVisualizer(g, clientSize);
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                if (circleMode)
+                {
+                    DrawCircleVisualizer(g, clientSize);
+                }
+                else
+                {
+                    switch (_animationStyle)
+                    {
+                        case AnimationStyle.Pulse:
+                            DrawPulseVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Wave:
+                            DrawWaveVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Bounce:
+                            DrawBounceVisualizer(g, clientSize);
+                            break;
+                        case AnimationStyle.Glitch:
+                            DrawGlitchVisualizer(g, clientSize);
+                            break;
+                        default:
+                            DrawBarVisualizer(g, clientSize);
+                            break;
+                    }
+                }
             }
         }
         
@@ -241,16 +342,30 @@ namespace NekoBeats
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
             
-            using (SolidBrush brush = new SolidBrush(barColor))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier);
+                if (h < 2) h = 2;
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier);
-                    if (h < 2) h = 2;
-                    
-                    float x = i * barWidth;
-                    float y = clientSize.Height - h;
-                    g.FillRectangle(brush, x, y, barWidth - 1, h);
+                    // Map height to rainbow colors (red = low, purple = high)
+                    float intensity = Math.Min(1.0f, h / (clientSize.Height * 0.5f));
+                    float hue = intensity * 300; // 0 = red, 300 = purple
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                float x = i * barWidth;
+                float y = clientSize.Height - h;
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
             }
         }
@@ -261,18 +376,30 @@ namespace NekoBeats
             float centerY = clientSize.Height / 2;
             float angleStep = 360f / barCount;
             
-            using (Pen pen = new Pen(barColor, 3))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float h = smoothedBarValues[i] * circleRadius;
+                float angle = i * angleStep * (float)Math.PI / 180f;
+                
+                float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
+                float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
+                float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
+                float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float h = smoothedBarValues[i] * circleRadius;
-                    float angle = i * angleStep * (float)Math.PI / 180f;
-                    
-                    float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
-                    float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
-                    float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
-                    float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
-                    
+                    float intensity = Math.Min(1.0f, h / circleRadius);
+                    float hue = intensity * 300;
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                using (Pen pen = new Pen(barColorToUse, 3))
+                {
                     g.DrawLine(pen, x1, y1, x2, y2);
                 }
             }
@@ -284,13 +411,26 @@ namespace NekoBeats
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
 
-            using (SolidBrush brush = new SolidBrush(barColor))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * pulse;
+                if (h < 2) h = 2;
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * pulse;
-                    if (h < 2) h = 2;
-                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - 1, h);
+                    float intensity = Math.Min(1.0f, h / (clientSize.Height * 0.5f));
+                    float hue = intensity * 300;
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - barSpacing, h);
                 }
             }
         }
@@ -300,14 +440,27 @@ namespace NekoBeats
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
 
-            using (SolidBrush brush = new SolidBrush(barColor))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float wave = (float)Math.Sin(waveOffset + (i * 0.15f)) * 0.3f + 0.7f;
+                float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * wave;
+                if (h < 2) h = 2;
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float wave = (float)Math.Sin(waveOffset + (i * 0.15f)) * 0.3f + 0.7f;
-                    float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * wave;
-                    if (h < 2) h = 2;
-                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - 1, h);
+                    float intensity = Math.Min(1.0f, h / (clientSize.Height * 0.5f));
+                    float hue = intensity * 300;
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - barSpacing, h);
                 }
             }
         }
@@ -317,13 +470,26 @@ namespace NekoBeats
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
 
-            using (SolidBrush brush = new SolidBrush(barColor))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float h = bounceHeights[i] * (clientSize.Height * heightMultiplier);
+                if (h < 2) h = 2;
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float h = bounceHeights[i] * (clientSize.Height * heightMultiplier);
-                    if (h < 2) h = 2;
-                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - 1, h);
+                    float intensity = Math.Min(1.0f, h / (clientSize.Height * 0.5f));
+                    float hue = intensity * 300;
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    g.FillRectangle(brush, i * barWidth, clientSize.Height - h, barWidth - barSpacing, h);
                 }
             }
         }
@@ -333,15 +499,29 @@ namespace NekoBeats
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
 
-            using (SolidBrush brush = new SolidBrush(barColor))
+            for (int i = 0; i < barCount; i++)
             {
-                for (int i = 0; i < barCount; i++)
+                float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
+                float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * glitch;
+                if (h < 2) h = 2;
+                
+                Color barColorToUse;
+                if (rainbowBars)
                 {
-                    float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
-                    float h = smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * glitch;
-                    if (h < 2) h = 2;
-                    float xOffset = glitchRandom.Next(-5, 5);
-                    g.FillRectangle(brush, (i * barWidth) + xOffset, clientSize.Height - h, barWidth - 1, h);
+                    float intensity = Math.Min(1.0f, h / (clientSize.Height * 0.5f));
+                    float hue = intensity * 300;
+                    barColorToUse = ColorFromHSV(hue, 1.0f, 1.0f);
+                }
+                else
+                {
+                    barColorToUse = barColor;
+                }
+                
+                float xOffset = glitchRandom.Next(-5, 5);
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    g.FillRectangle(brush, (i * barWidth) + xOffset, clientSize.Height - h, barWidth - barSpacing, h);
                 }
             }
         }
@@ -435,7 +615,7 @@ namespace NekoBeats
                     barCount,
                     smoothSpeed,
                     sensitivity,
-                    animationStyle = (int)animationStyle,
+                    animationStyle = (int)_animationStyle,
                     particleCount,
                     particlesEnabled,
                     circleMode,
@@ -446,7 +626,11 @@ namespace NekoBeats
                     colorSpeed,
                     fpsLimit,
                     clickThrough,
-                    draggable
+                    draggable,
+                    rainbowBars,
+                    barSpacing,
+                    edgeGlowEnabled,
+                    edgeGlowIntensity
                 };
                 
                 string json = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
@@ -485,6 +669,19 @@ namespace NekoBeats
                 fpsLimit = root.GetProperty("fpsLimit").GetInt32();
                 clickThrough = root.GetProperty("clickThrough").GetBoolean();
                 draggable = root.GetProperty("draggable").GetBoolean();
+                
+                // New properties (with fallback for old presets)
+                if (root.TryGetProperty("rainbowBars", out var rainbowProp))
+                    rainbowBars = rainbowProp.GetBoolean();
+                    
+                if (root.TryGetProperty("barSpacing", out var spacingProp))
+                    barSpacing = spacingProp.GetInt32();
+                    
+                if (root.TryGetProperty("edgeGlowEnabled", out var glowProp))
+                    edgeGlowEnabled = glowProp.GetBoolean();
+                    
+                if (root.TryGetProperty("edgeGlowIntensity", out var glowIntensityProp))
+                    edgeGlowIntensity = glowIntensityProp.GetSingle();
             } 
             catch (Exception ex)
             {
