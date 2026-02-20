@@ -29,10 +29,6 @@ namespace NekoBeats
             InitializeLogic();
             InitializeTimer();
             
-            // Set app icon
-            if (File.Exists("NekoBeatsLogo.ico"))
-                this.Icon = new Icon("NekoBeatsLogo.ico");
-            
             controlPanel = new ControlPanel(this);
             controlPanel.Show();
         }
@@ -40,13 +36,20 @@ namespace NekoBeats
         private void InitializeForm()
         {
             this.Text = "NekoBeats V2";
+            
+            // Set icon right at the start
+            if (File.Exists("NekoBeatsLogo.ico"))
+            {
+                this.Icon = new Icon("NekoBeatsLogo.ico");
+            }
+            
             this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
             this.BackColor = Color.Magenta;
             this.TransparencyKey = Color.Magenta;
             this.TopMost = true;
             this.DoubleBuffered = true;
-            this.ShowInTaskbar = false;
+            this.ShowInTaskbar = true;
             this.Opacity = 1.0f;
 
             this.Paint += OnPaint;
