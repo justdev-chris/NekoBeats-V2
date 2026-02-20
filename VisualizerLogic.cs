@@ -39,7 +39,7 @@ namespace NekoBeats
         // NEW FEATURES
         public bool rainbowBars = true;
         public int barSpacing = 1;
-        public bool edgeGlowEnabled = true;
+        public bool edgeGlowEnabled = false;
         public float edgeGlowIntensity = 0.5f;
         private float currentGlowIntensity = 0;
         
