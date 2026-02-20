@@ -1,4 +1,5 @@
-# NekoBeats V2 🎵✨
+# NekoBeats 
+>v2.1
 <p align="center">
   <img src="NekoBeatsLogo.png" width="150" height="150">
 </p>
