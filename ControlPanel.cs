@@ -55,7 +55,7 @@ namespace NekoBeats
                 Size = new Size(120, 25),
                 ForeColor = Color.White
             };
-            colorCycleCheck.CheckedChanged += (s, e) => visualizer.colorCycling = colorCycleCheck.Checked;
+            colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
             
             colorGroup.Controls.Add(colorBtn);
             colorGroup.Controls.Add(colorCycleCheck);
@@ -83,10 +83,10 @@ namespace NekoBeats
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
-            styleCombo.Items.AddRange(Enum.GetNames(typeof(VisualizerForm.AnimationStyle)));
+            styleCombo.Items.AddRange(Enum.GetNames(typeof(VisualizerLogic.AnimationStyle)));
             styleCombo.SelectedIndexChanged += (s, e) => 
             {
-                visualizer.animationStyle = (VisualizerForm.AnimationStyle)styleCombo.SelectedIndex;
+                visualizer.Logic.animationStyle = (VisualizerLogic.AnimationStyle)styleCombo.SelectedIndex;
             };
             visGroup.Controls.Add(styleCombo);
             gy += 30;
@@ -101,7 +101,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            barCountTrack.ValueChanged += (s, e) => visualizer.barCount = barCountTrack.Value;
+            barCountTrack.ValueChanged += (s, e) => visualizer.Logic.barCount = barCountTrack.Value;
             visGroup.Controls.Add(barCountTrack);
             gy += 40;
             
@@ -115,7 +115,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            barHeightTrack.ValueChanged += (s, e) => visualizer.barHeight = barHeightTrack.Value;
+            barHeightTrack.ValueChanged += (s, e) => visualizer.Logic.barHeight = barHeightTrack.Value;
             visGroup.Controls.Add(barHeightTrack);
             gy += 40;
             
@@ -131,8 +131,8 @@ namespace NekoBeats
             };
             opacityTrack.ValueChanged += (s, e) => 
             {
-                visualizer.opacity = opacityTrack.Value / 100f;
-                visualizer.Opacity = visualizer.opacity;
+                visualizer.Logic.opacity = opacityTrack.Value / 100f;
+                visualizer.Opacity = visualizer.Logic.opacity;
             };
             visGroup.Controls.Add(opacityTrack);
             
@@ -158,7 +158,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            sensitivityTrack.ValueChanged += (s, e) => visualizer.sensitivity = sensitivityTrack.Value / 100f;
+            sensitivityTrack.ValueChanged += (s, e) => visualizer.Logic.sensitivity = sensitivityTrack.Value / 100f;
             audioGroup.Controls.Add(sensitivityTrack);
             
             // Smooth Speed
@@ -171,7 +171,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            smoothSpeedTrack.ValueChanged += (s, e) => visualizer.smoothSpeed = smoothSpeedTrack.Value / 100f;
+            smoothSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.smoothSpeed = smoothSpeedTrack.Value / 100f;
             audioGroup.Controls.Add(smoothSpeedTrack);
             
             this.Controls.Add(audioGroup);
@@ -195,7 +195,7 @@ namespace NekoBeats
                 Size = new Size(120, 25),
                 ForeColor = Color.White
             };
-            bloomCheck.CheckedChanged += (s, e) => visualizer.bloomEnabled = bloomCheck.Checked;
+            bloomCheck.CheckedChanged += (s, e) => visualizer.Logic.bloomEnabled = bloomCheck.Checked;
             effectsGroup.Controls.Add(bloomCheck);
             
             effectsGroup.Controls.Add(new Label { Text = "Intensity:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
@@ -207,7 +207,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            bloomIntensityTrack.ValueChanged += (s, e) => visualizer.bloomIntensity = bloomIntensityTrack.Value;
+            bloomIntensityTrack.ValueChanged += (s, e) => visualizer.Logic.bloomIntensity = bloomIntensityTrack.Value;
             effectsGroup.Controls.Add(bloomIntensityTrack);
             gy += 35;
             
@@ -220,8 +220,12 @@ namespace NekoBeats
             };
             particlesCheck.CheckedChanged += (s, e) => 
             {
-                visualizer.particlesEnabled = particlesCheck.Checked;
-                if (particlesCheck.Checked) visualizer.InitializeParticles();
+                visualizer.Logic.particlesEnabled = particlesCheck.Checked;
+                if (particlesCheck.Checked) 
+                {
+                    // Force particle reinitialization on next resize
+                    visualizer.Logic.Resize(visualizer.ClientSize);
+                }
             };
             effectsGroup.Controls.Add(particlesCheck);
             
@@ -236,8 +240,11 @@ namespace NekoBeats
             };
             particleCountTrack.ValueChanged += (s, e) => 
             {
-                visualizer.particleCount = particleCountTrack.Value;
-                if (particlesCheck.Checked) visualizer.InitializeParticles();
+                visualizer.Logic.particleCount = particleCountTrack.Value;
+                if (particlesCheck.Checked) 
+                {
+                    visualizer.Logic.Resize(visualizer.ClientSize);
+                }
             };
             effectsGroup.Controls.Add(particleCountTrack);
             gy += 35;
@@ -249,7 +256,7 @@ namespace NekoBeats
                 Size = new Size(120, 25),
                 ForeColor = Color.White
             };
-            circleModeCheck.CheckedChanged += (s, e) => visualizer.circleMode = circleModeCheck.Checked;
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.circleMode = circleModeCheck.Checked;
             effectsGroup.Controls.Add(circleModeCheck);
             
             effectsGroup.Controls.Add(new Label { Text = "Radius:", Location = new Point(140, gy + 5), Size = new Size(60, 20), ForeColor = Color.White });
@@ -261,7 +268,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            circleRadiusTrack.ValueChanged += (s, e) => visualizer.circleRadius = circleRadiusTrack.Value;
+            circleRadiusTrack.ValueChanged += (s, e) => visualizer.Logic.circleRadius = circleRadiusTrack.Value;
             effectsGroup.Controls.Add(circleRadiusTrack);
             
             this.Controls.Add(effectsGroup);
@@ -290,7 +297,7 @@ namespace NekoBeats
             fpsCombo.SelectedIndex = 1;
             fpsCombo.SelectedIndexChanged += (s, e) => 
             {
-                visualizer.fpsLimit = fpsCombo.Text switch
+                visualizer.Logic.fpsLimit = fpsCombo.Text switch
                 {
                     "30 FPS" => 30,
                     "60 FPS" => 60,
@@ -311,7 +318,7 @@ namespace NekoBeats
                 TickStyle = TickStyle.None,
                 BackColor = Color.FromArgb(40, 40, 40)
             };
-            colorSpeedTrack.ValueChanged += (s, e) => visualizer.colorSpeed = colorSpeedTrack.Value / 10f;
+            colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
             perfGroup.Controls.Add(colorSpeedTrack);
             
             this.Controls.Add(perfGroup);
@@ -334,8 +341,8 @@ namespace NekoBeats
             };
             clickThroughCheck.CheckedChanged += (s, e) => 
             {
-                visualizer.clickThrough = clickThroughCheck.Checked;
-                visualizer.MakeClickThrough(visualizer.clickThrough);
+                visualizer.Logic.clickThrough = clickThroughCheck.Checked;
+                visualizer.MakeClickThrough(visualizer.Logic.clickThrough);
             };
             windowGroup.Controls.Add(clickThroughCheck);
             
@@ -345,7 +352,7 @@ namespace NekoBeats
                 Size = new Size(120, 25),
                 ForeColor = Color.White
             };
-            draggableCheck.CheckedChanged += (s, e) => visualizer.draggable = draggableCheck.Checked;
+            draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
             windowGroup.Controls.Add(draggableCheck);
             
             this.Controls.Add(windowGroup);
@@ -402,10 +409,10 @@ namespace NekoBeats
         
         private void ShowColorDialog()
         {
-            using var colorDialog = new ColorDialog { Color = visualizer.barColor };
+            using var colorDialog = new ColorDialog { Color = visualizer.Logic.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
-                visualizer.barColor = colorDialog.Color;
+                visualizer.Logic.barColor = colorDialog.Color;
                 // Find and uncheck color cycling checkbox
                 foreach (Control c in this.Controls)
                     if (c is GroupBox gb)
@@ -425,40 +432,40 @@ namespace NekoBeats
                     {
                         if (c2 is TrackBar track)
                         {
-                            // Match tracks by their ranges
+                            // Match tracks by their ranges and group
                             if (track.Minimum == 32 && track.Maximum == 512) 
-                                track.Value = visualizer.barCount;
+                                track.Value = visualizer.Logic.barCount;
                             else if (track.Minimum == 10 && track.Maximum == 200 && gb.Text == "Visualizer Settings") 
-                                track.Value = visualizer.barHeight;
-                            else if (track.Minimum == 10 && track.Maximum == 100) 
-                                track.Value = (int)(visualizer.opacity * 100);
+                                track.Value = visualizer.Logic.barHeight;
+                            else if (track.Minimum == 10 && track.Maximum == 100 && track.Location.Y > 100) 
+                                track.Value = (int)(visualizer.Logic.opacity * 100);
                             else if (track.Minimum == 10 && track.Maximum == 300) 
-                                track.Value = (int)(visualizer.sensitivity * 100);
+                                track.Value = (int)(visualizer.Logic.sensitivity * 100);
                             else if (track.Minimum == 1 && track.Maximum == 50 && gb.Text == "Audio Processing") 
-                                track.Value = (int)(visualizer.smoothSpeed * 100);
+                                track.Value = (int)(visualizer.Logic.smoothSpeed * 100);
                             else if (track.Minimum == 5 && track.Maximum == 30) 
-                                track.Value = visualizer.bloomIntensity;
+                                track.Value = visualizer.Logic.bloomIntensity;
                             else if (track.Minimum == 20 && track.Maximum == 500 && track.Location.Y > 100) 
-                                track.Value = visualizer.particleCount;
+                                track.Value = visualizer.Logic.particleCount;
                             else if (track.Minimum == 50 && track.Maximum == 500) 
-                                track.Value = (int)visualizer.circleRadius;
+                                track.Value = (int)visualizer.Logic.circleRadius;
                             else if (track.Minimum == 1 && track.Maximum == 20 && gb.Text == "Performance") 
-                                track.Value = (int)(visualizer.colorSpeed * 10);
+                                track.Value = (int)(visualizer.Logic.colorSpeed * 10);
                         }
                         else if (c2 is CheckBox cb)
                         {
-                            if (cb.Text == "Color Cycling") cb.Checked = visualizer.colorCycling;
-                            else if (cb.Text == "Bloom Effect") cb.Checked = visualizer.bloomEnabled;
-                            else if (cb.Text == "Particles") cb.Checked = visualizer.particlesEnabled;
-                            else if (cb.Text == "Circle Mode") cb.Checked = visualizer.circleMode;
-                            else if (cb.Text == "Click Through") cb.Checked = visualizer.clickThrough;
-                            else if (cb.Text == "Draggable") cb.Checked = visualizer.draggable;
+                            if (cb.Text == "Color Cycling") cb.Checked = visualizer.Logic.colorCycling;
+                            else if (cb.Text == "Bloom Effect") cb.Checked = visualizer.Logic.bloomEnabled;
+                            else if (cb.Text == "Particles") cb.Checked = visualizer.Logic.particlesEnabled;
+                            else if (cb.Text == "Circle Mode") cb.Checked = visualizer.Logic.circleMode;
+                            else if (cb.Text == "Click Through") cb.Checked = visualizer.Logic.clickThrough;
+                            else if (cb.Text == "Draggable") cb.Checked = visualizer.Logic.draggable;
                         }
                         else if (c2 is ComboBox combo)
                         {
                             if (combo.Items.Count == 4) // FPS combo
                             {
-                                combo.SelectedIndex = visualizer.fpsLimit switch
+                                combo.SelectedIndex = visualizer.Logic.fpsLimit switch
                                 {
                                     30 => 0,
                                     60 => 1,
@@ -468,7 +475,7 @@ namespace NekoBeats
                             }
                             else if (combo.Items.Count > 4) // Style combo
                             {
-                                combo.SelectedIndex = (int)visualizer.animationStyle;
+                                combo.SelectedIndex = (int)visualizer.Logic.animationStyle;
                             }
                         }
                     }
