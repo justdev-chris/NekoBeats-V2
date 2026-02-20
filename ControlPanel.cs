@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
 
 namespace NekoBeats
 {
@@ -65,6 +66,34 @@ namespace NekoBeats
             var colorsTab = new TabPage("Colors");
             colorsTab.BackColor = Color.FromArgb(40, 40, 40);
             colorsTab.ForeColor = Color.White;
+            
+            // Add logo
+            if (File.Exists("NekoBeatsLogo.png"))
+            {
+                var logoBox = new PictureBox
+                {
+                    Image = Image.FromFile("NekoBeatsLogo.png"),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Location = new Point(250, 20),
+                    Size = new Size(120, 120),
+                    BackColor = Color.Transparent
+                };
+                colorsTab.Controls.Add(logoBox);
+            }
+            else
+            {
+                // Fallback text if logo not found
+                var logoLabel = new Label
+                {
+                    Text = "🐱 NekoBeats",
+                    Font = new Font("Arial", 16, FontStyle.Bold),
+                    ForeColor = Color.Cyan,
+                    Location = new Point(250, 60),
+                    Size = new Size(150, 40),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                colorsTab.Controls.Add(logoLabel);
+            }
             
             var colorBtn = new Button { 
                 Text = "Choose Bar Color", 
@@ -475,7 +504,7 @@ namespace NekoBeats
             }
         }
         
-        private void UpdateControlsFromVisualizer()
+        public void UpdateControlsFromVisualizer()
         {
             // Colors Tab
             colorCycleCheck.Checked = visualizer.Logic.colorCycling;
