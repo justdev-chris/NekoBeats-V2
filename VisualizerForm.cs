@@ -21,8 +21,6 @@ namespace NekoBeats
         private VisualizerLogic logic;
         private Timer renderTimer;
         private ControlPanel controlPanel;
-        private Point dragStart;
-        private bool isDragging = false;
         
         public VisualizerForm()
         {
@@ -44,20 +42,16 @@ namespace NekoBeats
                 this.Icon = new Icon("NekoBeatsLogo.ico");
             }
             
-            this.WindowState = FormWindowState.Normal;
-            this.Size = new Size(800, 600);
+            this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
             this.BackColor = Color.Magenta;
             this.TransparencyKey = Color.Magenta;
             this.TopMost = true;
             this.DoubleBuffered = true;
-            this.ShowInTaskbar = false;
+            this.ShowInTaskbar = false; // Hidden from taskbar
             this.Opacity = 1.0f;
 
             this.Paint += OnPaint;
-            this.MouseDown += OnMouseDown;
-            this.MouseMove += OnMouseMove;
-            this.MouseUp += OnMouseUp;
             this.FormClosing += OnFormClosing;
             this.Resize += OnResize;
             
@@ -104,39 +98,6 @@ namespace NekoBeats
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
             else
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-        }
-        
-        private void OnMouseDown(object sender, MouseEventArgs e)
-        {
-            if (logic.draggable && e.Button == MouseButtons.Left)
-            {
-                // Temporarily disable click-through so we can drag
-                MakeClickThrough(false);
-                dragStart = e.Location;
-                isDragging = true;
-            }
-        }
-        
-        private void OnMouseMove(object sender, MouseEventArgs e)
-        {
-            if (logic.draggable && isDragging && e.Button == MouseButtons.Left)
-            {
-                this.Location = new Point(
-                    this.Left + e.X - dragStart.X,
-                    this.Top + e.Y - dragStart.Y
-                );
-            }
-        }
-        
-        private void OnMouseUp(object sender, MouseEventArgs e)
-        {
-            if (logic.draggable && isDragging && e.Button == MouseButtons.Left)
-            {
-                // Re-enable click-through after dragging
-                MakeClickThrough(logic.clickThrough);
-                isDragging = false;
-                dragStart = Point.Empty;
-            }
         }
         
         private void OnPaint(object sender, PaintEventArgs e)
