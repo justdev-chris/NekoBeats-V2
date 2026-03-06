@@ -801,7 +801,12 @@
     // Load themes from API
     async function loadThemes() {
       try {
-        const response = await fetch(`${API_BASE}?endpoint=/themes`);
+        const response = await fetch(`${API_BASE}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -943,7 +948,9 @@
     // Download theme
     async function downloadTheme(themeId, themeName) {
       try {
-        const response = await fetch(`${API_BASE}?endpoint=/themes/${themeId}/download`);
+        const response = await fetch(`${API_BASE}?id=${themeId}&action=download`, {
+          method: 'GET'
+        });
         const blob = await response.blob();
         
         const url = window.URL.createObjectURL(blob);
@@ -993,7 +1000,7 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE}?endpoint=/themes/${currentRatingThemeId}/rate`, {
+        const response = await fetch(`${API_BASE}?id=${currentRatingThemeId}&action=rate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ rating: currentRating })
