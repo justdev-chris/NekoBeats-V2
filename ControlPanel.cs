@@ -8,7 +8,6 @@ namespace NekoBeats
     public class ControlPanel : Form
     {
         private VisualizerForm visualizer;
-        private RecorderLogic recorder;
         
         // Controls we need to reference
         private CheckBox rainbowCheck;
@@ -33,17 +32,9 @@ namespace NekoBeats
         private CheckBox clickThroughCheck;
         private CheckBox draggableCheck;
         
-        // Recording controls
-        private Label recordingStatusLabel;
-        private ProgressBar recordingProgressBar;
-        private Button recordBtn;
-        private Button stopBtn;
-        private Timer captureTimer;
-        
         public ControlPanel(VisualizerForm visualizer)
         {
             this.visualizer = visualizer;
-            recorder = new RecorderLogic(visualizer);
             
             // Use the same icon as the main form
             this.Icon = visualizer.Icon;
@@ -790,13 +781,11 @@ namespace NekoBeats
                 captureTimer = null;
             }
             
-            recordingStatusLabel.Text = "Recording stopped. Encoding...";
-            recordingStatusLabel.ForeColor = Color.Yellow;
+            recordingStatusLabel.Text = "Recording stopped";
+            recordingStatusLabel.ForeColor = Color.Cyan;
             recordBtn.Enabled = true;
             stopBtn.Enabled = false;
             recordingProgressBar.Value = 0;
-            
-            recorder.EncodeToMP4();
         }
         
         public void UpdateControlsFromVisualizer()
