@@ -18,7 +18,6 @@ A sleek audio visualizer that turns your music into floating light bars. Revived
 - **Adjustable bars**: count, height, opacity
 - **Draggable window** when needed
 - **Separate control panel** for easy adjustments
-- **Built-in recording** to save visualizations as video
 
 ## Controls 🎮
 
@@ -34,15 +33,15 @@ A sleek audio visualizer that turns your music into floating light bars. Revived
 
 ## Recording 🎥
 
-NekoBeats includes a built-in video recorder in the **Recording** tab. Choose your resolution, FPS, and duration, then record your visualizations.
+Want to record your NekoBeats visualizations? We recommend using **[OBS Studio](https://obsproject.com/)** - it's free and gives you full control:
 
-**For recordings with audio**, we recommend using [OBS Studio](https://obsproject.com/):
-1. Add NekoBeats window as a source in OBS
-2. Configure audio input
-3. Hit record
-4. OBS will capture both video and audio seamlessly
+1. Download and open OBS
+2. Click **"+ Scene"** to create a new scene
+3. Add NekoBeats window as a source (Window Capture or Game Capture)
+4. Configure audio (System Audio or Mic)
+5. Click **Start Recording** and enjoy!
 
-This gives you higher quality control and better audio-video sync.
+OBS handles video compression, audio-video sync, and quality settings - way better than anything we could build in-app.
 
 ## Installation ⚡
 
@@ -79,7 +78,7 @@ NekoBeats captures your system audio output using NAudio, performs FFT analysis 
 - ✅ **Better performance** (60 FPS rendering)
 - ✅ **Modern UI** (separate control panel)
 - ✅ **Single EXE** (no dependencies needed)
-- ✅ **Built-in recording** (save visualizations as MP4)
+- ✅ **Draggable window** (move visualizer around)
 
 ## Troubleshooting 🔧
 
@@ -95,10 +94,6 @@ NekoBeats captures your system audio output using NAudio, performs FFT analysis 
 - Enable "Click Through" in control panel
 - Make sure no other apps are forcing focus
 
-**Recording not working?**
-- Make sure SharpAvi is installed via NuGet
-- Check that you have write permissions to the save location
-
 ## License 📄
 
 MIT License - do whatever you want with it!
@@ -106,7 +101,6 @@ MIT License - do whatever you want with it!
 ## Credits 👏
 
 - **NAudio** for audio capture
-- **SharpAvi** for video encoding
 - **FFT algorithm** for frequency analysis
 - **Original NekoBeats V1** for inspiration
 - **You** for using it! 🎧
