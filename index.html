@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NekoBeats - A sleek audio visualizer that turns your music into floating light bars. Real-time spectrum analysis with customizable themes.">
+  <title>NekoBeats-V2 | Audio Visualizer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #a855f7;
+      border-radius: 4px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(40px); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    .logo-container {
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      box-shadow: 0 20px 60px rgba(168, 85, 247, 0.3);
+    }
+
+    .hero h1 {
+      font-size: 64px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 40px;
+      line-height: 1.8;
+    }
+
+    .cta {
+      display: inline-flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(168, 85, 247, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #fff;
+      border: 1.5px solid #a855f7;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: #a855f7;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0;
+      background: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      z-index: 999;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    nav a {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 16px 20px;
+      border-right: 1px solid rgba(168, 85, 247, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    nav a:last-child {
+      border-right: none;
+    }
+
+    nav a:hover {
+      color: #a855f7;
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    nav a i {
+      font-size: 14px;
+    }
+
+    /* Features Section */
+    .features {
+      padding: 100px 20px;
+      background: linear-gradient(180deg, transparent 0%, rgba(168, 85, 247, 0.03) 100%);
+    }
+
+    .section-title {
+      font-size: 48px;
+      font-weight: 900;
+      margin-bottom: 60px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .section-title span {
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .features-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(99, 102, 241, 0.05));
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(168, 85, 247, 0.3);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1));
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      color: #a855f7;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .feature-card p {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Controls Section */
+    .controls {
+      padding: 100px 20px;
+    }
+
+    .controls-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .control-item {
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .control-item h4 {
+      color: #a855f7;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .control-item p {
+      color: #aaa;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* Installation Section */
+    .installation {
+      padding: 100px 20px;
+      background: linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, transparent 100%);
+    }
+
+    .install-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .install-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .step {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(99, 102, 241, 0.05));
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      border-radius: 12px;
+      padding: 32px;
+      position: relative;
+    }
+
+    .step-number {
+      position: absolute;
+      top: -15px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .step h3 {
+      font-size: 18px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .step p {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Code Block */
+    .code-block {
+      background: #000;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      color: #a855f7;
+      line-height: 1.5;
+    }
+
+    /* Improvements Section */
+    .improvements {
+      padding: 100px 20px;
+    }
+
+    .improvements-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .improvements-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .improvement-item {
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .improvement-item i {
+      color: #a855f7;
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .improvement-content h4 {
+      font-size: 16px;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .improvement-content p {
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* Troubleshooting */
+    .troubleshooting {
+      padding: 100px 20px;
+      background: linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, transparent 100%);
+    }
+
+    .troubleshooting-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .trouble-item {
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .trouble-item h4 {
+      color: #a855f7;
+      font-size: 16px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .trouble-item p {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .trouble-item p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Footer */
+    footer {
+      padding: 60px 20px;
+      border-top: 1px solid rgba(168, 85, 247, 0.1);
+      text-align: center;
+    }
+
+    footer p {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .social-link {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(168, 85, 247, 0.1);
+      border-radius: 8px;
+      color: #a855f7;
+      transition: all 0.3s;
+      font-size: 18px;
+    }
+
+    .social-link:hover {
+      background: #a855f7;
+      color: #fff;
+      transform: translateY(-4px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .section-title {
+        font-size: 36px;
+      }
+
+      .features-grid,
+      .install-steps,
+      .improvements-list {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        bottom: 20px;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      nav a {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+        padding: 12px 20px;
+      }
+
+      nav a:last-child {
+        border-bottom: none;
+      }
+
+      nav a i {
+        display: none;
+      }
+
+      .logo {
+        width: 120px;
+        height: 120px;
+        font-size: 60px;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="logo-container">
+  <div class="logo">
+    <img src="NekoBeatsLogo.png" alt="NekoBeats Logo" style="width: 100%; height: 100%; object-fit: contain;">
+  </div>
+</div>
+      <span class="version-badge">V2.1</span>
+      <h1>NekoBeats</h1>
+      <p>A sleek audio visualizer that turns your music into floating light bars. Revived and better than ever.</p>
+      <div class="cta">
+        <a href="#install" class="btn btn-primary">
+          <i class="fas fa-download"></i> Download Now
+        </a>
+        <a href="https://github.com/justdev-chris/NekoBeats-V2" class="btn btn-secondary" target="_blank">
+          <i class="fab fa-github"></i> View Source
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <h2 class="section-title">Why <span>NekoBeats</span>?</h2>
+    
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-wave-square"></i>
+        </div>
+        <h3>Real-time Audio</h3>
+        <p>Captures your system audio output and visualizes it instantly with FFT analysis</p>
+      </div>
+
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-square-full"></i>
+        </div>
+        <h3>Floating Bars</h3>
+        <p>Fullscreen visualization that floats above everything without interrupting your workflow</p>
+      </div>
+
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-mouse"></i>
+        </div>
+        <h3>Click-through Mode</h3>
+        <p>Enable click-through so the bars won't block your mouse clicks. Use PC normally</p>
+      </div>
+
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-palette"></i>
+        </div>
+        <h3>Custom Themes</h3>
+        <p>Full color picker - customize bars to match any color you want</p>
+      </div>
+
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-sliders-h"></i>
+        </div>
+        <h3>Adjustable Settings</h3>
+        <p>Control bar count, height, opacity, and more from the control panel</p>
+      </div>
+
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <i class="fas fa-rocket"></i>
+        </div>
+        <h3>60 FPS Performance</h3>
+        <p>Smooth, responsive visualization with better performance than V1</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="controls" id="controls">
+    <div class="controls-container">
+      <h2 class="section-title">Easy <span>Controls</span></h2>
+      
+      <div class="controls-grid">
+        <div class="control-item">
+          <h4><i class="fas fa-palette"></i> Bar Color</h4>
+          <p>Change bar color to any color you want with the color picker</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-eye"></i> Opacity</h4>
+          <p>Make bars more or less transparent based on your preference</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-arrows-alt-v"></i> Height</h4>
+          <p>Adjust how tall bars grow when reacting to audio</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-layer-group"></i> Bar Count</h4>
+          <p>Choose between 32-512 bars for different detail levels</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-mouse"></i> Click Through</h4>
+          <p>Toggle whether bars block mouse clicks or not</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-hand-paper"></i> Draggable</h4>
+          <p>Move the visualizer window around your screen</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="installation" id="install">
+    <div class="install-container">
+      <h2 class="section-title">Get <span>Started</span></h2>
+      
+      <div class="install-steps">
+        <div class="step fade-in">
+          <div class="step-number">1</div>
+          <h3>Download</h3>
+          <p>Get the latest NekoBeats.zip from the releases page on GitHub</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">2</div>
+          <h3>Run</h3>
+          <p>Extract and run the application (requires Windows 10/11)</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">3</div>
+          <h3>Play Music</h3>
+          <p>Start playing audio through your default output device</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">4</div>
+          <h3>Customize</h3>
+          <p>Adjust settings in the control panel to your liking</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 60px;">
+        <h3 style="margin-bottom: 20px; font-size: 20px;">Or Build from Source</h3>
+        <div class="code-block">git clone https://github.com/justdev-chris/NekoBeats-V2.git<br>cd NekoBeats-V2<br>dotnet restore<br>dotnet publish -c Release -r win-x64 --self-contained true</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V2 Improvements -->
+  <section class="improvements" id="improvements">
+    <div class="improvements-container">
+      <h2 class="section-title">V2 <span>Improvements</span></h2>
+      
+      <div class="improvements-list">
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Proper FFT Processing</h4>
+            <p>Smoother, more accurate frequency visualization</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Real Color Picker</h4>
+            <p>Not just presets - customize to any color imaginable</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Click-through Technology</h4>
+            <p>Use your PC normally while visualizing</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>More Bars</h4>
+            <p>Up to 512 bars for incredibly detailed spectrum</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Better Performance</h4>
+            <p>Smooth 60 FPS rendering without lag</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Modern UI</h4>
+            <p>Separate control panel for easy adjustments</p>
+          </div>
+        </div>
+
+        <div class="improvement-item fade-in">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Single EXE</h4>
+            <p>No dependencies needed - just download and run</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Troubleshooting -->
+  <section class="troubleshooting" id="troubleshooting">
+    <div class="troubleshooting-container">
+      <h2 class="section-title">Trouble<span>shooting</span></h2>
+      
+      <div class="trouble-item fade-in">
+        <h4><i class="fas fa-question-circle"></i> No bars showing?</h4>
+        <p>• Make sure audio is playing through your default output</p>
+        <p>• Check that your audio isn't muted</p>
+      </div>
+
+      <div class="trouble-item fade-in">
+        <h4><i class="fas fa-question-circle"></i> Visualizer laggy?</h4>
+        <p>• Reduce bar count in settings for better performance</p>
+        <p>• Close other intensive applications running in background</p>
+      </div>
+
+      <div class="trouble-item fade-in">
+        <h4><i class="fas fa-question-circle"></i> Can't click through?</h4>
+        <p>• Make sure to enable "Click Through" in control panel</p>
+        <p>• Verify no other apps are forcing focus</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Made with ❤️ for music lovers everywhere. Turn up the volume and watch the magic happen!</p>
+    <div class="social-links">
+      <a href="https://github.com/justdev-chris/NekoBeats-V2" class="social-link" target="_blank" title="GitHub">
+        <i class="fab fa-github"></i>
+      </a>
+      <a href="https://www.tiktok.com/@justdev_chris" class="social-link" target="_blank" title="TikTok">
+        <i class="fab fa-tiktok"></i>
+      </a>
+    </div>
+    <p style="margin-top: 20px; color: #555; font-size: 12px;">© 2026 justdev-chris | MIT License</p>
+  </footer>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="#features" title="Features"><i class="fas fa-star"></i>Features</a>
+    <a href="#controls" title="Controls"><i class="fas fa-sliders-h"></i>Controls</a>
+    <a href="#install" title="Install"><i class="fas fa-download"></i>Install</a>
+    <a href="#improvements" title="Improvements"><i class="fas fa-rocket"></i>V2</a>
+    <a href="#troubleshooting" title="Help"><i class="fas fa-question-circle"></i>Help</a>
+    <a href="https://github.com/justdev-chris/NekoBeats-V2" title="GitHub"><i class="fab fa-github"></i>GitHub</a>
+  </nav>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('fade-in');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-card, .step, .improvement-item, .trouble-item').forEach(el => {
+      el.style.opacity = '0';
+      observer.observe(el);
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
