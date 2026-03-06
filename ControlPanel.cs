@@ -796,69 +796,7 @@ namespace NekoBeats
             stopBtn.Enabled = false;
             recordingProgressBar.Value = 0;
         }
-        
-        
-        private void StartRecording_Click()
-        {
-            var saveDialog = new SaveFileDialog
-            {
-                Filter = "AVI Video (*.avi)|*.avi",
-                DefaultExt = "avi"
-            };
-            
-            if (saveDialog.ShowDialog() == DialogResult.OK)
-            {
-                if (recorder.StartRecording(
-                    saveDialog.FileName,
-                    recorder.RecordingWidth,
-                    recorder.RecordingHeight,
-                    recorder.MaxDurationSeconds,
-                    recorder.RecordingFPS))
-                {
-                    recordingStatusLabel.Text = "Recording... 0 frames";
-                    recordingStatusLabel.ForeColor = Color.Red;
-                    recordBtn.Enabled = false;
-                    stopBtn.Enabled = true;
-                    
-                    captureTimer = new Timer();
-                    captureTimer.Interval = Math.Max(1, 1000 / recorder.RecordingFPS);
-                    captureTimer.Tick += (s, e) =>
-                    {
-                        if (recorder.IsRecording)
-                        {
-                            recorder.CaptureFrame();
-                            recordingStatusLabel.Text = $"Recording... {recorder.FramesRecorded} frames";
-                            recordingProgressBar.Value = (int)(recorder.RecordingProgress * 100);
-                        }
-                        else
-                        {
-                            captureTimer.Stop();
-                            captureTimer.Dispose();
-                            captureTimer = null;
-                        }
-                    };
-                    captureTimer.Start();
-                }
-            }
-        }
-        
-        private void StopRecording_Click()
-        {
-            recorder.StopRecording();
-            
-            if (captureTimer != null)
-            {
-                captureTimer.Stop();
-                captureTimer.Dispose();
-                captureTimer = null;
-            }
-            
-            recordingStatusLabel.Text = "Recording stopped";
-            recordingStatusLabel.ForeColor = Color.Cyan;
-            recordBtn.Enabled = true;
-            stopBtn.Enabled = false;
-            recordingProgressBar.Value = 0;
-        }
+
         
         public void UpdateControlsFromVisualizer()
         {
