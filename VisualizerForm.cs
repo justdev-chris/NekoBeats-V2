@@ -120,6 +120,13 @@ namespace NekoBeats
         {
             if (logic.draggable && e.Button == MouseButtons.Left)
             {
+                // Exit maximized mode when dragging starts
+                if (this.WindowState == FormWindowState.Maximized)
+                {
+                    this.WindowState = FormWindowState.Normal;
+                    this.Size = new Size(1920, 1080);
+                }
+                
                 isDragging = true;
                 dragStart = new Point(e.X, e.Y);
             }
