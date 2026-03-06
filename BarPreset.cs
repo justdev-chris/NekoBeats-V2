@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace NekoBeats
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum BarShape
     {
         Rectangle,
@@ -16,6 +17,7 @@ namespace NekoBeats
         Gradient
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AnimationType
     {
         Sine,
