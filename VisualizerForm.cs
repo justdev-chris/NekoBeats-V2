@@ -22,6 +22,9 @@ namespace NekoBeats
         private Timer renderTimer;
         private ControlPanel controlPanel;
         
+        private Point dragStart;
+        private bool isDragging = false;
+        
         public VisualizerForm()
         {
             InitializeForm();
@@ -50,10 +53,12 @@ namespace NekoBeats
             this.DoubleBuffered = true;
             this.ShowInTaskbar = false; // Hidden from taskbar
             this.Opacity = 1.0f;
-
             this.Paint += OnPaint;
             this.FormClosing += OnFormClosing;
             this.Resize += OnResize;
+            this.MouseDown += OnMouseDown;
+            this.MouseMove += OnMouseMove;
+            this.MouseUp += OnMouseUp;
             
             MakeClickThrough(true);
         }
@@ -109,6 +114,30 @@ namespace NekoBeats
         {
             logic?.Dispose();
             controlPanel?.Close();
+        }
+        
+        private void OnMouseDown(object sender, MouseEventArgs e)
+        {
+            if (logic.draggable && e.Button == MouseButtons.Left)
+            {
+                isDragging = true;
+                dragStart = new Point(e.X, e.Y);
+            }
+        }
+        
+        private void OnMouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDragging && logic.draggable)
+            {
+                int deltaX = e.X - dragStart.X;
+                int deltaY = e.Y - dragStart.Y;
+                Location = new Point(Location.X + deltaX, Location.Y + deltaY);
+            }
+        }
+        
+        private void OnMouseUp(object sender, MouseEventArgs e)
+        {
+            isDragging = false;
         }
         
         public void SavePreset(string filename)
