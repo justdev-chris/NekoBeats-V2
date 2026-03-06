@@ -51,6 +51,10 @@ namespace NekoBeats
         public bool circleMode = false;
         public float circleRadius = 200f;
         
+        // Bar Preset System
+        public BarPreset barPreset { get; private set; } = BarPreset.GetDefault();
+        private System.Diagnostics.Stopwatch animationTimer = new System.Diagnostics.Stopwatch();
+        
         // Enums
         public enum AnimationStyle { Bars, Pulse, Wave, Bounce, Glitch }
         
@@ -94,6 +98,7 @@ namespace NekoBeats
         {
             InitializeAudio();
             InitializeParticles();
+            animationTimer.Start();
         }
         
         public void Initialize(Size clientSize)
@@ -318,6 +323,76 @@ namespace NekoBeats
                         default:
                             DrawBarVisualizer(g, clientSize);
                             break;
+                    }
+                }
+            }
+        }
+        
+        private void DrawBarVisualizerWithPreset(Graphics g, Size clientSize)
+        {
+            float barWidth = (float)clientSize.Width / barCount;
+            double elapsedMs = animationTimer.Elapsed.TotalMilliseconds;
+
+            for (int i = 0; i < barCount; i++)
+            {
+                float frequency = smoothedBarValues[i % barCount];
+                float animValue = barPreset.GetAnimationValue(i, frequency, elapsedMs);
+                
+                double height = frequency * sensitivity * animValue * clientSize.Height;
+                height = Math.Max(height, clientSize.Height * 0.02);
+                
+                double x = i * barWidth;
+                double y = clientSize.Height - height;
+
+                Color barColorToUse = barPreset.GetColorForIndex(i);
+                
+                using (SolidBrush brush = new SolidBrush(barColorToUse))
+                {
+                    switch (barPreset.BarShape)
+                    {
+                        case BarShape.Circle:
+                            float diameter = (float)Math.Min(barWidth - 1, height);
+                            g.FillEllipse(brush, (float)(x + (barWidth - diameter) / 2), (float)(y + height - diameter), diameter, diameter);
+                            break;
+                        case BarShape.Triangle:
+                            var points = new PointF[]
+                            {
+                                new PointF((float)(x + barWidth / 2), (float)y),
+                                new PointF((float)(x + barWidth - 1), (float)(y + height)),
+                                new PointF((float)x, (float)(y + height))
+                            };
+                            g.FillPolygon(brush, points);
+                            break;
+                        case BarShape.Rounded:
+                            g.SmoothingMode = SmoothingMode.AntiAlias;
+                            var path = new GraphicsPath();
+                            float radius = (float)(barWidth / 4);
+                            AddRoundedRectangle(path, (float)x, (float)y, (float)(barWidth - 1), (float)height, radius);
+                            g.FillPath(brush, path);
+                            path.Dispose();
+                            break;
+                        case BarShape.Gradient:
+                            using (var gradBrush = new LinearGradientBrush(
+                                new PointF((float)x, (float)y),
+                                new PointF((float)x, (float)(y + height)),
+                                barColorToUse, Color.Black))
+                            {
+                                g.FillRectangle(gradBrush, (float)x, (float)y, (float)(barWidth - 1), (float)height);
+                            }
+                            break;
+                        case BarShape.Rectangle:
+                        default:
+                            g.FillRectangle(brush, (float)x, (float)y, (float)(barWidth - 1), (float)height);
+                            break;
+                    }
+                }
+
+                // Draw glow effect
+                if (barPreset.GlowIntensity > 0)
+                {
+                    using (var glowBrush = new SolidBrush(Color.FromArgb((int)(50 * barPreset.GlowIntensity), barColorToUse)))
+                    {
+                        g.FillRectangle(glowBrush, (float)(x - 2), (float)(y - 2), (float)(barWidth + 3), (float)(height + 4));
                     }
                 }
             }
@@ -602,6 +677,25 @@ namespace NekoBeats
             else if (hi == 4) return Color.FromArgb(255, t, p, v);
             else return Color.FromArgb(255, v, p, q);
         }
+
+        private void AddRoundedRectangle(GraphicsPath path, float x, float y, float width, float height, float radius)
+        {
+            path.AddArc(x, y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(x + width - radius * 2, y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(x + width - radius * 2, y + height - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(x, y + height - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+        }
+
+        public void LoadBarPreset(string filePath)
+        {
+            barPreset = BarPreset.LoadFromFile(filePath);
+        }
+
+        public void SaveBarPreset(string filePath)
+        {
+            barPreset.SaveToFile(filePath);
+        }
         
         public void SavePreset(string filename)
         {
@@ -698,6 +792,7 @@ namespace NekoBeats
             }
             bloomBuffer?.Dispose();
             bloomGraphics?.Dispose();
+            animationTimer?.Dispose();
         }
 
         private struct Particle 
