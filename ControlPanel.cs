@@ -74,7 +74,7 @@ namespace NekoBeats
             // App name above logo
             var appNameLabel = new Label
             {
-                Text = "NekoBeats v2.1",
+                Text = "NekoBeats v2.2",
                 Font = new Font("Arial", 14, FontStyle.Bold),
                 ForeColor = Color.Cyan,
                 Location = new Point(250, 5),
@@ -487,7 +487,7 @@ namespace NekoBeats
             // Version
             var version = new Label
             {
-                Text = "NekoBeats V2.1",
+                Text = "NekoBeats V2.2",
                 Font = new Font("Arial", 12, FontStyle.Italic),
                 ForeColor = Color.LightGray,
                 Location = new Point(150, 255),
