@@ -39,7 +39,8 @@ namespace NekoBeats
         // Bar themes
         public bool rainbowBars = true;
         public int barSpacing = 1;
-        private BarRenderer barRenderer;
+        private BarRenderer _barRenderer;
+        public BarRenderer barRenderer { get { return _barRenderer; } }
         
         // Effects
         public bool bloomEnabled = false;
@@ -97,7 +98,7 @@ namespace NekoBeats
             InitializeAudio();
             InitializeParticles();
             animationTimer.Start();
-            barRenderer = new BarRenderer(smoothedBarValues, barColor, sensitivity, barHeight, barCount, barSpacing, rainbowBars);
+            _barRenderer = new BarRenderer(smoothedBarValues, barColor, sensitivity, barHeight, barCount, barSpacing, rainbowBars);
         }
         
         public void Initialize(Size clientSize)
@@ -208,13 +209,13 @@ namespace NekoBeats
             }
             
             // Update bar renderer
-            barRenderer.smoothedBarValues = smoothedBarValues;
-            barRenderer.barColor = barColor;
-            barRenderer.sensitivity = sensitivity;
-            barRenderer.barHeight = barHeight;
-            barRenderer.barCount = barCount;
-            barRenderer.barSpacing = barSpacing;
-            barRenderer.rainbowBars = rainbowBars;
+            _barRenderer.smoothedBarValues = smoothedBarValues;
+            _barRenderer.barColor = barColor;
+            _barRenderer.sensitivity = sensitivity;
+            _barRenderer.barHeight = barHeight;
+            _barRenderer.barCount = barCount;
+            _barRenderer.barSpacing = barSpacing;
+            _barRenderer.rainbowBars = rainbowBars;
         }
         
         public void Render(Graphics g, Size clientSize)
@@ -403,7 +404,7 @@ namespace NekoBeats
             }
             else
             {
-                barRenderer.Render(g, clientSize);
+                _barRenderer.Render(g, clientSize);
             }
         }
         
