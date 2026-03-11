@@ -16,6 +16,7 @@ namespace NekoBeats
         public Color barColor = Color.Cyan;
         public float sensitivity = 1.5f;
         public float circleRadius = 200f;
+        public bool isCircleMode = false;
         
         private float pulsePhase = 0;
         private float waveOffset = 0;
@@ -49,26 +50,30 @@ namespace NekoBeats
         
         public void Render(Graphics g, Size clientSize)
         {
-            switch (currentStyle)
+            if (isCircleMode)
             {
-                case AnimationStyle.Circle:
-                    DrawCircle(g, clientSize);
-                    break;
-                case AnimationStyle.Pulse:
-                    DrawPulse(g, clientSize);
-                    break;
-                case AnimationStyle.Wave:
-                    DrawWave(g, clientSize);
-                    break;
-                case AnimationStyle.Bounce:
-                    DrawBounce(g, clientSize);
-                    break;
-                case AnimationStyle.Glitch:
-                    DrawGlitch(g, clientSize);
-                    break;
-                default:
-                    DrawNormal(g, clientSize);
-                    break;
+                DrawCircle(g, clientSize);
+            }
+            else
+            {
+                switch (currentStyle)
+                {
+                    case AnimationStyle.Pulse:
+                        DrawPulse(g, clientSize);
+                        break;
+                    case AnimationStyle.Wave:
+                        DrawWave(g, clientSize);
+                        break;
+                    case AnimationStyle.Bounce:
+                        DrawBounce(g, clientSize);
+                        break;
+                    case AnimationStyle.Glitch:
+                        DrawGlitch(g, clientSize);
+                        break;
+                    default:
+                        DrawNormal(g, clientSize);
+                        break;
+                }
             }
         }
         
