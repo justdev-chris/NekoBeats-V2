@@ -27,9 +27,9 @@ Name: "startmenu"; Description: "Create Start Menu shortcut"; GroupDescription: 
 
 
 [Files]
-Source: "..\bin\Release\net6.0-windows\win-x64\publish\*.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\Release\net6.0-windows\win-x64\publish\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\bin\Release\net6.0-windows\win-x64\publish\*.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows\win-x64\publish\*.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows\win-x64\publish\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\bin\Release\net8.0-windows\win-x64\publish\*.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "NekoBeatsLogo.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "NekoBeatsLogo.png"; DestDir: "{app}"; Flags: ignoreversion
 
