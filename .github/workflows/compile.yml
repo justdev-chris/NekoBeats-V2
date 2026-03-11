@@ -1,15 +1,21 @@
 name: Build NekoBeats
-on: [push, workflow_dispatch]
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
     
@@ -17,10 +23,22 @@ jobs:
       run: dotnet restore
     
     - name: Build
-      run: dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true
+      run: dotnet publish -c Release -r win-x64 --self-contained true
     
-    - name: Upload artifact
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+    
+    - name: Build Installer
+      run: iscc installer\NekoBeats.iss
+    
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: NekoBeats
-        path: bin/Release/net8.0-windows/win-x64/publish/NekoBeats.exe
+        name: NekoBeats-build
+        path: bin/Release/net6.0-windows/win-x64/publish/
+    
+    - name: Upload Installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: NekoBeats-installer
+        path: output/NekoBeats-*-installer.exe

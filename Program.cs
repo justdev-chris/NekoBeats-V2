@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace NekoBeats
 {
@@ -10,6 +12,8 @@ namespace NekoBeats
         private static VisualizerForm mainForm;
         private static ControlPanel controlPanel;
         private static NotifyIcon trayIcon;
+        private const string CURRENT_VERSION = "2.2";
+        private const string UPDATE_CHECK_URL = "https://api.github.com/repos/justdev-chris/NekoBeats-V2/releases/tags/v2.3";
         
         [STAThread]
         static void Main()
@@ -22,6 +26,7 @@ namespace NekoBeats
             controlPanel.Hide();
             
             InitializeTrayIcon();
+            CheckForUpdates();
             
             Application.Run(mainForm);
         }
@@ -30,10 +35,10 @@ namespace NekoBeats
         {
             var trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("Show Control Panel", null, (s, e) => ShowControlPanel());
+            trayMenu.Items.Add("Check for Updates", null, (s, e) => CheckForUpdates());
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add("Exit NekoBeats", null, (s, e) => ExitApplication());
             
-            // Use the same icon as the main form
             Icon appIcon = mainForm.Icon;
             
             trayIcon = new NotifyIcon
@@ -53,6 +58,47 @@ namespace NekoBeats
                     trayIcon.Dispose();
                 }
             };
+        }
+        
+        private static void CheckForUpdates()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
+                        var response = await client.GetAsync(UPDATE_CHECK_URL);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            mainForm.Invoke((Action)(() =>
+                            {
+                                var result = MessageBox.Show(
+                                    "A new version of NekoBeats is available! (v2.3)\n\nWould you like to download it?\n\nYou can download it from: https://github.com/justdev-chris/NekoBeats-V2/releases",
+                                    "NekoBeats Update",
+                                    MessageBoxButtons.YesNo,
+                                    MessageBoxIcon.Information
+                                );
+                                
+                                if (result == DialogResult.Yes)
+                                {
+                                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                    {
+                                        FileName = "https://github.com/justdev-chris/NekoBeats-V2/releases",
+                                        UseShellExecute = true
+                                    });
+                                }
+                            }));
+                        }
+                    }
+                }
+                catch
+                {
+                    // Silent fail - don't bother user if check fails
+                }
+            });
         }
         
         private static void ShowControlPanel()
