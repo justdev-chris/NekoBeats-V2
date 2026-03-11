@@ -16,6 +16,7 @@ namespace NekoBeats
         public Color barColor = Color.Cyan;
         public float sensitivity = 1.5f;
         public float circleRadius = 200f;
+        public bool isCircleMode = false;
         
         private float pulsePhase = 0;
         private float waveOffset = 0;
@@ -49,26 +50,30 @@ namespace NekoBeats
         
         public void Render(Graphics g, Size clientSize)
         {
-            switch (currentStyle)
+            if (isCircleMode)
             {
-                case AnimationStyle.Circle:
-                    DrawCircle(g, clientSize);
-                    break;
-                case AnimationStyle.Pulse:
-                    DrawPulse(g, clientSize);
-                    break;
-                case AnimationStyle.Wave:
-                    DrawWave(g, clientSize);
-                    break;
-                case AnimationStyle.Bounce:
-                    DrawBounce(g, clientSize);
-                    break;
-                case AnimationStyle.Glitch:
-                    DrawGlitch(g, clientSize);
-                    break;
-                default:
-                    DrawNormal(g, clientSize);
-                    break;
+                DrawCircle(g, clientSize);
+            }
+            else
+            {
+                switch (currentStyle)
+                {
+                    case AnimationStyle.Pulse:
+                        DrawPulse(g, clientSize);
+                        break;
+                    case AnimationStyle.Wave:
+                        DrawWave(g, clientSize);
+                        break;
+                    case AnimationStyle.Bounce:
+                        DrawBounce(g, clientSize);
+                        break;
+                    case AnimationStyle.Glitch:
+                        DrawGlitch(g, clientSize);
+                        break;
+                    default:
+                        DrawNormal(g, clientSize);
+                        break;
+                }
             }
         }
         
@@ -87,6 +92,14 @@ namespace NekoBeats
         private void DrawPulse(Graphics g, Size clientSize)
         {
             float pulse = (float)(Math.Sin(pulsePhase) * 0.2 + 0.8);
+            barRenderer.currentTheme = currentTheme;
+            barRenderer.barColor = barColor;
+            barRenderer.sensitivity = sensitivity;
+            barRenderer.barHeight = barHeight;
+            barRenderer.barCount = barCount;
+            barRenderer.barSpacing = barSpacing;
+            barRenderer.rainbowBars = rainbowBars;
+            
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
 
@@ -95,14 +108,14 @@ namespace NekoBeats
                 float h = barRenderer.smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * pulse;
                 if (h < 2) h = 2;
                 
-                Color barColorToUse = GetBarColor(h, clientSize.Height);
-                float x = i * barWidth;
-                float y = clientSize.Height - h;
-                
-                using (SolidBrush brush = new SolidBrush(barColorToUse))
-                {
-                    g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
-                }
+                barRenderer.smoothedBarValues[i] = h / (clientSize.Height * heightMultiplier);
+            }
+            
+            barRenderer.Render(g, clientSize);
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                barRenderer.smoothedBarValues[i] = barRenderer.smoothedBarValues[i];
             }
         }
         
@@ -110,66 +123,77 @@ namespace NekoBeats
         {
             float barWidth = (float)clientSize.Width / barCount;
             float heightMultiplier = barHeight / 100f;
+            
+            barRenderer.currentTheme = currentTheme;
+            barRenderer.barColor = barColor;
+            barRenderer.sensitivity = sensitivity;
+            barRenderer.barHeight = barHeight;
+            barRenderer.barCount = barCount;
+            barRenderer.barSpacing = barSpacing;
+            barRenderer.rainbowBars = rainbowBars;
 
+            var waveValues = new float[barCount];
             for (int i = 0; i < barCount; i++)
             {
                 float wave = (float)Math.Sin(waveOffset + (i * 0.15f)) * 0.3f + 0.7f;
-                float h = barRenderer.smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * wave;
-                if (h < 2) h = 2;
-                
-                Color barColorToUse = GetBarColor(h, clientSize.Height);
-                float x = i * barWidth;
-                float y = clientSize.Height - h;
-                
-                using (SolidBrush brush = new SolidBrush(barColorToUse))
-                {
-                    g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
-                }
+                waveValues[i] = barRenderer.smoothedBarValues[i] * wave;
             }
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                barRenderer.smoothedBarValues[i] = waveValues[i];
+            }
+            
+            barRenderer.Render(g, clientSize);
         }
         
         private void DrawBounce(Graphics g, Size clientSize)
         {
-            float barWidth = (float)clientSize.Width / barCount;
-            float heightMultiplier = barHeight / 100f;
+            barRenderer.currentTheme = currentTheme;
+            barRenderer.barColor = barColor;
+            barRenderer.sensitivity = sensitivity;
+            barRenderer.barHeight = barHeight;
+            barRenderer.barCount = barCount;
+            barRenderer.barSpacing = barSpacing;
+            barRenderer.rainbowBars = rainbowBars;
 
+            var bounceValues = new float[barCount];
             for (int i = 0; i < barCount; i++)
             {
-                float h = bounceHeights[i] * (clientSize.Height * heightMultiplier);
-                if (h < 2) h = 2;
-                
-                Color barColorToUse = GetBarColor(h, clientSize.Height);
-                float x = i * barWidth;
-                float y = clientSize.Height - h;
-                
-                using (SolidBrush brush = new SolidBrush(barColorToUse))
-                {
-                    g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
-                }
+                bounceValues[i] = bounceHeights[i];
             }
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                barRenderer.smoothedBarValues[i] = bounceValues[i];
+            }
+            
+            barRenderer.Render(g, clientSize);
         }
         
         private void DrawGlitch(Graphics g, Size clientSize)
         {
-            float barWidth = (float)clientSize.Width / barCount;
-            float heightMultiplier = barHeight / 100f;
+            barRenderer.currentTheme = currentTheme;
+            barRenderer.barColor = barColor;
+            barRenderer.sensitivity = sensitivity;
+            barRenderer.barHeight = barHeight;
+            barRenderer.barCount = barCount;
+            barRenderer.barSpacing = barSpacing;
+            barRenderer.rainbowBars = rainbowBars;
 
+            var glitchValues = new float[barCount];
             for (int i = 0; i < barCount; i++)
             {
                 float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
-                float h = barRenderer.smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * glitch;
-                if (h < 2) h = 2;
-                
-                Color barColorToUse = GetBarColor(h, clientSize.Height);
-                float xOffset = glitchRandom.Next(-5, 5);
-                float x = (i * barWidth) + xOffset;
-                float y = clientSize.Height - h;
-                
-                using (SolidBrush brush = new SolidBrush(barColorToUse))
-                {
-                    g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
-                }
+                glitchValues[i] = barRenderer.smoothedBarValues[i] * glitch;
             }
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                barRenderer.smoothedBarValues[i] = glitchValues[i];
+            }
+            
+            barRenderer.Render(g, clientSize);
         }
         
         private void DrawCircle(Graphics g, Size clientSize)
