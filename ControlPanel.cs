@@ -26,6 +26,7 @@ namespace NekoBeats
         private CheckBox colorCycleCheck;
         private CheckBox bloomCheck;
         private CheckBox particlesCheck;
+        private CheckBox circleModeCheck;
         private CheckBox clickThroughCheck;
         private CheckBox draggableCheck;
         
@@ -154,15 +155,13 @@ namespace NekoBeats
             particleCountTrack.ValueChanged += (s, e) => { visualizer.Logic.particleCount = particleCountTrack.Value; if (particlesCheck.Checked) visualizer.Logic.Resize(visualizer.ClientSize); };
             effectsTab.Controls.Add(particleCountTrack);
             y += 35;
-
-            var circleModeCheck = new CheckBox { Text = "Circle Mode", Location = new Point(20, y), Size = new Size(120, 25), ForeColor = Color.White };
-            circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.currentStyle = circleModeCheck.Checked ? BarLogic.AnimationStyle.Circle : BarLogic.AnimationStyle.Bars;
-            effectsTab.Controls.Add(circleModeCheck);
-
-
             
-            effectsTab.Controls.Add(new Label { Text = "Circle Radius:", Location = new Point(20, y), Size = new Size(80, 20), ForeColor = Color.White });
-            circleRadiusTrack = new TrackBar { Location = new Point(110, y - 5), Size = new Size(260, 45), Minimum = 50, Maximum = 500, TickStyle = TickStyle.None, BackColor = Color.FromArgb(40, 40, 40) };
+            circleModeCheck = new CheckBox { Text = "Circle Mode", Location = new Point(20, y), Size = new Size(120, 25), ForeColor = Color.White };
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.isCircleMode = circleModeCheck.Checked;
+            effectsTab.Controls.Add(circleModeCheck);
+            
+            effectsTab.Controls.Add(new Label { Text = "Radius:", Location = new Point(150, y + 5), Size = new Size(60, 20), ForeColor = Color.White });
+            circleRadiusTrack = new TrackBar { Location = new Point(220, y - 2), Size = new Size(150, 45), Minimum = 50, Maximum = 500, TickStyle = TickStyle.None, BackColor = Color.FromArgb(40, 40, 40) };
             circleRadiusTrack.ValueChanged += (s, e) => visualizer.Logic.circleRadius = circleRadiusTrack.Value;
             effectsTab.Controls.Add(circleRadiusTrack);
             
@@ -286,6 +285,7 @@ namespace NekoBeats
             bloomIntensityTrack.Value = visualizer.Logic.bloomIntensity;
             particlesCheck.Checked = visualizer.Logic.particlesEnabled;
             particleCountTrack.Value = visualizer.Logic.particleCount;
+            circleModeCheck.Checked = visualizer.Logic.BarLogic.isCircleMode;
             circleRadiusTrack.Value = (int)visualizer.Logic.circleRadius;
             sensitivityTrack.Value = (int)(visualizer.Logic.sensitivity * 100);
             smoothSpeedTrack.Value = (int)(visualizer.Logic.smoothSpeed * 100);
