@@ -22,8 +22,8 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     
-    - name: Build
-      run: dotnet publish -c Release -r win-x64 --self-contained true
+    - name: Publish NekoBeats
+      run: dotnet publish -c Release -r win-x64 --self-contained true -o ./bin/Release/net8.0-windows/win-x64/publish
     
     - name: Install Inno Setup
       run: choco install innosetup -y
@@ -35,10 +35,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: NekoBeats-build
-        path: bin/Release/net6.0-windows/win-x64/publish/
+        path: bin/Release/net8.0-windows/win-x64/publish/
     
     - name: Upload Installer
       uses: actions/upload-artifact@v4
       with:
         name: NekoBeats-installer
-        path: output/NekoBeats-*-installer.exe
+        path: installer/output/*.exe
