@@ -5,7 +5,7 @@ namespace NekoBeats
 {
     public class BarLogic
     {
-        public enum AnimationStyle { Bars, Pulse, Wave, Bounce, Glitch, Circle }
+        public enum AnimationStyle { Bars, Pulse, Wave, Bounce, Glitch }
         
         public AnimationStyle currentStyle = AnimationStyle.Bars;
         public BarRenderer.BarTheme currentTheme = BarRenderer.BarTheme.Rectangle;

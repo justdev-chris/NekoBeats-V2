@@ -154,6 +154,12 @@ namespace NekoBeats
             particleCountTrack.ValueChanged += (s, e) => { visualizer.Logic.particleCount = particleCountTrack.Value; if (particlesCheck.Checked) visualizer.Logic.Resize(visualizer.ClientSize); };
             effectsTab.Controls.Add(particleCountTrack);
             y += 35;
+
+            var circleModeCheck = new CheckBox { Text = "Circle Mode", Location = new Point(20, y), Size = new Size(120, 25), ForeColor = Color.White };
+            circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.currentStyle = circleModeCheck.Checked ? BarLogic.AnimationStyle.Circle : BarLogic.AnimationStyle.Bars;
+            effectsTab.Controls.Add(circleModeCheck);
+
+
             
             effectsTab.Controls.Add(new Label { Text = "Circle Radius:", Location = new Point(20, y), Size = new Size(80, 20), ForeColor = Color.White });
             circleRadiusTrack = new TrackBar { Location = new Point(110, y - 5), Size = new Size(260, 45), Minimum = 50, Maximum = 500, TickStyle = TickStyle.None, BackColor = Color.FromArgb(40, 40, 40) };
