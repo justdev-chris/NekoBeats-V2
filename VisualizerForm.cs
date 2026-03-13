@@ -11,6 +11,7 @@ public partial class VisualizerForm : Form
 [DllImport("user32.dll")]
 private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
+
     [DllImport("user32.dll")]
     private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
     
@@ -192,5 +193,5 @@ private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
     }
     
     public VisualizerLogic Logic => logic;
-  }
+ }
 }
