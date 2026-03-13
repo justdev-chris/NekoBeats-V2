@@ -9,7 +9,7 @@ public class ControlPanel : Form
 {
 private VisualizerForm visualizer;
 
-```
+
     private CheckBox rainbowCheck;
     private TrackBar spacingTrack;
     private ComboBox themeCombo;
@@ -493,7 +493,5 @@ private VisualizerForm visualizer;
         if (clickThroughCheck != null) clickThroughCheck.Checked = visualizer.Logic.clickThrough;
         if (draggableCheck != null) draggableCheck.Checked = visualizer.Logic.draggable;
     }
-}
-```
-
+  }
 }
