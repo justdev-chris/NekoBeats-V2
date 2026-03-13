@@ -9,7 +9,6 @@ public class ControlPanel : Form
 {
 private VisualizerForm visualizer;
 
-
     private CheckBox rainbowCheck;
     private TrackBar spacingTrack;
     private ComboBox themeCombo;
@@ -38,7 +37,6 @@ private VisualizerForm visualizer;
     private Color dimText = Color.FromArgb(150, 150, 180);
     
     private Panel currentTabPanel;
-    private Button currentTabButton;
     
     public ControlPanel(VisualizerForm visualizer)
     {
@@ -50,7 +48,7 @@ private VisualizerForm visualizer;
     
     private void InitializeComponents()
     {
-        this.Text = "NekoBeats";
+        this.Text = "NekoBeats Control";
         this.Size = new Size(900, 700);
         this.StartPosition = FormStartPosition.Manual;
         this.Location = new Point(50, 50);
@@ -60,54 +58,28 @@ private VisualizerForm visualizer;
         this.Font = new Font("Courier New", 9);
         this.DoubleBuffered = true;
         
-        // Main container
         var mainContainer = new Panel { Dock = DockStyle.Fill, BackColor = darkBg, Padding = new Padding(0) };
         
-        // === HEADER ===
-        var headerPanel = new Panel
-        {
-            Dock = DockStyle.Top,
-            Height = 70,
-            BackColor = Color.FromArgb(5, 5, 10),
-            BorderStyle = BorderStyle.FixedSingle
-        };
-        headerPanel.Paint += (s, e) =>
-        {
-            e.Graphics.DrawLine(new Pen(neonCyan, 2), 0, 69, headerPanel.Width, 69);
-        };
-        
-        var titleLabel = new Label
-        {
-            Text = "≈ NekoBeats Control ≈",
-            Font = new Font("Courier New", 18, FontStyle.Bold),
-            ForeColor = neonCyan,
-            Location = new Point(20, 15),
-            Size = new Size(500, 40),
-            TextAlign = ContentAlignment.MiddleLeft
-        };
-        headerPanel.Controls.Add(titleLabel);
-        
-        mainContainer.Controls.Add(headerPanel);
-        
-        // === TAB BUTTONS ===
+        // === TAB BUTTONS (NO BIG HEADER) ===
         var tabButtonPanel = new Panel
         {
             Dock = DockStyle.Top,
-            Height = 50,
+            Height = 40,
             BackColor = Color.FromArgb(15, 15, 20),
             BorderStyle = BorderStyle.FixedSingle
         };
+        tabButtonPanel.Paint += (s, e) => e.Graphics.DrawLine(new Pen(neonCyan, 2), 0, 39, tabButtonPanel.Width, 39);
         
-        string[] tabs = { "VIZ", "COLORS", "FX", "AUDIO", "WINDOW", "PRESETS" };
-        int tabX = 10;
+        string[] tabs = { "VIZ", "COLORS", "FX", "AUDIO", "WINDOW", "PRESETS", "CREDITS" };
+        int tabX = 5;
         
         foreach (string tabName in tabs)
         {
             var tabBtn = new Button
             {
                 Text = tabName,
-                Location = new Point(tabX, 8),
-                Size = new Size(80, 34),
+                Location = new Point(tabX, 4),
+                Size = new Size(70, 32),
                 BackColor = Color.FromArgb(30, 30, 40),
                 ForeColor = dimText,
                 FlatStyle = FlatStyle.Flat,
@@ -117,19 +89,19 @@ private VisualizerForm visualizer;
             };
             tabBtn.FlatAppearance.BorderColor = dimText;
             tabBtn.FlatAppearance.BorderSize = 1;
-            tabBtn.Click += TabButton_Click;
+            tabBtn.Click += (s, e) => ShowTab(((Button)s).Text);
             tabButtonPanel.Controls.Add(tabBtn);
-            tabX += 90;
+            tabX += 75;
         }
         
         mainContainer.Controls.Add(tabButtonPanel);
         
-        // === TAB CONTENT PANEL ===
+        // === TAB CONTENT ===
         var contentPanel = new Panel
         {
             Dock = DockStyle.Fill,
             BackColor = darkBg,
-            Padding = new Padding(15)
+            Padding = new Padding(10)
         };
         
         currentTabPanel = new Panel
@@ -147,67 +119,27 @@ private VisualizerForm visualizer;
             Dock = DockStyle.Bottom,
             Height = 50,
             BackColor = Color.FromArgb(5, 5, 10),
-            BorderStyle = BorderStyle.FixedSingle
+            BorderStyle = BorderStyle.FixedSingle,
+            Padding = new Padding(5)
         };
-        footerPanel.Paint += (s, e) =>
-        {
-            e.Graphics.DrawLine(new Pen(neonPurple, 2), 0, 0, footerPanel.Width, 0);
-        };
+        footerPanel.Paint += (s, e) => e.Graphics.DrawLine(new Pen(neonPurple, 2), 0, 0, footerPanel.Width, 0);
         
-        var saveBtn = new Button
-        {
-            Text = "SAVE",
-            Location = new Point(10, 10),
-            Size = new Size(80, 30),
-            BackColor = neonCyan,
-            ForeColor = Color.Black,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Courier New", 10, FontStyle.Bold),
-            Cursor = Cursors.Hand
-        };
+        var saveBtn = new Button { Text = "SAVE", Location = new Point(10, 10), Size = new Size(80, 30), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand };
         saveBtn.Click += (s, e) => { var dialog = new SaveFileDialog { Filter = "NekoBeats Preset (*.nbp)|*.nbp" }; if (dialog.ShowDialog() == DialogResult.OK) visualizer.SavePreset(dialog.FileName); };
         footerPanel.Controls.Add(saveBtn);
         
-        var loadBtn = new Button
-        {
-            Text = "LOAD",
-            Location = new Point(100, 10),
-            Size = new Size(80, 30),
-            BackColor = neonCyan,
-            ForeColor = Color.Black,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Courier New", 10, FontStyle.Bold),
-            Cursor = Cursors.Hand
-        };
+        var loadBtn = new Button { Text = "LOAD", Location = new Point(100, 10), Size = new Size(80, 30), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand };
         loadBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "NekoBeats Preset (*.nbp)|*.nbp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.LoadPreset(dialog.FileName); UpdateControlsFromVisualizer(); } };
         footerPanel.Controls.Add(loadBtn);
         
-        var exitBtn = new Button
-        {
-            Text = "EXIT",
-            Location = new Point(800, 10),
-            Size = new Size(80, 30),
-            BackColor = neonPurple,
-            ForeColor = Color.Black,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Courier New", 10, FontStyle.Bold),
-            Cursor = Cursors.Hand
-        };
+        var exitBtn = new Button { Text = "EXIT", Location = new Point(800, 10), Size = new Size(80, 30), BackColor = neonPurple, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand };
         exitBtn.Click += (s, e) => Environment.Exit(0);
         footerPanel.Controls.Add(exitBtn);
         
         mainContainer.Controls.Add(footerPanel);
-        
         this.Controls.Add(mainContainer);
         
-        // Load first tab
         ShowTab("VIZ");
-    }
-    
-    private void TabButton_Click(object sender, EventArgs e)
-    {
-        var btn = (Button)sender;
-        ShowTab(btn.Text);
     }
     
     private void ShowTab(string tabName)
@@ -240,17 +172,7 @@ private VisualizerForm visualizer;
                 
             case "COLORS":
                 AddLabel(currentTabPanel, "[[ COLORS ]]", ref y);
-                var colorBtn = new Button
-                {
-                    Text = ">> COLOR PICKER <<",
-                    Location = new Point(20, y),
-                    Size = new Size(200, 35),
-                    BackColor = neonCyan,
-                    ForeColor = Color.Black,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Courier New", 10, FontStyle.Bold),
-                    Cursor = Cursors.Hand
-                };
+                var colorBtn = new Button { Text = ">> COLOR PICKER <<", Location = new Point(20, y), Size = new Size(200, 35), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand };
                 colorBtn.Click += (s, e) => ShowColorDialog();
                 currentTabPanel.Controls.Add(colorBtn);
                 y += 50;
@@ -300,25 +222,8 @@ private VisualizerForm visualizer;
             case "WINDOW":
                 AddLabel(currentTabPanel, "[[ WINDOW ]]", ref y);
                 
-                var streamingBtn = new Button
-                {
-                    Text = ">> STREAMING MODE <<",
-                    Location = new Point(20, y),
-                    Size = new Size(250, 35),
-                    BackColor = neonPurple,
-                    ForeColor = Color.Black,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Courier New", 10, FontStyle.Bold),
-                    Cursor = Cursors.Hand,
-                    Tag = false
-                };
-                streamingBtn.Click += (s, e) => 
-                { 
-                    bool isEnabled = (bool)streamingBtn.Tag;
-                    visualizer.SetStreamingMode(!isEnabled);
-                    streamingBtn.Tag = !isEnabled;
-                    streamingBtn.Text = !isEnabled ? ">> STREAMING MODE ON <<" : ">> STREAMING MODE <<";
-                };
+                var streamingBtn = new Button { Text = ">> STREAMING MODE <<", Location = new Point(20, y), Size = new Size(250, 35), BackColor = neonPurple, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand, Tag = false };
+                streamingBtn.Click += (s, e) => { bool isEnabled = (bool)streamingBtn.Tag; visualizer.SetStreamingMode(!isEnabled); streamingBtn.Tag = !isEnabled; streamingBtn.Text = !isEnabled ? ">> STREAMING MODE ON <<" : ">> STREAMING MODE <<"; };
                 currentTabPanel.Controls.Add(streamingBtn);
                 y += 50;
                 
@@ -336,102 +241,71 @@ private VisualizerForm visualizer;
             case "PRESETS":
                 AddLabel(currentTabPanel, "[[ PRESETS ]]", ref y);
                 
-                var loadBarBtn = new Button
-                {
-                    Text = ">> LOAD BAR THEME <<",
-                    Location = new Point(20, y),
-                    Size = new Size(200, 35),
-                    BackColor = neonPurple,
-                    ForeColor = Color.Black,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Courier New", 10, FontStyle.Bold),
-                    Cursor = Cursors.Hand
-                };
+                var loadBarBtn = new Button { Text = ">> LOAD BAR THEME <<", Location = new Point(20, y), Size = new Size(250, 35), BackColor = neonPurple, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 10, FontStyle.Bold), Cursor = Cursors.Hand };
                 loadBarBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "NekoBeats Bar Preset (*.nbbar)|*.nbbar" }; if (dialog.ShowDialog() == DialogResult.OK) visualizer.Logic.LoadBarPreset(dialog.FileName); };
                 currentTabPanel.Controls.Add(loadBarBtn);
+                y += 50;
+                
+                var infoLabel = new Label { Text = "Use SAVE/LOAD buttons in footer\nfor full visualizer presets", Location = new Point(20, y), Size = new Size(400, 50), ForeColor = dimText, Font = new Font("Courier New", 9), AutoSize = false };
+                currentTabPanel.Controls.Add(infoLabel);
+                break;
+                
+            case "CREDITS":
+                AddLabel(currentTabPanel, "[[ CREDITS ]]", ref y);
+                
+                if (File.Exists("NekoBeatsLogo.png"))
+                {
+                    var logoBox = new PictureBox { Image = Image.FromFile("NekoBeatsLogo.png"), SizeMode = PictureBoxSizeMode.Zoom, Location = new Point(300, y), Size = new Size(120, 120), BackColor = Color.Transparent };
+                    currentTabPanel.Controls.Add(logoBox);
+                    y += 130;
+                }
+                
+                var createdLabel = new Label { Text = "Created by: justdev-chris", Location = new Point(20, y), Size = new Size(400, 25), ForeColor = neonCyan, Font = new Font("Courier New", 11, FontStyle.Bold), AutoSize = false };
+                currentTabPanel.Controls.Add(createdLabel);
+                y += 40;
+                
+                var versionLabel = new Label { Text = "NekoBeats V2.3", Location = new Point(20, y), Size = new Size(400, 25), ForeColor = dimText, Font = new Font("Courier New", 10), AutoSize = false };
+                currentTabPanel.Controls.Add(versionLabel);
+                y += 40;
+                
+                var githubLabel = new Label { Text = "github.com/justdev-chris/NekoBeats-V2", Location = new Point(20, y), Size = new Size(400, 25), ForeColor = neonCyan, Font = new Font("Courier New", 9, FontStyle.Underline), AutoSize = false, Cursor = Cursors.Hand };
+                githubLabel.Click += (s, e) => { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://github.com/justdev-chris/NekoBeats-V2", UseShellExecute = true }); } catch { } };
+                currentTabPanel.Controls.Add(githubLabel);
                 break;
         }
     }
     
     private void AddLabel(Panel panel, string text, ref int y)
     {
-        var label = new Label
-        {
-            Text = text,
-            Location = new Point(20, y),
-            Size = new Size(300, 25),
-            ForeColor = neonCyan,
-            Font = new Font("Courier New", 11, FontStyle.Bold),
-            AutoSize = false
-        };
+        var label = new Label { Text = text, Location = new Point(20, y), Size = new Size(300, 20), ForeColor = neonCyan, Font = new Font("Courier New", 11, FontStyle.Bold), AutoSize = false };
         panel.Controls.Add(label);
-        y += 35;
+        y += 30;
     }
     
     private void AddSliderControl(Panel panel, string label, ref int y, out TrackBar trackBar, int min, int max)
     {
-        var labelCtrl = new Label
-        {
-            Text = label + ":",
-            Location = new Point(20, y),
-            Size = new Size(150, 20),
-            ForeColor = dimText,
-            Font = new Font("Courier New", 9)
-        };
+        var labelCtrl = new Label { Text = label + ":", Location = new Point(20, y), Size = new Size(150, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
         panel.Controls.Add(labelCtrl);
         
-        trackBar = new TrackBar
-        {
-            Location = new Point(180, y - 5),
-            Size = new Size(400, 45),
-            Minimum = min,
-            Maximum = max,
-            TickStyle = TickStyle.None,
-            BackColor = darkBg
-        };
+        trackBar = new TrackBar { Location = new Point(180, y - 5), Size = new Size(350, 45), Minimum = min, Maximum = max, TickStyle = TickStyle.None, BackColor = darkBg };
         panel.Controls.Add(trackBar);
         y += 45;
     }
     
     private CheckBox AddCheckboxControl(Panel panel, string label, ref int y)
     {
-        var checkbox = new CheckBox
-        {
-            Text = ">> " + label,
-            Location = new Point(20, y),
-            Size = new Size(250, 25),
-            ForeColor = neonCyan,
-            BackColor = darkBg,
-            Font = new Font("Courier New", 9),
-            Appearance = Appearance.Normal
-        };
+        var checkbox = new CheckBox { Text = ">> " + label, Location = new Point(20, y), Size = new Size(250, 25), ForeColor = neonCyan, BackColor = darkBg, Font = new Font("Courier New", 9), Appearance = Appearance.Normal };
         panel.Controls.Add(checkbox);
-        y += 35;
+        y += 30;
         return checkbox;
     }
     
     private void AddComboControl(Panel panel, string label, ref int y, out ComboBox comboBox, Type enumType)
     {
-        var labelCtrl = new Label
-        {
-            Text = label,
-            Location = new Point(20, y + 5),
-            Size = new Size(150, 20),
-            ForeColor = dimText,
-            Font = new Font("Courier New", 9)
-        };
+        var labelCtrl = new Label { Text = label, Location = new Point(20, y + 5), Size = new Size(150, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
         panel.Controls.Add(labelCtrl);
         
-        comboBox = new ComboBox
-        {
-            Location = new Point(180, y),
-            Size = new Size(200, 25),
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            BackColor = Color.FromArgb(30, 30, 40),
-            ForeColor = neonCyan,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Courier New", 9)
-        };
+        comboBox = new ComboBox { Location = new Point(180, y), Size = new Size(200, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
         comboBox.Items.AddRange(System.Enum.GetNames(enumType));
         panel.Controls.Add(comboBox);
         y += 40;
@@ -439,26 +313,10 @@ private VisualizerForm visualizer;
     
     private void AddComboControl(Panel panel, string label, ref int y, out ComboBox comboBox, string[] items)
     {
-        var labelCtrl = new Label
-        {
-            Text = label,
-            Location = new Point(20, y + 5),
-            Size = new Size(150, 20),
-            ForeColor = dimText,
-            Font = new Font("Courier New", 9)
-        };
+        var labelCtrl = new Label { Text = label, Location = new Point(20, y + 5), Size = new Size(150, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
         panel.Controls.Add(labelCtrl);
         
-        comboBox = new ComboBox
-        {
-            Location = new Point(180, y),
-            Size = new Size(200, 25),
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            BackColor = Color.FromArgb(30, 30, 40),
-            ForeColor = neonCyan,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Courier New", 9)
-        };
+        comboBox = new ComboBox { Location = new Point(180, y), Size = new Size(200, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
         comboBox.Items.AddRange(items);
         panel.Controls.Add(comboBox);
         y += 40;
