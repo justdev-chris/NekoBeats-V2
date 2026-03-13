@@ -8,7 +8,7 @@ namespace NekoBeats
 {
 public partial class VisualizerForm : Form
 {
-[DllImport(“user32.dll”)]
+[DllImport("user32.dll")]
 private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
     [DllImport("user32.dll")]
