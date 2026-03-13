@@ -9,7 +9,6 @@ public class ControlPanel : Form
 {
 private VisualizerForm visualizer;
 
-```
     private CheckBox rainbowCheck;
     private TrackBar spacingTrack;
     private ComboBox themeCombo;
