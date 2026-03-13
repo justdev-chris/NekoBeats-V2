@@ -37,3 +37,9 @@ steps:
   with:
     name: NekoBeats-2.3-installer
     path: installer/NekoBeats-2.3-installer.exe
+
+- name: Upload Build Output
+  uses: actions/upload-artifact@v4
+  with:
+    name: NekoBeats-2.3-build
+    path: bin/Release/net8.0-windows/win-x64/publish/
