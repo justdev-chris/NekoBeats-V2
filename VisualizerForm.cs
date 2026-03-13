@@ -6,158 +6,194 @@ using System.IO;
 
 namespace NekoBeats
 {
-    public partial class VisualizerForm : Form
+public partial class VisualizerForm : Form
+{
+[DllImport(“user32.dll”)]
+private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+```
+    [DllImport("user32.dll")]
+    private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+    
+    private const int GWL_EXSTYLE = -20;
+    private const int WS_EX_LAYERED = 0x80000;
+    private const int WS_EX_TRANSPARENT = 0x20;
+    
+    private VisualizerLogic logic;
+    private Timer renderTimer;
+    private ControlPanel controlPanel;
+    
+    private Point dragStart;
+    private bool isDragging = false;
+    
+    public bool streamingMode = false;
+    
+    public VisualizerForm()
     {
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        InitializeForm();
+        InitializeLogic();
+        InitializeTimer();
         
-        [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        controlPanel = new ControlPanel(this);
+        controlPanel.Show();
+    }
+    
+    private void InitializeForm()
+    {
+        this.Text = "NekoBeats V2";
         
-        private const int GWL_EXSTYLE = -20;
-        private const int WS_EX_LAYERED = 0x80000;
-        private const int WS_EX_TRANSPARENT = 0x20;
-        
-        private VisualizerLogic logic;
-        private Timer renderTimer;
-        private ControlPanel controlPanel;
-        
-        private Point dragStart;
-        private bool isDragging = false;
-        
-        public VisualizerForm()
+        // Set icon right at the start
+        if (File.Exists("NekoBeatsLogo.ico"))
         {
-            InitializeForm();
-            InitializeLogic();
-            InitializeTimer();
-            
-            controlPanel = new ControlPanel(this);
-            controlPanel.Show();
+            this.Icon = new Icon("NekoBeatsLogo.ico");
         }
         
-        private void InitializeForm()
+        this.WindowState = FormWindowState.Maximized;
+        this.FormBorderStyle = FormBorderStyle.None;
+        this.BackColor = Color.Magenta;
+        this.TransparencyKey = Color.Magenta;
+        this.TopMost = true;
+        this.DoubleBuffered = true;
+        this.ShowInTaskbar = false; // Hidden from taskbar
+        this.Opacity = 1.0f;
+        this.Paint += OnPaint;
+        this.FormClosing += OnFormClosing;
+        this.Resize += OnResize;
+        this.MouseDown += OnMouseDown;
+        this.MouseMove += OnMouseMove;
+        this.MouseUp += OnMouseUp;
+        
+        MakeClickThrough(true);
+    }
+    
+    private void InitializeLogic()
+    {
+        logic = new VisualizerLogic();
+        logic.Initialize(this.ClientSize);
+    }
+    
+    private void InitializeTimer()
+    {
+        renderTimer = new Timer();
+        renderTimer.Interval = 16;
+        renderTimer.Tick += (s, e) => {
+            logic.UpdateSmoothing();
+            this.Invalidate();
+        };
+        renderTimer.Start();
+    }
+    
+    public void UpdateFPSTimer()
+    {
+        renderTimer.Interval = logic.fpsLimit switch
         {
-            this.Text = "NekoBeats V2";
-            
-            // Set icon right at the start
-            if (File.Exists("NekoBeatsLogo.ico"))
-            {
-                this.Icon = new Icon("NekoBeatsLogo.ico");
-            }
-            
-            this.WindowState = FormWindowState.Maximized;
+            30 => 33,
+            60 => 16,
+            120 => 8,
+            _ => 1
+        };
+    }
+    
+    private void OnResize(object sender, EventArgs e)
+    {
+        logic?.Resize(this.ClientSize);
+    }
+    
+    public void MakeClickThrough(bool enable)
+    {
+        int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+        if (enable)
+            SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+        else
+            SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+    }
+    
+    public void SetStreamingMode(bool enable)
+    {
+        streamingMode = enable;
+        
+        if (enable)
+        {
+            // Normal window mode (OBS capturable)
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.ShowInTaskbar = true;
+            this.TopMost = false;
+            this.BackColor = Color.Black;
+            this.TransparencyKey = Color.Magenta;
+            this.WindowState = FormWindowState.Normal;
+            this.Size = new Size(1280, 720);
+            this.Text = "NekoBeats V2 - Streaming Mode";
+            MakeClickThrough(false);
+        }
+        else
+        {
+            // Borderless mode (default)
             this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar = false;
+            this.TopMost = true;
             this.BackColor = Color.Magenta;
             this.TransparencyKey = Color.Magenta;
-            this.TopMost = true;
-            this.DoubleBuffered = true;
-            this.ShowInTaskbar = false; // Hidden from taskbar
-            this.Opacity = 1.0f;
-            this.Paint += OnPaint;
-            this.FormClosing += OnFormClosing;
-            this.Resize += OnResize;
-            this.MouseDown += OnMouseDown;
-            this.MouseMove += OnMouseMove;
-            this.MouseUp += OnMouseUp;
-            
+            this.WindowState = FormWindowState.Maximized;
+            this.Text = "NekoBeats V2";
             MakeClickThrough(true);
         }
-        
-        private void InitializeLogic()
-        {
-            logic = new VisualizerLogic();
-            logic.Initialize(this.ClientSize);
-        }
-        
-        private void InitializeTimer()
-        {
-            renderTimer = new Timer();
-            renderTimer.Interval = 16;
-            renderTimer.Tick += (s, e) => {
-                logic.UpdateSmoothing();
-                this.Invalidate();
-            };
-            renderTimer.Start();
-        }
-        
-        public void UpdateFPSTimer()
-        {
-            renderTimer.Interval = logic.fpsLimit switch
-            {
-                30 => 33,
-                60 => 16,
-                120 => 8,
-                _ => 1
-            };
-        }
-        
-        private void OnResize(object sender, EventArgs e)
-        {
-            logic?.Resize(this.ClientSize);
-        }
-        
-        public void MakeClickThrough(bool enable)
-        {
-            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-            if (enable)
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-            else
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-        }
-        
-        private void OnPaint(object sender, PaintEventArgs e)
-        {
-            logic.Render(e.Graphics, this.ClientSize);
-        }
-        
-        private void OnFormClosing(object sender, FormClosingEventArgs e)
-        {
-            logic?.Dispose();
-            controlPanel?.Close();
-        }
-        
-        private void OnMouseDown(object sender, MouseEventArgs e)
-        {
-            if (logic.draggable && e.Button == MouseButtons.Left)
-            {
-                // Exit maximized mode when dragging starts
-                if (this.WindowState == FormWindowState.Maximized)
-                {
-                    this.WindowState = FormWindowState.Normal;
-                    this.Size = new Size(1920, 1080);
-                }
-                
-                isDragging = true;
-                dragStart = new Point(e.X, e.Y);
-            }
-        }
-        
-        private void OnMouseMove(object sender, MouseEventArgs e)
-        {
-            if (isDragging && logic.draggable)
-            {
-                int deltaX = e.X - dragStart.X;
-                int deltaY = e.Y - dragStart.Y;
-                Location = new Point(Location.X + deltaX, Location.Y + deltaY);
-            }
-        }
-        
-        private void OnMouseUp(object sender, MouseEventArgs e)
-        {
-            isDragging = false;
-        }
-        
-        public void SavePreset(string filename)
-        {
-            logic.SavePreset(filename);
-        }
-        
-        public void LoadPreset(string filename)
-        {
-            logic.LoadPreset(filename);
-            controlPanel?.UpdateControlsFromVisualizer();
-        }
-        
-        public VisualizerLogic Logic => logic;
     }
+    
+    private void OnPaint(object sender, PaintEventArgs e)
+    {
+        logic.Render(e.Graphics, this.ClientSize);
+    }
+    
+    private void OnFormClosing(object sender, FormClosingEventArgs e)
+    {
+        logic?.Dispose();
+        controlPanel?.Close();
+    }
+    
+    private void OnMouseDown(object sender, MouseEventArgs e)
+    {
+        if (logic.draggable && e.Button == MouseButtons.Left)
+        {
+            // Exit maximized mode when dragging starts
+            if (this.WindowState == FormWindowState.Maximized)
+            {
+                this.WindowState = FormWindowState.Normal;
+                this.Size = new Size(1920, 1080);
+            }
+            
+            isDragging = true;
+            dragStart = new Point(e.X, e.Y);
+        }
+    }
+    
+    private void OnMouseMove(object sender, MouseEventArgs e)
+    {
+        if (isDragging && logic.draggable)
+        {
+            int deltaX = e.X - dragStart.X;
+            int deltaY = e.Y - dragStart.Y;
+            Location = new Point(Location.X + deltaX, Location.Y + deltaY);
+        }
+    }
+    
+    private void OnMouseUp(object sender, MouseEventArgs e)
+    {
+        isDragging = false;
+    }
+    
+    public void SavePreset(string filename)
+    {
+        logic.SavePreset(filename);
+    }
+    
+    public void LoadPreset(string filename)
+    {
+        logic.LoadPreset(filename);
+        controlPanel?.UpdateControlsFromVisualizer();
+    }
+    
+    public VisualizerLogic Logic => logic;
+}
+```
+
 }
