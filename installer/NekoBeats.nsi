@@ -34,10 +34,13 @@ CRCCheck on
 XPStyle on
 
 ; ---------------------------------------------------------
-; Installation section
+; Install Section
 ; ---------------------------------------------------------
 Section "Install"
   SetOutPath "$INSTDIR"
+
+  ; Create uninstaller
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   ; App files
   File "..\bin\Release\net8.0-windows\win-x64\publish\NekoBeats.exe"
@@ -55,18 +58,25 @@ Section "Install"
 SectionEnd
 
 ; ---------------------------------------------------------
-; Uninstaller
+; Uninstall Section
 ; ---------------------------------------------------------
 Section "Uninstall"
   Delete "$INSTDIR\NekoBeats.exe"
   Delete "$INSTDIR\*.dll"
   Delete "$INSTDIR\NekoBeatsLogo.ico"
   Delete "$INSTDIR\NekoBeatsLogo.png"
+
+  ; Remove uninstaller
   Delete "$INSTDIR\Uninstall.exe"
+
+  ; Remove install directory
   RMDir "$INSTDIR"
 
+  ; Remove Start Menu shortcuts
   Delete "$SMPROGRAMS\NekoBeats\NekoBeats.lnk"
   Delete "$SMPROGRAMS\NekoBeats\Uninstall.lnk"
   RMDir "$SMPROGRAMS\NekoBeats"
+
+  ; Remove Desktop shortcut
   Delete "$DESKTOP\NekoBeats.lnk"
 SectionEnd
