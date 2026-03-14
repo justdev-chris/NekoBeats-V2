@@ -1,45 +1,45 @@
 name: Build NekoBeats NSIS Installer
 
-on: 
- push:
-  branches: [ main ]
- workflow_dispatch:
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
- build:
-  runs-on: windows-latest
+  build:
+    runs-on: windows-latest
 
- steps:
- - uses: actions/checkout@v3
-
- - name: Setup .NET
-   uses: actions/setup-dotnet@v3
-   with:
-     dotnet-version: '8.0.x'
-
- - name: Restore dependencies
-   run: dotnet restore
-
- - name: Build
-   run: dotnet publish -c Release -f net8.0-windows -r win-x64 --self-contained true
-
- - name: Install NSIS
-   run: |
-     choco install nsis -y
-
- - name: Build Installer
-   run: |
-     cd installer
-     "C:\Program Files (x86)\NSIS\makensis.exe" NekoBeats.nsi
-
- - name: Upload Artifacts
-   uses: actions/upload-artifact@v4
-   with:
-     name: NekoBeats-2.3-installer
-     path: installer/NekoBeats-2.3-installer.exe
-
- - name: Upload Build Output
-   uses: actions/upload-artifact@v4
-   with:
-    name: NekoBeats-2.3-build
-   path: bin/Release/net8.0-windows/win-x64/publish/
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet publish -c Release -f net8.0-windows -r win-x64 --self-contained true
+    
+    - name: Install NSIS
+      run: |
+        choco install nsis -y
+    
+    - name: Build Installer
+      run: |
+        cd installer
+        "C:\Program Files (x86)\NSIS\makensis.exe" NekoBeats.nsi
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: NekoBeats-2.3-installer
+        path: installer/NekoBeats-2.3-installer.exe
+    
+    - name: Upload Build Output
+      uses: actions/upload-artifact@v4
+      with:
+        name: NekoBeats-2.3-build
+        path: bin/Release/net8.0-windows/win-x64/publish/
