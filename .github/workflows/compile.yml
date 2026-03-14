@@ -22,7 +22,12 @@ jobs:
     
     - name: Build
       run: dotnet publish -c Release -f net8.0-windows -r win-x64 --self-contained true
-    
+
+    - name: Convert PNGs to NSIS-compatible BMP
+      run: |
+        magick installer/Banner.bmp -type truecolor -define bmp:format=bmp3 installer/NekoBeatsBanner.bmp
+        magick installer/Header.bmp -type truecolor -define bmp:format=bmp3 installer/NekoBeatsHeader.bmp
+ 
     - name: Install NSIS
       run: |
         choco install nsis -y
