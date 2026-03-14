@@ -154,16 +154,20 @@ namespace NekoBeats
                     AddComboControl(vizGroup, "Style:", ref gy, out styleCombo, typeof(BarLogic.AnimationStyle));
                     styleCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.animationStyle = (BarLogic.AnimationStyle)styleCombo.SelectedIndex;
                     
-                    AddSliderControl(vizGroup, "Bar Count:", ref gy, out barCountTrack, 32, 512, 100);
+                    var barCountVal = 100;
+                    AddSliderControl(vizGroup, "Bar Count:", ref gy, out barCountTrack, 32, 512, barCountVal);
                     barCountTrack.ValueChanged += (s, e) => visualizer.Logic.barCount = barCountTrack.Value;
                     
-                    AddSliderControl(vizGroup, "Bar Height:", ref gy, out barHeightTrack, 10, 200, 50);
+                    var barHeightVal = 50;
+                    AddSliderControl(vizGroup, "Bar Height:", ref gy, out barHeightTrack, 10, 200, barHeightVal);
                     barHeightTrack.ValueChanged += (s, e) => visualizer.Logic.barHeight = barHeightTrack.Value;
                     
-                    AddSliderControl(vizGroup, "Bar Spacing:", ref gy, out spacingTrack, 0, 20, 2);
+                    var spacingVal = 2;
+                    AddSliderControl(vizGroup, "Bar Spacing:", ref gy, out spacingTrack, 0, 20, spacingVal);
                     spacingTrack.ValueChanged += (s, e) => visualizer.Logic.barSpacing = spacingTrack.Value;
                     
-                    AddSliderControl(vizGroup, "Opacity:", ref gy, out opacityTrack, 10, 100, 100);
+                    var opacityVal = 100;
+                    AddSliderControl(vizGroup, "Opacity:", ref gy, out opacityTrack, 10, 100, opacityVal);
                     opacityTrack.ValueChanged += (s, e) => { visualizer.Logic.opacity = opacityTrack.Value / 100f; visualizer.Opacity = visualizer.Logic.opacity; };
                     
                     currentTabPanel.Controls.Add(vizGroup);
@@ -186,7 +190,8 @@ namespace NekoBeats
                     colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
                     gy += 35;
                     
-                    AddSliderControl(colorGroup, "Color Speed:", 20, gy, out colorSpeedTrack, 1, 20, 10);
+                    var colorSpeedVal = 10;
+                    AddSliderControl(colorGroup, "Color Speed:", 20, gy, out colorSpeedTrack, 1, 20, colorSpeedVal);
                     colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
                     
                     currentTabPanel.Controls.Add(colorGroup);
@@ -200,7 +205,8 @@ namespace NekoBeats
                     bloomCheck.CheckedChanged += (s, e) => visualizer.Logic.bloomEnabled = bloomCheck.Checked;
                     gy += 35;
                     
-                    AddSliderControl(fxGroup, "Bloom Intensity:", 20, gy, out bloomIntensityTrack, 5, 30, 15);
+                    var bloomVal = 15;
+                    AddSliderControl(fxGroup, "Bloom Intensity:", 20, gy, out bloomIntensityTrack, 5, 30, bloomVal);
                     bloomIntensityTrack.ValueChanged += (s, e) => visualizer.Logic.bloomIntensity = bloomIntensityTrack.Value;
                     gy += 45;
                     
@@ -208,7 +214,8 @@ namespace NekoBeats
                     particlesCheck.CheckedChanged += (s, e) => { visualizer.Logic.particlesEnabled = particlesCheck.Checked; if (particlesCheck.Checked) visualizer.Logic.Resize(visualizer.ClientSize); };
                     gy += 35;
                     
-                    AddSliderControl(fxGroup, "Particle Count:", 20, gy, out particleCountTrack, 20, 500, 100);
+                    var particleVal = 100;
+                    AddSliderControl(fxGroup, "Particle Count:", 20, gy, out particleCountTrack, 20, 500, particleVal);
                     particleCountTrack.ValueChanged += (s, e) => { visualizer.Logic.particleCount = particleCountTrack.Value; if (particlesCheck.Checked) visualizer.Logic.Resize(visualizer.ClientSize); };
                     gy += 45;
                     
@@ -216,7 +223,8 @@ namespace NekoBeats
                     circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.isCircleMode = circleModeCheck.Checked;
                     gy += 35;
                     
-                    AddSliderControl(fxGroup, "Circle Radius:", 20, gy, out circleRadiusTrack, 50, 500, 200);
+                    var circleVal = 200;
+                    AddSliderControl(fxGroup, "Circle Radius:", 20, gy, out circleRadiusTrack, 50, 500, circleVal);
                     circleRadiusTrack.ValueChanged += (s, e) => visualizer.Logic.circleRadius = circleRadiusTrack.Value;
                     
                     currentTabPanel.Controls.Add(fxGroup);
@@ -226,11 +234,13 @@ namespace NekoBeats
                     var audioGroup = CreateGroupBox("Audio Settings", 10, y, 900, 160);
                     gy = 25;
                     
-                    AddSliderControl(audioGroup, "Sensitivity:", 20, gy, out sensitivityTrack, 10, 300, 100);
+                    var sensitivityVal = 100;
+                    AddSliderControl(audioGroup, "Sensitivity:", 20, gy, out sensitivityTrack, 10, 300, sensitivityVal);
                     sensitivityTrack.ValueChanged += (s, e) => visualizer.Logic.sensitivity = sensitivityTrack.Value / 100f;
                     gy += 45;
                     
-                    AddSliderControl(audioGroup, "Smoothing:", 20, gy, out smoothSpeedTrack, 1, 50, 10);
+                    var smoothVal = 10;
+                    AddSliderControl(audioGroup, "Smoothing:", 20, gy, out smoothSpeedTrack, 1, 50, smoothVal);
                     smoothSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.smoothSpeed = smoothSpeedTrack.Value / 100f;
                     
                     currentTabPanel.Controls.Add(audioGroup);
