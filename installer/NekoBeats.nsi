@@ -15,6 +15,7 @@
 Name "NekoBeats"
 OutFile "NekoBeats-2.3-installer.exe"
 InstallDir "$PROGRAMFILES\NekoBeats"
+Icon "NekoBeatsLogo.ico"
 
 ; ---------------------------------------------------------
 ; MUI Pages
