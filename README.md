@@ -106,7 +106,7 @@ NekoBeats captures your system audio output using NAudio, performs FFT analysis 
 - ✅ Recording Visualizations - Optimized streaming mode for OBS
 - ✅ Improved Stability - Better audio handling and memory management
 - ✅ Performance Optimizations - Smoother rendering and faster response times
-Previous V2 Improvements 🎯
+- **Previous V2 Improvements 🎯**
 - ✅ Proper FFT processing (smoother visualization)
 - ✅ Real color picker (not just preset themes)
 - ✅ Click-through technology (use PC while visualizing)
