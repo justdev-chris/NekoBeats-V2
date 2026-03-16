@@ -92,48 +92,48 @@ dotnet publish -c Release -r win-x64 --self-contained true
 ```
 
 ## Requirements 📋
-∙ Windows 10/11
-∙ .NET 8.0 Runtime (included in self-contained build)
-∙ Audio output playing music
+- Windows 10/11
+- .NET 8.0 Runtime (included in self-contained build)
+- Audio output playing music
 
 ## How it Works 🔬
 
 NekoBeats captures your system audio output using NAudio, performs FFT analysis to extract frequencies, and visualizes them as colorful bars that pulse to the beat. The bars are rendered in a transparent overlay window that sits above everything else.
 
 # V2.3 Updates 🚀
-∙ ✅ Revamped UI - Cleaner, more intuitive interface
-∙ ✅ Built-in Installer - One-click setup and installation
-∙ ✅ Recording Visualizations - Optimized streaming mode for OBS
-∙ ✅ Improved Stability - Better audio handling and memory management
-∙ ✅ Performance Optimizations - Smoother rendering and faster response times
+- ✅ Revamped UI - Cleaner, more intuitive interface
+- ✅ Built-in Installer - One-click setup and installation
+- ✅ Recording Visualizations - Optimized streaming mode for OBS
+- ✅ Improved Stability - Better audio handling and memory management
+- ✅ Performance Optimizations - Smoother rendering and faster response times
 Previous V2 Improvements 🎯
-∙ ✅ Proper FFT processing (smoother visualization)
-∙ ✅ Real color picker (not just preset themes)
-∙ ✅ Click-through technology (use PC while visualizing)
-∙ ✅ More bars (up to 512 for detailed spectrum)
-∙ ✅ Better performance (60 FPS rendering)
-∙ ✅ Modern UI (separate control panel)
-∙ ✅ Single EXE (no dependencies needed)
-∙ ✅ Draggable window (move visualizer around)
-∙ ✅ Custom bar presets (shapes, animations, colors)
+- ✅ Proper FFT processing (smoother visualization)
+- ✅ Real color picker (not just preset themes)
+- ✅ Click-through technology (use PC while visualizing)
+- ✅ More bars (up to 512 for detailed spectrum)
+- ✅ Better performance (60 FPS rendering)
+- ✅ Modern UI (separate control panel)
+- ✅ Single EXE (no dependencies needed)
+- ✅ Draggable window (move visualizer around)
+- ✅ Custom bar presets (shapes, animations, colors)
 
 # Troubleshooting 🔧
 No bars showing?
-∙ Make sure audio is playing through your default output
-∙ Check that your audio isn’t muted
-∙ Try adjusting bar count in settings
+- Make sure audio is playing through your default output
+- Check that your audio isn’t muted
+- Try adjusting bar count in settings
 Visualizer laggy?
-∙ Reduce bar count in settings
-∙ Close other intensive applications
-∙ Check system audio device
+- Reduce bar count in settings
+- Close other intensive applications
+- Check system audio device
 Can’t click through?
-∙ Enable “Click Through” in control panel
-∙ Make sure no other apps are forcing focus
-∙ Restart the application
+- Enable “Click Through” in control panel
+- Make sure no other apps are forcing focus
+- Restart the application
 Recording issues?
-∙ Enable “Recording Mode” in control panel
-∙ Check OBS audio settings
-∙ Make sure NekoBeats audio is routed correctly
+- Enable “Recording Mode” in control panel
+- Check OBS audio settings
+- Make sure NekoBeats audio is routed correctly
 
 # Known Issues ⚠️
 1. If you change your sound output, NekoBeats may not detect the audio anymore and may have to restart NekoBeats.
@@ -146,9 +146,9 @@ MIT License - do whatever you want with it!
 
 # Credits 👏
 	
-  ∙	NAudio for audio capture
-	∙	FFT algorithm for frequency analysis
-	∙	Original NekoBeats V1 for inspiration
-	∙	You for using it! 🎧
+  -	NAudio for audio capture
+	-	FFT algorithm for frequency analysis
+	-	Original NekoBeats V1 for inspiration
+	-	You for using it! 🎧
 
 Made with ❤️ for music lovers everywhere. Turn up the volume and watch the magic happen!
