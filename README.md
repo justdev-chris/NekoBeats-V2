@@ -12,7 +12,7 @@ A sleek audio visualizer that turns your music into floating light bars. Revived
 ## Features 🌟
 
 - **Real-time audio visualization** using system output
-- **Fullscreen floating bars** that don't interrupt your workflow
+- **Fullscreen floating bars** that don't interrupt your work
 - **Click-through mode** (bars won't block clicks)
 - **Customizable themes** with color picker
 - **Adjustable bars**: count, height, opacity
