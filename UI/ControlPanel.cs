@@ -177,9 +177,13 @@ namespace NekoBeats
                     gy += 35;
                     
                     AddComboControl(colorGroup, "Bar Theme:", 20, gy, out themeCombo, typeof(BarRenderer.BarTheme));
-                    themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
-                    themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
-                    gy += 45;
+                    themeCombo = new ComboBox { Location = new Point(20, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
+                     themeCombo.Items.AddRange(System.Enum.GetNames(typeof(BarRenderer.BarTheme)));
+                     themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
+                     themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
+                     colorGroup.Controls.Add(themeCombo);
+                     gy += 45;
+
                     
                     var gradientBtn = new Button { Text = "Apply Gradient", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
                     gradientBtn.Click += (s, e) => ApplyPresetGradient();
