@@ -10,9 +10,9 @@ namespace NekoBeats
         private VisualizerForm visualizer;
 
         private CheckBox rainbowCheck;
+        private CheckBox gradientToggle;
         private TrackBar spacingTrack;
         private ComboBox themeCombo;
-        private ComboBox styleCombo;
         private ComboBox fpsCombo;
         private TrackBar barCountTrack;
         private TrackBar barHeightTrack;
@@ -35,7 +35,6 @@ namespace NekoBeats
         
         private Color darkBg = Color.FromArgb(10, 10, 15);
         private Color neonCyan = Color.FromArgb(0, 255, 200);
-        private Color neonPurple = Color.FromArgb(200, 0, 255);
         private Color textColor = Color.FromArgb(255, 255, 255);
         private Color dimText = Color.FromArgb(150, 150, 180);
         private Color boxBg = Color.FromArgb(20, 20, 30);
@@ -163,44 +162,61 @@ namespace NekoBeats
                     break;
                     
                 case "COLORS":
-    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 400);
-    gy = 25;
-    
-    var colorBtn = new Button { Text = "Bar Color", Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-    colorBtn.Click += (s, e) => ShowColorDialog();
-    colorGroup.Controls.Add(colorBtn);
-    gy += 45;
-    
-    rainbowCheck = AddCheckboxControl(colorGroup, "Rainbow Bars", 20, gy);
-    rainbowCheck.Checked = visualizer.Logic.rainbowBars;
-    rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
-    gy += 35;
-    
-    var labelTheme = new Label { Text = "Bar Theme:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-    colorGroup.Controls.Add(labelTheme);
-    themeCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
-    themeCombo.Items.AddRange(System.Enum.GetNames(typeof(BarRenderer.BarTheme)));
-    themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
-    themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
-    colorGroup.Controls.Add(themeCombo);
-    gy += 40;
-    
-    var gradientBtn = new Button { Text = "Apply Gradient", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-    gradientBtn.Click += (s, e) => ApplyPresetGradient();
-    colorGroup.Controls.Add(gradientBtn);
-    gy += 45;
-    
-    colorCycleCheck = AddCheckboxControl(colorGroup, "Color Cycle", 20, gy);
-    colorCycleCheck.Checked = visualizer.Logic.colorCycling;
-    colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
-    gy += 35;
-    
-    colorSpeedTrack = AddSliderControl(colorGroup, "Color Speed:", 20, gy, 1, 100, (int)(visualizer.Logic.colorSpeed * 10));
-    colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
-    
-    currentTabPanel.Controls.Add(colorGroup);
-    break;
-
+                    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 420);
+                    gy = 25;
+                    
+                    var colorBtn = new Button { Text = "Bar Color", Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+                    colorBtn.Click += (s, e) => ShowColorDialog();
+                    colorGroup.Controls.Add(colorBtn);
+                    gy += 45;
+                    
+                    rainbowCheck = AddCheckboxControl(colorGroup, "Rainbow Bars", 20, gy);
+                    rainbowCheck.Checked = visualizer.Logic.rainbowBars;
+                    rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
+                    gy += 35;
+                    
+                    var labelTheme = new Label { Text = "Bar Theme:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                    colorGroup.Controls.Add(labelTheme);
+                    themeCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
+                    themeCombo.Items.AddRange(System.Enum.GetNames(typeof(BarRenderer.BarTheme)));
+                    themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
+                    themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
+                    colorGroup.Controls.Add(themeCombo);
+                    gy += 40;
+                    
+                    gradientToggle = AddCheckboxControl(colorGroup, "Rainbow Gradient", 20, gy);
+                    gradientToggle.Checked = visualizer.Logic.useGradient;
+                    gradientToggle.CheckedChanged += (s, e) => 
+                    {
+                        if (gradientToggle.Checked)
+                        {
+                            Color[] gradient = new Color[] { 
+                                Color.Red, 
+                                Color.Yellow, 
+                                Color.Green, 
+                                Color.Cyan, 
+                                Color.Blue, 
+                                Color.Magenta 
+                            };
+                            visualizer.Logic.ApplyGradient(gradient);
+                        }
+                        else
+                        {
+                            visualizer.Logic.ClearGradient();
+                        }
+                    };
+                    gy += 35;
+                    
+                    colorCycleCheck = AddCheckboxControl(colorGroup, "Color Cycle", 20, gy);
+                    colorCycleCheck.Checked = visualizer.Logic.colorCycling;
+                    colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
+                    gy += 35;
+                    
+                    colorSpeedTrack = AddSliderControl(colorGroup, "Color Speed:", 20, gy, 1, 100, (int)(visualizer.Logic.colorSpeed * 10));
+                    colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
+                    
+                    currentTabPanel.Controls.Add(colorGroup);
+                    break;
                     
                 case "FX":
                     var fxGroup = CreateGroupBox("Effects", 10, y, 900, 480);
@@ -217,7 +233,14 @@ namespace NekoBeats
                     
                     particlesCheck = AddCheckboxControl(fxGroup, "Particles", 20, gy);
                     particlesCheck.Checked = visualizer.Logic.particlesEnabled;
-                    particlesCheck.CheckedChanged += (s, e) => visualizer.Logic.particlesEnabled = particlesCheck.Checked;
+                    particlesCheck.CheckedChanged += (s, e) => 
+                    {
+                        visualizer.Logic.particlesEnabled = particlesCheck.Checked;
+                        if (particlesCheck.Checked && visualizer.Handle != IntPtr.Zero)
+                        {
+                            visualizer.Logic.ResetParticles(visualizer.ClientSize);
+                        }
+                    };
                     gy += 35;
                     
                     particleCountTrack = AddSliderControl(fxGroup, "Particle Count:", 20, gy, 10, 500, visualizer.Logic.particleCount);
@@ -271,9 +294,13 @@ namespace NekoBeats
                     windowGroup.Controls.Add(streamingBtn);
                     gy += 45;
                     
-                    AddComboControl(windowGroup, "FPS Limit:", 20, gy, out fpsCombo, new string[] { "30", "60", "120", "Uncapped" });
+                    var labelFps = new Label { Text = "FPS Limit:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                    windowGroup.Controls.Add(labelFps);
+                    fpsCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
+                    fpsCombo.Items.AddRange(new string[] { "30", "60", "120", "Uncapped" });
                     fpsCombo.SelectedIndex = visualizer.Logic.fpsLimit switch { 30 => 0, 60 => 1, 120 => 2, _ => 3 };
                     fpsCombo.SelectedIndexChanged += (s, e) => { visualizer.Logic.fpsLimit = fpsCombo.Text switch { "30" => 30, "60" => 60, "120" => 120, _ => 999 }; visualizer.UpdateFPSTimer(); };
+                    windowGroup.Controls.Add(fpsCombo);
                     gy += 45;
                     
                     clickThroughCheck = AddCheckboxControl(windowGroup, "Click Through", 20, gy);
@@ -312,16 +339,12 @@ namespace NekoBeats
                     
                     currentTabPanel.Controls.Add(nbpGroup);
                     
-                    var nbbarGroup = CreateGroupBox("NBBAR - Bar Presets", 10, y + 140, 900, 130);
+                    var nbbarGroup = CreateGroupBox("NBBAR - Bar Presets", 10, y + 140, 900, 80);
                     gy = 25;
                     
                     var loadBarBtn = new Button { Text = "Load Bar Theme", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
                     loadBarBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "NekoBeats Bar Preset (*.nbbar)|*.nbbar" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.LoadBarPreset(dialog.FileName); MessageBox.Show("Bar theme loaded!"); } };
                     nbbarGroup.Controls.Add(loadBarBtn);
-                    
-                    var saveBarBtn = new Button { Text = "Save Bar Theme", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-                    saveBarBtn.Click += (s, e) => { if (visualizer.Logic.barPreset == null) { MessageBox.Show("No bar preset loaded!"); return; } var dialog = new SaveFileDialog { Filter = "NekoBeats Bar Preset (*.nbbar)|*.nbbar" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SaveBarPreset(dialog.FileName); MessageBox.Show("Bar theme saved!"); } };
-                    nbbarGroup.Controls.Add(saveBarBtn);
                     
                     currentTabPanel.Controls.Add(nbbarGroup);
                     break;
@@ -409,45 +432,10 @@ namespace NekoBeats
             return checkbox;
         }
         
-        private void AddComboControl(Control parent, string label, ref int y, out ComboBox comboBox, Type enumType)
-        {
-            var labelCtrl = new Label { Text = label, Location = new Point(20, y + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            parent.Controls.Add(labelCtrl);
-            
-            comboBox = new ComboBox { Location = new Point(170, y), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
-            comboBox.Items.AddRange(System.Enum.GetNames(enumType));
-            parent.Controls.Add(comboBox);
-            y += 40;
-        }
-        
-        private void AddComboControl(Control parent, string label, int x, int y, out ComboBox comboBox, string[] items)
-        {
-            var labelCtrl = new Label { Text = label, Location = new Point(x, y + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            parent.Controls.Add(labelCtrl);
-            
-            comboBox = new ComboBox { Location = new Point(x + 150, y), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
-            comboBox.Items.AddRange(items);
-            parent.Controls.Add(comboBox);
-        }
-        
         private void ShowColorDialog()
         {
             using var colorDialog = new ColorDialog { Color = visualizer.Logic.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK) visualizer.Logic.barColor = colorDialog.Color;
-        }
-        
-        private void ApplyPresetGradient()
-        {
-            Color[] gradient = new Color[] { 
-                Color.Red, 
-                Color.Yellow, 
-                Color.Green, 
-                Color.Cyan, 
-                Color.Blue, 
-                Color.Magenta 
-            };
-            visualizer.Logic.ApplyGradient(gradient);
-            MessageBox.Show("Rainbow gradient applied!");
         }
     }
 }

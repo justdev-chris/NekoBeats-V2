@@ -82,7 +82,7 @@ namespace NekoBeats
         
         // Fade effect
         public bool fadeEffectEnabled = false;
-        public float fadeEffectSpeed = 0.1f;
+        public float fadeEffectSpeed = 0.5f;
         private float[] fadeValues = new float[512];
         
         // Custom background
@@ -150,7 +150,7 @@ namespace NekoBeats
             if (particlesEnabled) ResetParticles(clientSize);
         }
         
-        private void ResetParticles(Size clientSize)
+        public void ResetParticles(Size clientSize)
         {
             particles.Clear();
             for (int i = 0; i < particleCount; i++)
@@ -202,11 +202,14 @@ namespace NekoBeats
                 smoothedBarValues[i] += (barValues[i] - smoothedBarValues[i]) * smoothSpeed;
             }
             
-            // V2.3.2: Color cycling
+            // V2.3.2: Color cycling - UPDATE HUE
             if (colorCycling)
             {
                 hue += colorSpeed * 2f;
                 if (hue >= 360) hue -= 360;
+                
+                // Apply cycling color to barColor
+                barColor = ColorFromHSV(hue, 0.8f, 1.0f);
             }
             
             // Update fade effect
@@ -242,6 +245,7 @@ namespace NekoBeats
             barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
             barLogic.barRenderer.useGradient = useGradient;
             barLogic.barRenderer.gradientColors = gradientColors;
+            barLogic.barRenderer.currentTheme = barLogic.currentTheme;
             
             barLogic.Update();
         }
@@ -262,16 +266,16 @@ namespace NekoBeats
             barLogic.rainbowBars = rainbowBars;
             barLogic.circleRadius = circleRadius;
             barLogic.currentStyle = _animationStyle;
-            barLogic.currentTheme = barPreset != null ? BarRenderer.BarTheme.Rectangle : BarRenderer.BarTheme.NeonTubes;
             
-            // Sync to BarRenderer
+            // SYNC BARRENDERER THEME
+            barLogic.barRenderer.currentTheme = barLogic.currentTheme;
             barLogic.barRenderer.opacity = opacity;
             barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
             barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
             barLogic.barRenderer.useGradient = useGradient;
             barLogic.barRenderer.gradientColors = gradientColors;
             
-            // V2.3.2: Pass gradient and fade to barLogic
+            // V2.3.2: Pass gradient and fade to barlogic
             if (useGradient && gradientColors != null)
                 barLogic.SetGradient(gradientColors);
             
@@ -398,11 +402,13 @@ namespace NekoBeats
             circleRadius = 200f;
             latencyCompensationMs = 0;
             fadeEffectEnabled = false;
+            fadeEffectSpeed = 0.5f;
             customBackgroundPath = null;
             ClearCustomBackground();
             useGradient = false;
             gradientColors = null;
             barPreset = null;
+            hue = 0;
         }
 
         public void SetCustomBackground(string imagePath)

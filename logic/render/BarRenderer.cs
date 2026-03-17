@@ -32,7 +32,7 @@ namespace NekoBeats
         public Color[] gradientColors;
         public bool useGradient = false;
         public bool fadeEffectEnabled = false;
-        public float fadeEffectSpeed = 0.1f;
+        public float fadeEffectSpeed = 0.5f;
         private float[] fadeValues = new float[512];
 
         public BarRenderer(float[] smoothedValues, Color color, float sens, int height, int count, int spacing, bool rainbow)
@@ -77,7 +77,7 @@ namespace NekoBeats
             }
         }
 
-        private Color GetBarColor(float h, float clientHeight, int barIndex)
+        public Color GetBarColor(float h, float clientHeight, int barIndex)
         {
             // V2.3.2: Check gradient first
             if (useGradient && gradientColors != null && gradientColors.Length > 0)
@@ -106,7 +106,7 @@ namespace NekoBeats
             return fadeValues[barIndex];
         }
 
-        private Color ApplyOpacity(Color color)
+        public Color ApplyOpacity(Color color)
         {
             int alpha = (int)(255 * opacity);
             return Color.FromArgb(Math.Clamp(alpha, 0, 255), color.R, color.G, color.B);
@@ -149,14 +149,8 @@ namespace NekoBeats
                 float tubeDiameter = barWidth - barSpacing;
 
                 using (SolidBrush brush = new SolidBrush(barColorToUse))
-                using (Pen outline = new Pen(barColorToUse, 2))
                 {
                     g.FillRoundedRectangle(brush, x, y, tubeDiameter, h, 5);
-                }
-
-                using (SolidBrush glow = new SolidBrush(ApplyOpacity(Color.FromArgb(50, barColorToUse))))
-                {
-                    g.FillRoundedRectangle(glow, x - 2, y - 2, tubeDiameter + 4, h + 4, 6);
                 }
             }
         }
