@@ -202,6 +202,13 @@ namespace NekoBeats
                 smoothedBarValues[i] += (barValues[i] - smoothedBarValues[i]) * smoothSpeed;
             }
             
+            // V2.3.2: Color cycling
+            if (colorCycling)
+            {
+                hue += colorSpeed * 2f;
+                if (hue >= 360) hue -= 360;
+            }
+            
             // Update fade effect
             UpdateFadeEffect();
             
@@ -219,7 +226,7 @@ namespace NekoBeats
                 }
             }
             
-            // Update bar logic
+            // Update bar logic - SYNC ALL PROPERTIES
             barLogic.barColor = barColor;
             barLogic.sensitivity = sensitivity;
             barLogic.barHeight = barHeight;
@@ -228,6 +235,14 @@ namespace NekoBeats
             barLogic.rainbowBars = rainbowBars;
             barLogic.circleRadius = circleRadius;
             barLogic.currentStyle = _animationStyle;
+            
+            // Sync to BarRenderer through barLogic
+            barLogic.barRenderer.opacity = opacity;
+            barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
+            barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
+            barLogic.barRenderer.useGradient = useGradient;
+            barLogic.barRenderer.gradientColors = gradientColors;
+            
             barLogic.Update();
         }
         
@@ -238,7 +253,7 @@ namespace NekoBeats
             // Render custom background first
             RenderCustomBackground(g, clientSize);
             
-            // Update bar logic with current settings
+            // SYNC ALL PROPERTIES TO BARLOGIC
             barLogic.barColor = barColor;
             barLogic.sensitivity = sensitivity;
             barLogic.barHeight = barHeight;
@@ -248,6 +263,13 @@ namespace NekoBeats
             barLogic.circleRadius = circleRadius;
             barLogic.currentStyle = _animationStyle;
             barLogic.currentTheme = barPreset != null ? BarRenderer.BarTheme.Rectangle : BarRenderer.BarTheme.NeonTubes;
+            
+            // Sync to BarRenderer
+            barLogic.barRenderer.opacity = opacity;
+            barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
+            barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
+            barLogic.barRenderer.useGradient = useGradient;
+            barLogic.barRenderer.gradientColors = gradientColors;
             
             // V2.3.2: Pass gradient and fade to barLogic
             if (useGradient && gradientColors != null)
@@ -262,7 +284,7 @@ namespace NekoBeats
             barLogic.Render(g, clientSize);
             
             // Draw particles if enabled
-            if (particlesEnabled)
+            if (particlesEnabled && particles.Count > 0)
                 DrawParticles(g, clientSize);
             
             if (bloomEnabled)
@@ -343,15 +365,6 @@ namespace NekoBeats
             else if (hi == 3) return Color.FromArgb(255, p, q, v);
             else if (hi == 4) return Color.FromArgb(255, t, p, v);
             else return Color.FromArgb(255, v, p, q);
-        }
-
-        private void AddRoundedRectangle(GraphicsPath path, float x, float y, float width, float height, float radius)
-        {
-            path.AddArc(x, y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(x + width - radius * 2, y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(x + width - radius * 2, y + height - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(x, y + height - radius * 2, radius * 2, radius * 2, 90, 90);
-            path.CloseFigure();
         }
 
         public void LoadBarPreset(string filePath)
