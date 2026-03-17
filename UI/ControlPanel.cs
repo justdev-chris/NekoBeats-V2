@@ -201,8 +201,8 @@ private VisualizerForm visualizer;
                 particleCountTrack.ValueChanged += (s, e) => visualizer.Logic.particleCount = particleCountTrack.Value;
                 
                 circleModeCheck = AddCheckboxControl(fxGroup, "Circle Mode", 20, gy);
-                circleModeCheck.Checked = visualizer.Logic.barLogic.isCircleMode;
-                circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.barLogic.isCircleMode = circleModeCheck.Checked;
+                circleModeCheck.Checked = visualizer.Logic.BarLogic.isCircleMode;
+                circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.isCircleMode = circleModeCheck.Checked;
                 gy += 35;
 
 
