@@ -163,43 +163,44 @@ namespace NekoBeats
                     break;
                     
                 case "COLORS":
-                    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 400);
-                    gy = 25;
-                    
-                    var colorBtn = new Button { Text = "Bar Color", Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-                    colorBtn.Click += (s, e) => ShowColorDialog();
-                    colorGroup.Controls.Add(colorBtn);
-                    gy += 45;
-                    
-                    rainbowCheck = AddCheckboxControl(colorGroup, "Rainbow Bars", 20, gy);
-                    rainbowCheck.Checked = visualizer.Logic.rainbowBars;
-                    rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
-                    gy += 35;
-                    
-                    AddComboControl(colorGroup, "Bar Theme:", 20, gy, out themeCombo, typeof(BarRenderer.BarTheme));
-                    themeCombo = new ComboBox { Location = new Point(20, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
-                     themeCombo.Items.AddRange(System.Enum.GetNames(typeof(BarRenderer.BarTheme)));
-                     themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
-                     themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
-                     colorGroup.Controls.Add(themeCombo);
-                     gy += 45;
+    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 400);
+    gy = 25;
+    
+    var colorBtn = new Button { Text = "Bar Color", Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+    colorBtn.Click += (s, e) => ShowColorDialog();
+    colorGroup.Controls.Add(colorBtn);
+    gy += 45;
+    
+    rainbowCheck = AddCheckboxControl(colorGroup, "Rainbow Bars", 20, gy);
+    rainbowCheck.Checked = visualizer.Logic.rainbowBars;
+    rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
+    gy += 35;
+    
+    var labelTheme = new Label { Text = "Bar Theme:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+    colorGroup.Controls.Add(labelTheme);
+    themeCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
+    themeCombo.Items.AddRange(System.Enum.GetNames(typeof(BarRenderer.BarTheme)));
+    themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
+    themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
+    colorGroup.Controls.Add(themeCombo);
+    gy += 40;
+    
+    var gradientBtn = new Button { Text = "Apply Gradient", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+    gradientBtn.Click += (s, e) => ApplyPresetGradient();
+    colorGroup.Controls.Add(gradientBtn);
+    gy += 45;
+    
+    colorCycleCheck = AddCheckboxControl(colorGroup, "Color Cycle", 20, gy);
+    colorCycleCheck.Checked = visualizer.Logic.colorCycling;
+    colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
+    gy += 35;
+    
+    colorSpeedTrack = AddSliderControl(colorGroup, "Color Speed:", 20, gy, 1, 100, (int)(visualizer.Logic.colorSpeed * 10));
+    colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
+    
+    currentTabPanel.Controls.Add(colorGroup);
+    break;
 
-                    
-                    var gradientBtn = new Button { Text = "Apply Gradient", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-                    gradientBtn.Click += (s, e) => ApplyPresetGradient();
-                    colorGroup.Controls.Add(gradientBtn);
-                    gy += 45;
-                    
-                    colorCycleCheck = AddCheckboxControl(colorGroup, "Color Cycle", 20, gy);
-                    colorCycleCheck.Checked = visualizer.Logic.colorCycling;
-                    colorCycleCheck.CheckedChanged += (s, e) => visualizer.Logic.colorCycling = colorCycleCheck.Checked;
-                    gy += 35;
-                    
-                    colorSpeedTrack = AddSliderControl(colorGroup, "Color Speed:", 20, gy, 1, 100, (int)(visualizer.Logic.colorSpeed * 10));
-                    colorSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.colorSpeed = colorSpeedTrack.Value / 10f;
-                    
-                    currentTabPanel.Controls.Add(colorGroup);
-                    break;
                     
                 case "FX":
                     var fxGroup = CreateGroupBox("Effects", 10, y, 900, 480);
