@@ -144,7 +144,7 @@ namespace NekoBeats
             switch (tabName)
             {
                 case "VIZ":
-                    var vizGroup = CreateGroupBox("Visualization", 10, y, 900, 280);
+                    var vizGroup = CreateGroupBox("Visualization", 10, y, 900, 320);
                     int gy = 25;
                     
                     barCountTrack = AddSliderControl(vizGroup, "Bar Count:", ref gy, 32, 512, visualizer.Logic.barCount);
@@ -156,16 +156,34 @@ namespace NekoBeats
                     opacityTrack = AddSliderControl(vizGroup, "Opacity:", ref gy, 0, 100, (int)(visualizer.Logic.opacity * 100));
                     opacityTrack.ValueChanged += (s, e) => visualizer.Logic.opacity = opacityTrack.Value / 100f;
                     
+                    spacingTrack = AddSliderControl(vizGroup, "Bar Spacing:", ref gy, 0, 10, visualizer.Logic.barSpacing);
+                    spacingTrack.ValueChanged += (s, e) => visualizer.Logic.barSpacing = spacingTrack.Value;
+                    
                     currentTabPanel.Controls.Add(vizGroup);
                     break;
                     
                 case "COLORS":
-                    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 200);
+                    var colorGroup = CreateGroupBox("Colors & Effects", 10, y, 900, 400);
                     gy = 25;
                     
                     var colorBtn = new Button { Text = "Bar Color", Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
                     colorBtn.Click += (s, e) => ShowColorDialog();
                     colorGroup.Controls.Add(colorBtn);
+                    gy += 45;
+                    
+                    rainbowCheck = AddCheckboxControl(colorGroup, "Rainbow Bars", 20, gy);
+                    rainbowCheck.Checked = visualizer.Logic.rainbowBars;
+                    rainbowCheck.CheckedChanged += (s, e) => visualizer.Logic.rainbowBars = rainbowCheck.Checked;
+                    gy += 35;
+                    
+                    AddComboControl(colorGroup, "Bar Theme:", 20, gy, out themeCombo, typeof(BarRenderer.BarTheme));
+                    themeCombo.SelectedIndex = (int)visualizer.Logic.BarLogic.currentTheme;
+                    themeCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.BarLogic.currentTheme = (BarRenderer.BarTheme)themeCombo.SelectedIndex;
+                    gy += 45;
+                    
+                    var gradientBtn = new Button { Text = "Apply Gradient", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+                    gradientBtn.Click += (s, e) => ApplyPresetGradient();
+                    colorGroup.Controls.Add(gradientBtn);
                     gy += 45;
                     
                     colorCycleCheck = AddCheckboxControl(colorGroup, "Color Cycle", 20, gy);
@@ -180,7 +198,7 @@ namespace NekoBeats
                     break;
                     
                 case "FX":
-                    var fxGroup = CreateGroupBox("Effects", 10, y, 900, 400);
+                    var fxGroup = CreateGroupBox("Effects", 10, y, 900, 480);
                     gy = 25;
                     
                     bloomCheck = AddCheckboxControl(fxGroup, "Bloom", 20, gy);
@@ -206,6 +224,10 @@ namespace NekoBeats
                     circleModeCheck.CheckedChanged += (s, e) => visualizer.Logic.BarLogic.isCircleMode = circleModeCheck.Checked;
                     gy += 35;
                     
+                    circleRadiusTrack = AddSliderControl(fxGroup, "Circle Radius:", 20, gy, 50, 500, (int)visualizer.Logic.circleRadius);
+                    circleRadiusTrack.ValueChanged += (s, e) => visualizer.Logic.circleRadius = circleRadiusTrack.Value;
+                    gy += 45;
+                    
                     fadeEffectCheck = AddCheckboxControl(fxGroup, "Fade Effect", 20, gy);
                     fadeEffectCheck.Checked = visualizer.Logic.fadeEffectEnabled;
                     fadeEffectCheck.CheckedChanged += (s, e) => visualizer.Logic.fadeEffectEnabled = fadeEffectCheck.Checked;
@@ -218,7 +240,7 @@ namespace NekoBeats
                     break;
                     
                 case "AUDIO":
-                    var audioGroup = CreateGroupBox("Audio Settings", 10, y, 900, 200);
+                    var audioGroup = CreateGroupBox("Audio Settings", 10, y, 900, 240);
                     gy = 25;
                     
                     sensitivityTrack = AddSliderControl(audioGroup, "Sensitivity:", 20, gy, 1, 300, (int)(visualizer.Logic.sensitivity * 100));
@@ -227,12 +249,16 @@ namespace NekoBeats
                     
                     smoothSpeedTrack = AddSliderControl(audioGroup, "Smooth Speed:", 20, gy, 1, 100, (int)(visualizer.Logic.smoothSpeed * 100));
                     smoothSpeedTrack.ValueChanged += (s, e) => visualizer.Logic.smoothSpeed = smoothSpeedTrack.Value / 100f;
+                    gy += 45;
+                    
+                    latencyTrack = AddSliderControl(audioGroup, "Latency Comp (ms):", 20, gy, 0, 200, visualizer.Logic.latencyCompensationMs);
+                    latencyTrack.ValueChanged += (s, e) => visualizer.Logic.SetLatencyCompensation(latencyTrack.Value);
                     
                     currentTabPanel.Controls.Add(audioGroup);
                     break;
                     
                 case "WINDOW":
-                    var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 220);
+                    var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 360);
                     gy = 25;
                     
                     var streamingBtn = new Button { Text = "Streaming Mode: OFF", Location = new Point(20, gy), Size = new Size(200, 32), BackColor = Color.FromArgb(150, 50, 50), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand, Tag = false };
@@ -253,6 +279,16 @@ namespace NekoBeats
                     draggableCheck = AddCheckboxControl(windowGroup, "Draggable", 20, gy);
                     draggableCheck.Checked = visualizer.Logic.draggable;
                     draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
+                    gy += 35;
+                    
+                    var bgBtn = new Button { Text = "Set Background", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+                    bgBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SetCustomBackground(dialog.FileName); MessageBox.Show("Background set!"); } };
+                    windowGroup.Controls.Add(bgBtn);
+                    gy += 35;
+                    
+                    var clearBgBtn = new Button { Text = "Clear Background", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+                    clearBgBtn.Click += (s, e) => { visualizer.Logic.ClearCustomBackground(); MessageBox.Show("Background cleared!"); };
+                    windowGroup.Controls.Add(clearBgBtn);
                     
                     currentTabPanel.Controls.Add(windowGroup);
                     break;
@@ -393,6 +429,20 @@ namespace NekoBeats
         {
             using var colorDialog = new ColorDialog { Color = visualizer.Logic.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK) visualizer.Logic.barColor = colorDialog.Color;
+        }
+        
+        private void ApplyPresetGradient()
+        {
+            Color[] gradient = new Color[] { 
+                Color.Red, 
+                Color.Yellow, 
+                Color.Green, 
+                Color.Cyan, 
+                Color.Blue, 
+                Color.Magenta 
+            };
+            visualizer.Logic.ApplyGradient(gradient);
+            MessageBox.Show("Rainbow gradient applied!");
         }
     }
 }
