@@ -22,7 +22,7 @@ namespace NekoBeats
         private float waveOffset = 0;
         private float[] bounceHeights;
         private Random glitchRandom = new Random();
-        private BarRenderer barRenderer;
+        public BarRenderer barRenderer { get; set; }
         
         public BarLogic(float[] smoothedBarValues)
         {
@@ -79,61 +79,61 @@ namespace NekoBeats
         
         private void DrawNormal(Graphics g, Size clientSize)
         {
+            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawPulse(Graphics g, Size clientSize)
         {
+            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity * (0.5f + 0.5f * (float)Math.Sin(pulsePhase));
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawWave(Graphics g, Size clientSize)
         {
+            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = (int)(barHeight * (0.7f + 0.3f * (float)Math.Sin(waveOffset)));
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawBounce(Graphics g, Size clientSize)
         {
+            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawGlitch(Graphics g, Size clientSize)
         {
+            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity * (0.8f + 0.2f * (float)glitchRandom.NextDouble());
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
@@ -141,25 +141,24 @@ namespace NekoBeats
         {
             float centerX = clientSize.Width / 2f;
             float centerY = clientSize.Height / 2f;
-            
-            barRenderer.barColor = barColor;
-            barRenderer.sensitivity = sensitivity;
-            barRenderer.barHeight = barHeight;
-            barRenderer.barCount = barCount;
-            barRenderer.barSpacing = barSpacing;
-            barRenderer.rainbowBars = rainbowBars;
-            barRenderer.currentTheme = currentTheme;
+            float angleStep = 360f / barCount;
             
             for (int i = 0; i < barCount; i++)
             {
-                float angle = (i / (float)barCount) * (float)Math.PI * 2;
-                float x = centerX + (float)Math.Cos(angle) * circleRadius;
-                float y = centerY + (float)Math.Sin(angle) * circleRadius;
+                float h = barRenderer.smoothedBarValues[i] * circleRadius;
+                float angle = i * angleStep * (float)Math.PI / 180f;
                 
-                using (var brush = new SolidBrush(barColor))
+                float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
+                float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
+                float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
+                float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
+                
+                Color barColorToUse = barRenderer.GetBarColor(h, circleRadius * 2, i);
+                Color finalColor = barRenderer.ApplyOpacity(barColorToUse);
+                
+                using (Pen pen = new Pen(finalColor, 3))
                 {
-                    float height = barRenderer.smoothedBarValues[i] * barHeight;
-                    g.FillRectangle(brush, x - 5, y - height / 2, 10, height);
+                    g.DrawLine(pen, x1, y1, x2, y2);
                 }
             }
         }
