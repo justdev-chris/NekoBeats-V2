@@ -39,7 +39,7 @@ private int fftPos = 0;
     // Bar themes & animations
     public bool rainbowBars = true;
     public int barSpacing = 1;
-    private BarLogic barLogic;
+    public BarLogic barLogic;
     public BarLogic BarLogic => barLogic;
     
     // Effects
