@@ -79,176 +79,105 @@ namespace NekoBeats
         
         private void DrawNormal(Graphics g, Size clientSize)
         {
-            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
+            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawPulse(Graphics g, Size clientSize)
         {
-            float pulse = (float)(Math.Sin(pulsePhase) * 0.2 + 0.8);
-            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
-            barRenderer.sensitivity = sensitivity;
+            barRenderer.sensitivity = sensitivity * (0.5f + 0.5f * (float)Math.Sin(pulsePhase));
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-            
-            float barWidth = (float)clientSize.Width / barCount;
-            float heightMultiplier = barHeight / 100f;
-
-            for (int i = 0; i < barCount; i++)
-            {
-                float h = barRenderer.smoothedBarValues[i] * (clientSize.Height * heightMultiplier) * pulse;
-                if (h < 2) h = 2;
-                
-                barRenderer.smoothedBarValues[i] = h / (clientSize.Height * heightMultiplier);
-            }
-            
+            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                barRenderer.smoothedBarValues[i] = barRenderer.smoothedBarValues[i];
-            }
         }
         
         private void DrawWave(Graphics g, Size clientSize)
         {
-            float barWidth = (float)clientSize.Width / barCount;
-            float heightMultiplier = barHeight / 100f;
-            
-            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
-            barRenderer.barHeight = barHeight;
+            barRenderer.barHeight = (int)(barHeight * (0.7f + 0.3f * (float)Math.Sin(waveOffset)));
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-
-            var waveValues = new float[barCount];
-            for (int i = 0; i < barCount; i++)
-            {
-                float wave = (float)Math.Sin(waveOffset + (i * 0.15f)) * 0.3f + 0.7f;
-                waveValues[i] = barRenderer.smoothedBarValues[i] * wave;
-            }
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                barRenderer.smoothedBarValues[i] = waveValues[i];
-            }
-            
+            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawBounce(Graphics g, Size clientSize)
         {
-            barRenderer.currentTheme = currentTheme;
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-
-            var bounceValues = new float[barCount];
-            for (int i = 0; i < barCount; i++)
-            {
-                bounceValues[i] = bounceHeights[i];
-            }
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                barRenderer.smoothedBarValues[i] = bounceValues[i];
-            }
-            
+            barRenderer.currentTheme = currentTheme;
             barRenderer.Render(g, clientSize);
         }
         
         private void DrawGlitch(Graphics g, Size clientSize)
         {
+            barRenderer.barColor = barColor;
+            barRenderer.sensitivity = sensitivity * (0.8f + 0.2f * (float)glitchRandom.NextDouble());
+            barRenderer.barHeight = barHeight;
+            barRenderer.barCount = barCount;
+            barRenderer.barSpacing = barSpacing;
+            barRenderer.rainbowBars = rainbowBars;
             barRenderer.currentTheme = currentTheme;
+            barRenderer.Render(g, clientSize);
+        }
+        
+        private void DrawCircle(Graphics g, Size clientSize)
+        {
+            float centerX = clientSize.Width / 2f;
+            float centerY = clientSize.Height / 2f;
+            
             barRenderer.barColor = barColor;
             barRenderer.sensitivity = sensitivity;
             barRenderer.barHeight = barHeight;
             barRenderer.barCount = barCount;
             barRenderer.barSpacing = barSpacing;
             barRenderer.rainbowBars = rainbowBars;
-
-            var glitchValues = new float[barCount];
-            for (int i = 0; i < barCount; i++)
-            {
-                float glitch = glitchRandom.NextSingle() * 0.4f + 0.8f;
-                glitchValues[i] = barRenderer.smoothedBarValues[i] * glitch;
-            }
+            barRenderer.currentTheme = currentTheme;
             
             for (int i = 0; i < barCount; i++)
             {
-                barRenderer.smoothedBarValues[i] = glitchValues[i];
-            }
-            
-            barRenderer.Render(g, clientSize);
-        }
-        
-        private void DrawCircle(Graphics g, Size clientSize)
-        {
-            float centerX = clientSize.Width / 2;
-            float centerY = clientSize.Height / 2;
-            float angleStep = 360f / barCount;
-            
-            for (int i = 0; i < barCount; i++)
-            {
-                float h = barRenderer.smoothedBarValues[i] * circleRadius;
-                float angle = i * angleStep * (float)Math.PI / 180f;
+                float angle = (i / (float)barCount) * (float)Math.PI * 2;
+                float x = centerX + (float)Math.Cos(angle) * circleRadius;
+                float y = centerY + (float)Math.Sin(angle) * circleRadius;
                 
-                float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
-                float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
-                float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
-                float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
-                
-                Color barColorToUse = GetBarColor(h, circleRadius);
-                
-                using (Pen pen = new Pen(barColorToUse, 3))
+                using (var brush = new SolidBrush(barColor))
                 {
-                    g.DrawLine(pen, x1, y1, x2, y2);
+                    float height = barRenderer.smoothedBarValues[i] * barHeight;
+                    g.FillRectangle(brush, x - 5, y - height / 2, 10, height);
                 }
             }
         }
         
-        private Color GetBarColor(float h, float maxHeight)
+        // V2.3.2 NEW METHODS
+        public void SetGradient(Color[] colors)
         {
-            if (rainbowBars)
-            {
-                float intensity = Math.Min(1.0f, h / (maxHeight * 0.5f));
-                float hue = intensity * 300;
-                return ColorFromHSV(hue, 1.0f, 1.0f);
-            }
-            return barColor;
+            barRenderer.SetGradient(colors);
         }
-        
-        private Color ColorFromHSV(double hue, double saturation, double value)
+
+        public void SetFadeEffect(bool enabled, float speed)
         {
-            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-            double f = hue / 60 - Math.Floor(hue / 60);
+            barRenderer.SetFadeEffect(enabled, speed);
+        }
 
-            value = value * 255;
-            int v = Convert.ToInt32(value);
-            int p = Convert.ToInt32(value * (1 - saturation));
-            int q = Convert.ToInt32(value * (1 - f * saturation));
-            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-
-            if (hi == 0) return Color.FromArgb(255, v, t, p);
-            else if (hi == 1) return Color.FromArgb(255, q, v, p);
-            else if (hi == 2) return Color.FromArgb(255, p, v, t);
-            else if (hi == 3) return Color.FromArgb(255, p, q, v);
-            else if (hi == 4) return Color.FromArgb(255, t, p, v);
-            else return Color.FromArgb(255, v, p, q);
+        public void UpdateFadeEffect()
+        {
+            barRenderer.UpdateFadeEffect();
         }
     }
 }
