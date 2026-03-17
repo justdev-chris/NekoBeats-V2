@@ -1,6 +1,6 @@
 [Setup]
 AppName=NekoBeats
-AppVersion=2.3
+AppVersion=2.3.2
 AppPublisher=justdev-chris
 AppPublisherURL=https://github.com/justdev-chris/NekoBeats-V2
 DefaultDirName={pf}\NekoBeats
