@@ -38,22 +38,12 @@ namespace NekoBeats
             try
             {
                 discordRpc = new DiscordRpcClient("1483867520665387178");
-                
-                discordRpc.OnReady += () =>
-                {
-                    Console.WriteLine("Discord RPC Connected");
-                };
-
-                discordRpc.OnConnectionEstablished += () =>
-                {
-                    UpdateDiscordStatus();
-                };
-
                 discordRpc.Initialize();
+                UpdateDiscordStatus();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Discord RPC failed to initialize: {ex.Message}");
+                Console.WriteLine($"Discord RPC failed: {ex.Message}");
                 discordRpc = null;
             }
         }
@@ -77,7 +67,6 @@ namespace NekoBeats
             }
 
             visualizerForm.Show();
-            UpdateDiscordStatus();
         }
 
         private static void UpdateDiscordStatus()
@@ -100,7 +89,7 @@ namespace NekoBeats
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to update Discord status: {ex.Message}");
+                Console.WriteLine($"Discord update failed: {ex.Message}");
             }
         }
 
