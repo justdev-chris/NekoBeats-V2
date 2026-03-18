@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using DiscordRPC;
 using NekoBeats.Plugins;
 
@@ -13,6 +14,7 @@ namespace NekoBeats
         private const string CURRENT_VERSION = "2.3.2";
         private const string GITHUB_REPO = "justdev-chris2/NekoBeats-V2";
         private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest";
+        private const string GITHUB_RELEASES_URL = "https://github.com/" + GITHUB_REPO + "/releases";
         
         private static DiscordRpcClient discordRpc;
         private static VisualizerForm visualizerForm;
@@ -143,12 +145,21 @@ namespace NekoBeats
 
                                 if (latestVersion != CURRENT_VERSION)
                                 {
-                                    MessageBox.Show(
+                                    DialogResult result = MessageBox.Show(
                                         $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
                                         "Update Available",
-                                        MessageBoxButtons.OK,
+                                        MessageBoxButtons.OKCancel,
                                         MessageBoxIcon.Information
                                     );
+
+                                    if (result == DialogResult.OK)
+                                    {
+                                        OpenReleasesPage();
+                                    }
+                                }
+                                else
+                                {
+                                    MessageBox.Show("You are on the latest version!", "NekoBeats", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 }
                             }
                         }
@@ -159,6 +170,22 @@ namespace NekoBeats
                     Console.WriteLine($"Update check failed: {ex.Message}");
                 }
             });
+        }
+
+        private static void OpenReleasesPage()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = GITHUB_RELEASES_URL,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open releases page: {ex.Message}");
+            }
         }
 
         private static void UpdateDiscordStatus()
