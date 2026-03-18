@@ -1,6 +1,8 @@
 using System;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Net.Http;
+using System.Threading.Tasks;
 using DiscordRPC;
 using NekoBeats.Plugins;
 
@@ -9,9 +11,14 @@ namespace NekoBeats
     static class Program
     {
         private const string CURRENT_VERSION = "2.3.2";
+        private const string GITHUB_REPO = "justdev-chris2/NekoBeats-V2";
+        private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest";
+        
         private static DiscordRpcClient discordRpc;
         private static VisualizerForm visualizerForm;
+        private static ControlPanel controlPanel;
         private static PluginLoader pluginLoader;
+        private static NotifyIcon trayIcon;
 
         [STAThread]
         static void Main()
@@ -23,6 +30,8 @@ namespace NekoBeats
             {
                 InitializeDiscordRPC();
                 InitializeVisualizer();
+                InitializeSystemTray();
+                CheckForUpdates();
             }
             catch (Exception ex)
             {
@@ -51,6 +60,7 @@ namespace NekoBeats
         private static void InitializeVisualizer()
         {
             visualizerForm = new VisualizerForm();
+            controlPanel = new ControlPanel(visualizerForm);
             
             pluginLoader = new PluginLoader(new NekoBeatsPluginHost(visualizerForm));
             
@@ -69,6 +79,88 @@ namespace NekoBeats
             visualizerForm.Show();
         }
 
+        private static void InitializeSystemTray()
+        {
+            trayIcon = new NotifyIcon();
+            trayIcon.Icon = SystemIcons.Application;
+            
+            if (System.IO.File.Exists("NekoBeatsLogo.ico"))
+            {
+                try { trayIcon.Icon = new Icon("NekoBeatsLogo.ico"); }
+                catch { }
+            }
+
+            trayIcon.Visible = true;
+            trayIcon.Text = "NekoBeats v" + CURRENT_VERSION;
+
+            ContextMenuStrip menu = new ContextMenuStrip();
+            
+            var showItem = new ToolStripMenuItem("Show", null, (s, e) =>
+            {
+                controlPanel.Show();
+                controlPanel.WindowState = FormWindowState.Normal;
+                controlPanel.BringToFront();
+            });
+            menu.Items.Add(showItem);
+
+            var updateItem = new ToolStripMenuItem("Check for Updates", null, (s, e) =>
+            {
+                CheckForUpdates();
+            });
+            menu.Items.Add(updateItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            var exitItem = new ToolStripMenuItem("Exit", null, (s, e) =>
+            {
+                ExitApplication();
+            });
+            menu.Items.Add(exitItem);
+
+            trayIcon.ContextMenuStrip = menu;
+        }
+
+        private static void CheckForUpdates()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
+                        HttpResponseMessage response = await client.GetAsync(GITHUB_API_URL);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string json = await response.Content.ReadAsStringAsync();
+                            
+                            if (json.Contains("\"tag_name\":\"v"))
+                            {
+                                int tagStart = json.IndexOf("\"tag_name\":\"v") + 14;
+                                int tagEnd = json.IndexOf("\"", tagStart);
+                                string latestVersion = json.Substring(tagStart, tagEnd - tagStart);
+
+                                if (latestVersion != CURRENT_VERSION)
+                                {
+                                    MessageBox.Show(
+                                        $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
+                                        "Update Available",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Information
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Update check failed: {ex.Message}");
+                }
+            });
+        }
+
         private static void UpdateDiscordStatus()
         {
             if (discordRpc == null) return;
@@ -82,7 +174,7 @@ namespace NekoBeats
                     Assets = new Assets()
                     {
                         LargeImageKey = "nekobeats_logo",
-                        LargeImageText = "NekoBeats Audio Visualizer v" + CURRENT_VERSION
+                        LargeImageText = "NekoBeats v" + CURRENT_VERSION
                     },
                     Timestamps = Timestamps.Now
                 });
@@ -97,8 +189,10 @@ namespace NekoBeats
         {
             try
             {
+                trayIcon?.Dispose();
                 pluginLoader?.UnloadAllPlugins();
                 discordRpc?.Dispose();
+                controlPanel?.Dispose();
                 visualizerForm?.Dispose();
             }
             catch (Exception ex)
