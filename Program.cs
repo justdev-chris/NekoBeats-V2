@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
 using System.Windows.Forms;
-using NekoBeats.Plugins;
+using System.Drawing;
 using DiscordRPC;
+using NekoBeats.Plugins;
 
 namespace NekoBeats
 {
@@ -37,11 +37,11 @@ namespace NekoBeats
         {
             try
             {
-                discordRpc = new DiscordRpcClient("YOUR_APPLICATION_ID_HERE");
+                discordRpc = new DiscordRpcClient("1483867520665387178");
                 
-                discordRpc.OnReady += (user) =>
+                discordRpc.OnReady += () =>
                 {
-                    Console.WriteLine($"Discord RPC Connected as {user.Username}");
+                    Console.WriteLine("Discord RPC Connected");
                 };
 
                 discordRpc.OnConnectionEstablished += () =>
@@ -175,9 +175,9 @@ namespace NekoBeats
             visualizerForm.Logic.SetLatencyCompensation(milliseconds);
         }
 
-        public void SetFadeEffect(bool enabled, float speed)
+        public void SetFadeEffect(bool enabled, float fadeSpeed)
         {
-            visualizerForm.Logic.SetFadeEffect(enabled, speed);
+            visualizerForm.Logic.SetFadeEffect(enabled, fadeSpeed);
         }
 
         public float GetAudioLevel()
