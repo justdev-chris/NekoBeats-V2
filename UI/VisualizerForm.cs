@@ -136,13 +136,17 @@ private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
     }
     
     private void OnPaint(object sender, PaintEventArgs e)
-    {
-        // Render custom background first (if set)
-        logic.RenderCustomBackground(e.Graphics, this.ClientSize);
-        
-        // Render visualization on top
-        logic.Render(e.Graphics, this.ClientSize);
-    }
+{
+    // Fade background with bar opacity
+    this.Opacity = logic.opacity;
+    
+    // Render custom background first (if set)
+    logic.RenderCustomBackground(e.Graphics, this.ClientSize);
+    
+    // Render visualization on top
+    logic.Render(e.Graphics, this.ClientSize);
+}
+
     
     private void OnFormClosing(object sender, FormClosingEventArgs e)
     {
