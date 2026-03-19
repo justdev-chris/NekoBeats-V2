@@ -372,9 +372,22 @@ namespace NekoBeats
         }
 
         public void LoadBarPreset(string filePath)
-        {
-            barPreset = BarPreset.LoadFromFile(filePath);
-        }
+{
+    barPreset = BarPreset.LoadFromFile(filePath);
+    if (barPreset != null)
+    {
+        barHeight = barPreset.BarHeight;
+        barSpacing = barPreset.BarSpacing;
+        barLogic.currentTheme = (BarRenderer.BarTheme)barPreset.BarShape;
+        
+        Color[] colors = new Color[barPreset.Colors.Length];
+        for (int i = 0; i < barPreset.Colors.Length; i++)
+            colors[i] = ColorTranslator.FromHtml(barPreset.Colors[i]);
+        gradientColors = colors;
+        useGradient = true;
+    }
+}
+
 
         public void SaveBarPreset(string filePath)
         {
@@ -551,72 +564,73 @@ namespace NekoBeats
         }
 
         public void LoadPreset(string filename)
+{
+    if (!File.Exists(filename)) return;
+    try 
+    {
+        string json = File.ReadAllText(filename);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        
+        barColor = Color.FromArgb(root.GetProperty("barColor").GetInt32());
+        opacity = root.GetProperty("opacity").GetSingle();
+        barHeight = root.GetProperty("barHeight").GetInt32();
+        barCount = root.GetProperty("barCount").GetInt32();
+        smoothSpeed = root.GetProperty("smoothSpeed").GetSingle();
+        sensitivity = root.GetProperty("sensitivity").GetSingle();
+        animationStyle = (BarLogic.AnimationStyle)root.GetProperty("animationStyle").GetInt32();
+        particleCount = root.GetProperty("particleCount").GetInt32();
+        particlesEnabled = root.GetProperty("particlesEnabled").GetBoolean();
+        circleRadius = root.GetProperty("circleRadius").GetSingle();
+        bloomEnabled = root.GetProperty("bloomEnabled").GetBoolean();
+        bloomIntensity = root.GetProperty("bloomIntensity").GetInt32();
+        colorCycling = root.GetProperty("colorCycling").GetBoolean();
+        colorSpeed = root.GetProperty("colorSpeed").GetSingle();
+        fpsLimit = root.GetProperty("fpsLimit").GetInt32();
+        clickThrough = root.GetProperty("clickThrough").GetBoolean();
+        draggable = root.GetProperty("draggable").GetBoolean();
+        
+        if (root.TryGetProperty("rainbowBars", out var rainbowProp))
+            rainbowBars = rainbowProp.GetBoolean();
+            
+        if (root.TryGetProperty("barSpacing", out var spacingProp))
+            barSpacing = spacingProp.GetInt32();
+            
+        if (root.TryGetProperty("barTheme", out var themeProp))
+            barLogic.currentTheme = (BarRenderer.BarTheme)themeProp.GetInt32();
+        
+        if (root.TryGetProperty("latencyCompensationMs", out var latencyProp))
+            latencyCompensationMs = latencyProp.GetInt32();
+            
+        if (root.TryGetProperty("fadeEffectEnabled", out var fadeProp))
+            fadeEffectEnabled = fadeProp.GetBoolean();
+            
+        if (root.TryGetProperty("fadeEffectSpeed", out var fadeSpeedProp))
+            fadeEffectSpeed = fadeSpeedProp.GetSingle();
+            
+        if (root.TryGetProperty("customBackgroundPath", out var bgProp))
+            SetCustomBackground(bgProp.GetString());
+            
+        if (root.TryGetProperty("useGradient", out var gradientProp))
+            useGradient = gradientProp.GetBoolean();
+            
+        if (root.TryGetProperty("gradientColors", out var colorsProp) && colorsProp.ValueKind != JsonValueKind.Null)
         {
-            if (!File.Exists(filename)) return;
-            try 
+            var colors = new List<Color>();
+            foreach (var colorInt in colorsProp.EnumerateArray())
             {
-                string json = File.ReadAllText(filename);
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-                
-                barColor = Color.FromArgb(root.GetProperty("barColor").GetInt32());
-                opacity = root.GetProperty("opacity").GetSingle();
-                barHeight = root.GetProperty("barHeight").GetInt32();
-                barCount = root.GetProperty("barCount").GetInt32();
-                smoothSpeed = root.GetProperty("smoothSpeed").GetSingle();
-                sensitivity = root.GetProperty("sensitivity").GetSingle();
-                animationStyle = (BarLogic.AnimationStyle)root.GetProperty("animationStyle").GetInt32();
-                particleCount = root.GetProperty("particleCount").GetInt32();
-                particlesEnabled = root.GetProperty("particlesEnabled").GetBoolean();
-                circleRadius = root.GetProperty("circleRadius").GetSingle();
-                bloomEnabled = root.GetProperty("bloomEnabled").GetBoolean();
-                bloomIntensity = root.GetProperty("bloomIntensity").GetInt32();
-                colorCycling = root.GetProperty("colorCycling").GetBoolean();
-                colorSpeed = root.GetProperty("colorSpeed").GetSingle();
-                fpsLimit = root.GetProperty("fpsLimit").GetInt32();
-                clickThrough = root.GetProperty("clickThrough").GetBoolean();
-                draggable = root.GetProperty("draggable").GetBoolean();
-                
-                if (root.TryGetProperty("rainbowBars", out var rainbowProp))
-                    rainbowBars = rainbowProp.GetBoolean();
-                    
-                if (root.TryGetProperty("barSpacing", out var spacingProp))
-                    barSpacing = spacingProp.GetInt32();
-                    
-                if (root.TryGetProperty("barTheme", out var themeProp))
-                    barLogic.currentTheme = (BarRenderer.BarTheme)themeProp.GetInt32();
-                
-                if (root.TryGetProperty("latencyCompensationMs", out var latencyProp))
-                    latencyCompensationMs = latencyProp.GetInt32();
-                    
-                if (root.TryGetProperty("fadeEffectEnabled", out var fadeProp))
-                    fadeEffectEnabled = fadeProp.GetBoolean();
-                    
-                if (root.TryGetProperty("fadeEffectSpeed", out var fadeSpeedProp))
-                    fadeEffectSpeed = fadeSpeedProp.GetSingle();
-                    
-                if (root.TryGetProperty("customBackgroundPath", out var bgProp))
-                    SetCustomBackground(bgProp.GetString());
-                    
-                if (root.TryGetProperty("useGradient", out var gradientProp))
-                    useGradient = gradientProp.GetBoolean();
-                    
-                if (root.TryGetProperty("gradientColors", out var colorsProp))
-                {
-                    var colors = new List<Color>();
-                    foreach (var colorInt in colorsProp.EnumerateArray())
-                    {
-                        colors.Add(Color.FromArgb(colorInt.GetInt32()));
-                    }
-                    if (colors.Count > 0)
-                        gradientColors = colors.ToArray();
-                }
-            } 
-            catch (Exception ex)
-            {
-                MessageBox.Show("Load failed: " + ex.Message);
+                colors.Add(Color.FromArgb(colorInt.GetInt32()));
             }
+            if (colors.Count > 0)
+                gradientColors = colors.ToArray();
         }
+    } 
+    catch (Exception ex)
+    {
+        MessageBox.Show("Load failed: " + ex.Message);
+    }
+}
+
         
         public void Dispose()
         {
