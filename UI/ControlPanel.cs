@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace NekoBeats
 {
@@ -41,14 +43,15 @@ namespace NekoBeats
         private Color boxBg = Color.FromArgb(20, 20, 30);
         
         private Panel currentTabPanel;
+        private string activePresetsFile = "active_presets.json";
         
         public ControlPanel(VisualizerForm visualizer, PluginLoader loader)
-{
-    this.visualizer = visualizer;
-    this.pluginLoader = loader;
-    InitializeComponents();
-}
-
+        {
+            this.visualizer = visualizer;
+            this.pluginLoader = loader;
+            this.Icon = visualizer.Icon;
+            InitializeComponents();
+        }
         
         private void InitializeComponents()
         {
@@ -61,6 +64,7 @@ namespace NekoBeats
             this.MinimumSize = new Size(900, 700);
             this.Font = new Font("Courier New", 9);
             this.DoubleBuffered = true;
+            this.FormClosing += OnFormClosing;
             
             var mainContainer = new Panel { Dock = DockStyle.Fill, BackColor = darkBg, Padding = new Padding(0) };
             
@@ -328,114 +332,140 @@ namespace NekoBeats
                     break;
                     
                 case "PRESETS":
-    var presetsGroup = CreateGroupBox("Presets & Plugins", 10, y, 900, 650);
-    gy = 25;
-    
-    // Plugin Manager
-    var pluginLabel = new Label { Text = "Plugins", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
-    presetsGroup.Controls.Add(pluginLabel);
-    gy += 30;
-    
-    if (pluginLoader != null)
-    {
-        var loadedPlugins = pluginLoader.GetLoadedPlugins();
-        if (loadedPlugins.Count > 0)
-        {
-            foreach (var plugin in loadedPlugins)
-            {
-                var checkbox = new CheckBox 
-                { 
-                    Text = $"{plugin.Name} v{plugin.Version}", 
-                    Location = new Point(20, gy), 
-                    Size = new Size(400, 25), 
-                    ForeColor = neonCyan, 
-                    BackColor = boxBg, 
-                    Font = new Font("Courier New", 9), 
-                    Checked = true,
-                    Tag = plugin
-                };
-                checkbox.CheckedChanged += (s, e) => 
-                {
-                    if (checkbox.Checked)
-                        plugin.OnEnable();
+                    var presetsGroup = CreateGroupBox("Presets & Plugins", 10, y, 900, 650);
+                    gy = 25;
+                    
+                    // Plugin Manager
+                    var pluginLabel = new Label { Text = "Plugins", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
+                    presetsGroup.Controls.Add(pluginLabel);
+                    gy += 30;
+                    
+                    if (pluginLoader != null)
+                    {
+                        var loadedPlugins = pluginLoader.GetLoadedPlugins();
+                        if (loadedPlugins.Count > 0)
+                        {
+                            foreach (var plugin in loadedPlugins)
+                            {
+                                var checkbox = new CheckBox 
+                                { 
+                                    Text = $"{plugin.Name} v{plugin.Version}", 
+                                    Location = new Point(20, gy), 
+                                    Size = new Size(400, 25), 
+                                    ForeColor = neonCyan, 
+                                    BackColor = boxBg, 
+                                    Font = new Font("Courier New", 9), 
+                                    Checked = true,
+                                    Tag = plugin
+                                };
+                                checkbox.CheckedChanged += (s, e) => 
+                                {
+                                    if (checkbox.Checked)
+                                        plugin.OnEnable();
+                                    else
+                                        plugin.OnDisable();
+                                };
+                                presetsGroup.Controls.Add(checkbox);
+                                gy += 30;
+                            }
+                        }
+                        else
+                        {
+                            var noPluginsLabel = new Label { Text = "No plugins loaded", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                            presetsGroup.Controls.Add(noPluginsLabel);
+                            gy += 30;
+                        }
+                    }
                     else
-                        plugin.OnDisable();
-                };
-                presetsGroup.Controls.Add(checkbox);
-                gy += 30;
-            }
-        }
-        else
-        {
-            var noPluginsLabel = new Label { Text = "No plugins loaded", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            presetsGroup.Controls.Add(noPluginsLabel);
-            gy += 30;
-        }
-    }
-    else
-    {
-        var noPluginsLabel = new Label { Text = "Plugin loader not initialized", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-        presetsGroup.Controls.Add(noPluginsLabel);
-        gy += 30;
-    }
-    
-    // NBP Presets
-    var nbpLabel = new Label { Text = "NBP Presets (Settings)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
-    presetsGroup.Controls.Add(nbpLabel);
-    gy += 30;
-    
-    string presetsPath = "Presets";
-    if (Directory.Exists(presetsPath))
-    {
-        var nbpFiles = Directory.GetFiles(presetsPath, "*.nbp");
-        if (nbpFiles.Length > 0)
-        {
-            foreach (var file in nbpFiles)
-            {
-                string presetName = Path.GetFileNameWithoutExtension(file);
-                var checkbox = new CheckBox { Text = presetName, Location = new Point(20, gy), Size = new Size(400, 25), ForeColor = neonCyan, BackColor = boxBg, Font = new Font("Courier New", 9), Checked = false };
-                presetsGroup.Controls.Add(checkbox);
-                gy += 30;
-            }
-        }
-        else
-        {
-            var noNBPLabel = new Label { Text = "No NBP presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            presetsGroup.Controls.Add(noNBPLabel);
-            gy += 30;
-        }
-    }
-    
-    // NBBAR Presets
-    var nbbarLabel = new Label { Text = "NBBAR Presets (Bar Themes)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
-    presetsGroup.Controls.Add(nbbarLabel);
-    gy += 30;
-    
-    if (Directory.Exists(presetsPath))
-    {
-        var nbbarFiles = Directory.GetFiles(presetsPath, "*.nbbar");
-        if (nbbarFiles.Length > 0)
-        {
-            foreach (var file in nbbarFiles)
-            {
-                string presetName = Path.GetFileNameWithoutExtension(file);
-                var checkbox = new CheckBox { Text = presetName, Location = new Point(20, gy), Size = new Size(400, 25), ForeColor = neonCyan, BackColor = boxBg, Font = new Font("Courier New", 9), Checked = false };
-                presetsGroup.Controls.Add(checkbox);
-                gy += 30;
-            }
-        }
-        else
-        {
-            var noNBBARLabel = new Label { Text = "No NBBAR presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            presetsGroup.Controls.Add(noNBBARLabel);
-            gy += 30;
-        }
-    }
-    
-    currentTabPanel.Controls.Add(presetsGroup);
-    break;
-
-
+                    {
+                        var noPluginsLabel = new Label { Text = "No plugins loaded", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                        presetsGroup.Controls.Add(noPluginsLabel);
+                        gy += 30;
+                    }
+                    
+                    // NBP Presets
+                    var nbpLabel = new Label { Text = "NBP Presets (Settings)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
+                    presetsGroup.Controls.Add(nbpLabel);
+                    gy += 30;
+                    
+                    string presetsPath = "Presets";
+                    var activePresets = LoadActivePresets();
+                    
+                    if (Directory.Exists(presetsPath))
+                    {
+                        var nbpFiles = Directory.GetFiles(presetsPath, "*.nbp");
+                        if (nbpFiles.Length > 0)
+                        {
+                            foreach (var file in nbpFiles)
+                            {
+                                string presetName = Path.GetFileNameWithoutExtension(file);
+                                bool isActive = activePresets.Contains(presetName);
+                                var checkbox = new CheckBox { Text = presetName, Location = new Point(20, gy), Size = new Size(400, 25), ForeColor = neonCyan, BackColor = boxBg, Font = new Font("Courier New", 9), Checked = isActive };
+                                checkbox.CheckedChanged += (s, e) => 
+                                {
+                                    if (checkbox.Checked)
+                                    {
+                                        visualizer.Logic.LoadPreset(file);
+                                        SaveActivePreset(presetName);
+                                    }
+                                    else
+                                    {
+                                        RemoveActivePreset(presetName);
+                                    }
+                                };
+                                presetsGroup.Controls.Add(checkbox);
+                                gy += 30;
+                            }
+                        }
+                        else
+                        {
+                            var noNBPLabel = new Label { Text = "No NBP presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                            presetsGroup.Controls.Add(noNBPLabel);
+                            gy += 30;
+                        }
+                    }
+                    
+                    // NBBAR Presets
+                    var nbbarLabel = new Label { Text = "NBBAR Presets (Bar Themes)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
+                    presetsGroup.Controls.Add(nbbarLabel);
+                    gy += 30;
+                    
+                    if (Directory.Exists(presetsPath))
+                    {
+                        var nbbarFiles = Directory.GetFiles(presetsPath, "*.nbbar");
+                        if (nbbarFiles.Length > 0)
+                        {
+                            foreach (var file in nbbarFiles)
+                            {
+                                string presetName = Path.GetFileNameWithoutExtension(file);
+                                bool isActive = activePresets.Contains(presetName);
+                                var checkbox = new CheckBox { Text = presetName, Location = new Point(20, gy), Size = new Size(400, 25), ForeColor = neonCyan, BackColor = boxBg, Font = new Font("Courier New", 9), Checked = isActive };
+                                checkbox.CheckedChanged += (s, e) => 
+                                {
+                                    if (checkbox.Checked)
+                                    {
+                                        visualizer.Logic.LoadBarPreset(file);
+                                        SaveActivePreset(presetName);
+                                    }
+                                    else
+                                    {
+                                        RemoveActivePreset(presetName);
+                                    }
+                                };
+                                presetsGroup.Controls.Add(checkbox);
+                                gy += 30;
+                            }
+                        }
+                        else
+                        {
+                            var noNBBARLabel = new Label { Text = "No NBBAR presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+                            presetsGroup.Controls.Add(noNBBARLabel);
+                            gy += 30;
+                        }
+                    }
+                    
+                    currentTabPanel.Controls.Add(presetsGroup);
+                    break;
                     
                 case "CREDITS":
                     var creditsGroup = CreateGroupBox("About", 10, y, 900, 280);
@@ -456,8 +486,8 @@ namespace NekoBeats
                     creditsGroup.Controls.Add(versionLabel);
                     gy += 35;
                     
-                    var githubLabel = new Label { Text = "github.com/justdev-chris/NekoBeats-V2", Location = new Point(20, gy), Size = new Size(860, 25), ForeColor = neonCyan, Font = new Font("Courier New", 9, FontStyle.Underline), AutoSize = false, Cursor = Cursors.Hand };
-                    githubLabel.Click += (s, e) => { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://github.com/justdev-chris/NekoBeats-V2", UseShellExecute = true }); } catch { } };
+                    var githubLabel = new Label { Text = "github.com/justdev-chris2/NekoBeats-V2", Location = new Point(20, gy), Size = new Size(860, 25), ForeColor = neonCyan, Font = new Font("Courier New", 9, FontStyle.Underline), AutoSize = false, Cursor = Cursors.Hand };
+                    githubLabel.Click += (s, e) => { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://github.com/justdev-chris2/NekoBeats-V2", UseShellExecute = true }); } catch { } };
                     creditsGroup.Controls.Add(githubLabel);
                     
                     currentTabPanel.Controls.Add(creditsGroup);
@@ -524,6 +554,57 @@ namespace NekoBeats
         {
             using var colorDialog = new ColorDialog { Color = visualizer.Logic.barColor };
             if (colorDialog.ShowDialog() == DialogResult.OK) visualizer.Logic.barColor = colorDialog.Color;
+        }
+        
+        private List<string> LoadActivePresets()
+        {
+            try
+            {
+                if (File.Exists(activePresetsFile))
+                {
+                    string json = File.ReadAllText(activePresetsFile);
+                    return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+                }
+            }
+            catch { }
+            return new List<string>();
+        }
+
+        private void SaveActivePreset(string presetName)
+        {
+            try
+            {
+                var activePresets = LoadActivePresets();
+                if (!activePresets.Contains(presetName))
+                    activePresets.Add(presetName);
+                
+                string json = JsonSerializer.Serialize(activePresets, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(activePresetsFile, json);
+            }
+            catch { }
+        }
+
+        private void RemoveActivePreset(string presetName)
+        {
+            try
+            {
+                var activePresets = LoadActivePresets();
+                activePresets.Remove(presetName);
+                
+                string json = JsonSerializer.Serialize(activePresets, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(activePresetsFile, json);
+            }
+            catch { }
+        }
+        
+        private void OnFormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                if (File.Exists(activePresetsFile))
+                    File.Delete(activePresetsFile);
+            }
+            catch { }
         }
     }
 }
