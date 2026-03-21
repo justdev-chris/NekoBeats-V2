@@ -12,10 +12,11 @@ namespace NekoBeats
     static class Program
     {
         private const string CURRENT_VERSION = "2.3.2";
+        private const string LATEST_VERSION = "2.3.2"; // update this with each release
         private const string GITHUB_REPO = "justdev-chris2/NekoBeats-V2";
-        private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest";
+        private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/tags/v" + LATEST_VERSION;
         private const string GITHUB_RELEASES_URL = "https://github.com/" + GITHUB_REPO + "/releases";
-        
+
         private static DiscordRpcClient discordRpc;
         private static VisualizerForm visualizerForm;
         private static ControlPanel controlPanel;
@@ -82,11 +83,11 @@ namespace NekoBeats
 
         private static void InitializeVisualizer()
         {
-            visualizerForm = new VisualizerForm(null);
-            visualizerForm.Icon = nekoIcon;
-            
-            pluginLoader = new PluginLoader(new NekoBeatsPluginHost(visualizerForm));
-            
+            var tempForm = new VisualizerForm(null);
+            tempForm.Icon = nekoIcon;
+
+            pluginLoader = new PluginLoader(new NekoBeatsPluginHost(tempForm));
+
             var result = MessageBox.Show(
                 "Load plugins? (Security Warning: Only load plugins you trust)",
                 "NekoBeats Plugin System",
@@ -99,11 +100,23 @@ namespace NekoBeats
                 pluginLoader.LoadAllPlugins();
             }
 
+            tempForm.Dispose();
+
             visualizerForm = new VisualizerForm(pluginLoader);
             visualizerForm.Icon = nekoIcon;
-            
+
             controlPanel = new ControlPanel(visualizerForm, pluginLoader);
             controlPanel.Icon = nekoIcon;
+
+            // Hide instead of dispose when user closes control panel
+            controlPanel.FormClosing += (s, e) =>
+            {
+                if (e.CloseReason == CloseReason.UserClosing)
+                {
+                    e.Cancel = true;
+                    controlPanel.Hide();
+                }
+            };
 
             visualizerForm.Show();
         }
@@ -116,12 +129,15 @@ namespace NekoBeats
             trayIcon.Text = "NekoBeats v" + CURRENT_VERSION;
 
             ContextMenuStrip menu = new ContextMenuStrip();
-            
+
             var showItem = new ToolStripMenuItem("Show", null, (s, e) =>
             {
-                controlPanel.Show();
-                controlPanel.WindowState = FormWindowState.Normal;
-                controlPanel.BringToFront();
+                if (controlPanel != null && !controlPanel.IsDisposed)
+                {
+                    controlPanel.Show();
+                    controlPanel.WindowState = FormWindowState.Normal;
+                    controlPanel.BringToFront();
+                }
             });
             menu.Items.Add(showItem);
 
@@ -152,30 +168,21 @@ namespace NekoBeats
                     {
                         client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
                         HttpResponseMessage response = await client.GetAsync(GITHUB_API_URL);
-                        
+
                         if (response.IsSuccessStatusCode)
                         {
-                            string json = await response.Content.ReadAsStringAsync();
-                            
-                            if (json.Contains("\"tag_name\":\"v"))
+                            if (LATEST_VERSION != CURRENT_VERSION)
                             {
-                                int tagStart = json.IndexOf("\"tag_name\":\"v") + 14;
-                                int tagEnd = json.IndexOf("\"", tagStart);
-                                string latestVersion = json.Substring(tagStart, tagEnd - tagStart);
+                                DialogResult result = MessageBox.Show(
+                                    $"New version available: v{LATEST_VERSION}\n\nCurrent: v{CURRENT_VERSION}",
+                                    "Update Available",
+                                    MessageBoxButtons.OKCancel,
+                                    MessageBoxIcon.Information
+                                );
 
-                                if (latestVersion != CURRENT_VERSION)
+                                if (result == DialogResult.OK)
                                 {
-                                    DialogResult result = MessageBox.Show(
-                                        $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
-                                        "Update Available",
-                                        MessageBoxButtons.OKCancel,
-                                        MessageBoxIcon.Information
-                                    );
-
-                                    if (result == DialogResult.OK)
-                                    {
-                                        OpenReleasesPage();
-                                    }
+                                    OpenReleasesPage();
                                 }
                             }
                         }
