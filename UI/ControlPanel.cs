@@ -8,6 +8,7 @@ namespace NekoBeats
     public class ControlPanel : Form
     {
         private VisualizerForm visualizer;
+        private PluginLoader pluginLoader;
 
         private CheckBox rainbowCheck;
         private CheckBox gradientToggle;
