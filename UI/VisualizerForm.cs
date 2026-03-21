@@ -29,15 +29,17 @@ private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
     
     public bool streamingMode = false;
     
-    public VisualizerForm()
-    {
-        InitializeForm();
-        InitializeLogic();
-        InitializeTimer();
-        
-        controlPanel = new ControlPanel(this, pluginLoader);
-        controlPanel.Show();
-    }
+    public VisualizerForm(PluginLoader loader)
+{
+    pluginLoader = loader;
+    InitializeForm();
+    InitializeLogic();
+    InitializeTimer();
+    
+    controlPanel = new ControlPanel(this, pluginLoader);
+    controlPanel.Show();
+}
+
     
     private void InitializeForm()
     {
