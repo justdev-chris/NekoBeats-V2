@@ -1,0 +1,9 @@
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at NekoBeats.ControlPanel.ShowTab(String tabName) in D:\a\NekoBeats-V2\NekoBeats-V2\UI\ControlPanel.cs:line 339
+   at NekoBeats.ControlPanel.<InitializeComponents>b__32_2(Object s, EventArgs e) in D:\a\NekoBeats-V2\NekoBeats-V2\UI\ControlPanel.cs:line 94
+   at System.Windows.Forms.Button.OnClick(EventArgs e)
+   at System.Windows.Forms.Button.OnMouseUp(MouseEventArgs mevent)
+   at System.Windows.Forms.Control.WmMouseUp(Message& m, MouseButtons button, Int32 clicks)
+   at System.Windows.Forms.Control.WndProc(Message& m)
+   at System.Windows.Forms.ButtonBase.WndProc(Message& m)
+   at System.Windows.Forms.NativeWindow.Callback(HWND hWnd, MessageId msg, WPARAM wparam, LPARAM lparam)
