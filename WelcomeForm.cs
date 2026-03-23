@@ -163,7 +163,7 @@ namespace NekoBeats
             AddLabel(panel, "Welcome to NekoBeats! 🐱", new Point(0, 185), new Size(580, 40),
                 new Font("Courier New", 18, FontStyle.Bold), accent, ContentAlignment.MiddleCenter);
 
-            AddLabel(panel, "v2.3.2", new Point(0, 230), new Size(580, 25),
+            AddLabel(panel, "v2.3.3", new Point(0, 230), new Size(580, 25),
                 new Font("Courier New", 10), dimText, ContentAlignment.MiddleCenter);
 
             AddLabel(panel, "A sleek audio visualizer that turns your music\ninto floating light bars.",
