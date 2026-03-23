@@ -134,11 +134,13 @@ namespace NekoBeats
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
-        {
-            this.Opacity = logic.opacity;
-            logic.RenderCustomBackground(e.Graphics, this.ClientSize);
-            logic.Render(e.Graphics, this.ClientSize);
-        }
+{
+    this.Opacity = logic.opacity;
+    e.Graphics.Clear(Color.Magenta);
+    logic.RenderCustomBackground(e.Graphics, this.ClientSize);
+    logic.Render(e.Graphics, this.ClientSize);
+}
+
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
