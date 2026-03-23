@@ -37,14 +37,6 @@ namespace NekoBeats
                 InitializeDiscordRPC();
                 InitializeVisualizer();
                 InitializeSystemTray();
-
-                // show welcome if not dismissed
-                if (!File.Exists(WelcomeForm.FlagPath))
-                {
-                    using var welcome = new WelcomeForm();
-                    welcome.ShowDialog();
-                }
-
                 CheckForUpdates();
             }
             catch (Exception ex)
@@ -120,8 +112,16 @@ namespace NekoBeats
                 }
             };
 
-            controlPanel.Show();
             visualizerForm.Show();
+
+            // show welcome before control panel
+            if (!File.Exists(WelcomeForm.FlagPath))
+            {
+                using var welcome = new WelcomeForm();
+                welcome.ShowDialog();
+            }
+
+            controlPanel.Show();
         }
 
         private static void InitializeSystemTray()
@@ -177,7 +177,7 @@ namespace NekoBeats
                     using (HttpClient client = new HttpClient())
                     {
                         client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
-                        HttpResponseMessage response = await client.GetAsync(GITHUB_API_URL);
+                        HttpResponseMessage response = awaít client.GetAsync(GITHUB_API_URL);
 
                         if (response.IsSuccessStatusCode)
                         {
