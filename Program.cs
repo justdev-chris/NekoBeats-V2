@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.IO;
 using DiscordRPC;
 using NekoBeats.Plugins;
 
@@ -11,8 +12,8 @@ namespace NekoBeats
 {
     static class Program
     {
-        private const string CURRENT_VERSION = "2.3.2";
-        private const string LATEST_VERSION = "2.3.3"; // update this with each release
+        private const string CURRENT_VERSION = "2.3.3";
+        private const string LATEST_VERSION = "2.3.4";
         private const string GITHUB_REPO = "justdev-chris/NekoBeats-V2";
         private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/tags/v" + LATEST_VERSION;
         private const string GITHUB_RELEASES_URL = "https://github.com/" + GITHUB_REPO + "/releases";
@@ -36,6 +37,14 @@ namespace NekoBeats
                 InitializeDiscordRPC();
                 InitializeVisualizer();
                 InitializeSystemTray();
+
+                // show welcome if not dismissed
+                if (!File.Exists(WelcomeForm.FlagPath))
+                {
+                    using var welcome = new WelcomeForm();
+                    welcome.ShowDialog();
+                }
+
                 CheckForUpdates();
             }
             catch (Exception ex)
@@ -51,14 +60,10 @@ namespace NekoBeats
         {
             try
             {
-                if (System.IO.File.Exists("NekoBeatsLogo.ico"))
-                {
+                if (File.Exists("NekoBeatsLogo.ico"))
                     nekoIcon = new Icon("NekoBeatsLogo.ico");
-                }
                 else
-                {
                     nekoIcon = SystemIcons.Application;
-                }
             }
             catch
             {
@@ -96,9 +101,7 @@ namespace NekoBeats
             );
 
             if (result == DialogResult.Yes)
-            {
                 pluginLoader.LoadAllPlugins();
-            }
 
             tempForm.Dispose();
 
@@ -108,7 +111,6 @@ namespace NekoBeats
             controlPanel = new ControlPanel(visualizerForm, pluginLoader);
             controlPanel.Icon = nekoIcon;
 
-            // Hide instead of dispose when user closes control panel
             controlPanel.FormClosing += (s, e) =>
             {
                 if (e.CloseReason == CloseReason.UserClosing)
@@ -117,6 +119,7 @@ namespace NekoBeats
                     controlPanel.Hide();
                 }
             };
+
             controlPanel.Show();
             visualizerForm.Show();
         }
@@ -146,6 +149,13 @@ namespace NekoBeats
                 CheckForUpdates();
             });
             menu.Items.Add(updateItem);
+
+            var welcomeItem = new ToolStripMenuItem("Show Welcome", null, (s, e) =>
+            {
+                using var welcome = new WelcomeForm();
+                welcome.ShowDialog();
+            });
+            menu.Items.Add(welcomeItem);
 
             menu.Items.Add(new ToolStripSeparator());
 
@@ -181,9 +191,7 @@ namespace NekoBeats
                                 );
 
                                 if (result == DialogResult.OK)
-                                {
                                     OpenReleasesPage();
-                                }
                             }
                         }
                     }
