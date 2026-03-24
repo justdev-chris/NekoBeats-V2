@@ -76,7 +76,7 @@ namespace NekoBeats
             backBtn = new Button
             {
                 Text = "◀ BACK",
-                Location = new Point(270, 465),
+                Location = new Point(270, 480),
                 Size = new Size(100, 35),
                 BackColor = Color.FromArgb(30, 30, 40),
                 ForeColor = dimText,
@@ -92,7 +92,7 @@ namespace NekoBeats
             nextBtn = new Button
             {
                 Text = "NEXT ▶",
-                Location = new Point(480, 465),
+                Location = new Point(480, 480),
                 Size = new Size(100, 35),
                 BackColor = accent,
                 ForeColor = Color.Black,
@@ -107,7 +107,7 @@ namespace NekoBeats
             pageIndicator = new Label
             {
                 Text = "1 / 5",
-                Location = new Point(0, 435),
+                Location = new Point(0, 440),
                 Size = new Size(600, 20),
                 ForeColor = dimText,
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -208,7 +208,7 @@ namespace NekoBeats
                 "FX tab — bloom, particles, circle mode, fade effect",
                 "AUDIO tab — sensitivity, smooth speed, latency comp",
                 "WINDOW tab — click-through, streaming mode, FPS limit",
-                "PRESETS tab — load .nbp and .nbbar preset files"
+                "PRESETS tab — load .nbp and .nbbar preset files by setting a '/Presets'"
             };
 
             int y = 90;
