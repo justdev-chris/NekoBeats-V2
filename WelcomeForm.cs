@@ -65,7 +65,7 @@ namespace NekoBeats
             dontShowCheck = new CheckBox
             {
                 Text = "Don't show this again",
-                Location = new Point(20, 468),
+                Location = new Point(20, 428),
                 Size = new Size(200, 25),
                 ForeColor = dimText,
                 BackColor = bg,
@@ -76,7 +76,7 @@ namespace NekoBeats
             backBtn = new Button
             {
                 Text = "◀ BACK",
-                Location = new Point(270, 480),
+                Location = new Point(270, 420),
                 Size = new Size(100, 35),
                 BackColor = Color.FromArgb(30, 30, 40),
                 ForeColor = dimText,
@@ -92,7 +92,7 @@ namespace NekoBeats
             nextBtn = new Button
             {
                 Text = "NEXT ▶",
-                Location = new Point(480, 480),
+                Location = new Point(480, 420),
                 Size = new Size(100, 35),
                 BackColor = accent,
                 ForeColor = Color.Black,
@@ -107,7 +107,7 @@ namespace NekoBeats
             pageIndicator = new Label
             {
                 Text = "1 / 5",
-                Location = new Point(0, 440),
+                Location = new Point(0, 395),
                 Size = new Size(600, 20),
                 ForeColor = dimText,
                 TextAlign = ContentAlignment.MiddleCenter,
