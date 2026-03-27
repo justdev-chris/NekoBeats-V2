@@ -79,20 +79,27 @@ namespace NekoBeats
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
         {
-            // V2.3.2: Check gradient first
+            // Calculate alpha based on bar height (optional - makes bars fade at the top)
+            int alpha = (int)(Math.Min(1.0f, h / (clientHeight * 0.5f)) * 255);
+            alpha = Math.Clamp(alpha, 50, 255); // Minimum 50 alpha so bars are always visible
+            
+            // Check gradient first
             if (useGradient && gradientColors != null && gradientColors.Length > 0)
             {
                 int colorIndex = barIndex % gradientColors.Length;
-                return gradientColors[colorIndex];
+                Color baseColor = gradientColors[colorIndex];
+                return Color.FromArgb(alpha, baseColor);
             }
             
             if (rainbowBars)
             {
                 float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
                 float hue = intensity * 300;
-                return ColorFromHSV(hue, 1.0f, 1.0f);
+                Color baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
+                return Color.FromArgb(alpha, baseColor);
             }
-            return barColor;
+            
+            return Color.FromArgb(alpha, barColor);
         }
 
         private float GetBarHeight(int barIndex)
@@ -106,12 +113,6 @@ namespace NekoBeats
             return fadeValues[barIndex];
         }
 
-        public Color ApplyOpacity(Color color)
-        {
-            int alpha = (int)(255 * opacity);
-            return Color.FromArgb(Math.Clamp(alpha, 0, 255), color.R, color.G, color.B);
-        }
-
         private void DrawRectangle(Graphics g, Size clientSize)
         {
             float barWidth = (float)clientSize.Width / barCount;
@@ -122,7 +123,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
@@ -143,7 +144,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
                 float tubeDiameter = barWidth - barSpacing;
@@ -172,13 +173,13 @@ namespace NekoBeats
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y),
                     new PointF(x, y + h),
-                    ApplyOpacity(Color.FromArgb(200, barColorToUse)),
-                    ApplyOpacity(Color.FromArgb(100, barColorToUse))))
+                    Color.FromArgb(200, barColorToUse),
+                    Color.FromArgb(100, barColorToUse)))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
 
-                using (Pen pen = new Pen(ApplyOpacity(barColorToUse), 2))
+                using (Pen pen = new Pen(barColorToUse, 2))
                 {
                     g.DrawLine(pen, x, y, x + barWidth - barSpacing, y);
                 }
@@ -195,7 +196,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
                 float mid = x + (barWidth - barSpacing) / 2;
@@ -230,7 +231,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
@@ -258,13 +259,13 @@ namespace NekoBeats
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y + h),
                     new PointF(x + barWidth - barSpacing, y),
-                    ApplyOpacity(barColorToUse),
-                    ApplyOpacity(Color.FromArgb(80, barColorToUse))))
+                    barColorToUse,
+                    Color.FromArgb(80, barColorToUse)))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
 
-                using (Pen gridPen = new Pen(ApplyOpacity(Color.FromArgb(100, barColorToUse)), 1))
+                using (Pen gridPen = new Pen(Color.FromArgb(100, barColorToUse), 1))
                 {
                     for (int line = 0; line < 3; line++)
                     {
@@ -286,7 +287,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
@@ -315,7 +316,7 @@ namespace NekoBeats
                 float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
                 if (h < 2) h = 2;
 
-                Color barColorToUse = ApplyOpacity(GetBarColor(h, clientSize.Height, i));
+                Color barColorToUse = GetBarColor(h, clientSize.Height, i);
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
