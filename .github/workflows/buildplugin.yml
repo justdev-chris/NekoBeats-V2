@@ -10,7 +10,7 @@ jobs:
       - name: Compile plugin
         run: |
           $csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $csc /target:library /reference:"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Windows.Forms.dll" /reference:"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Drawing.dll" /out:BeatFlashPlugin.dll PluginSystem/PluginInterface.cs BeatFlashPlugin.cs
+          & $csc /target:library /langversion:7.3 /reference:"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Windows.Forms.dll" /reference:"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Drawing.dll" /out:BeatFlashPlugin.dll PluginSystem/PluginInterface.cs BeatFlashPlugin.cs
       
       - name: Rename to .nbplugin
         run: ren BeatFlashPlugin.dll BeatFlashPlugin.nbplugin
