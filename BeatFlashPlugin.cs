@@ -22,7 +22,6 @@ namespace BeatFlashPlugin
         {
             this.host = host;
 
-            // add custom tab to control panel
             host.AddControlPanelTab("FLASH", panel =>
             {
                 var label = new Label
@@ -37,7 +36,7 @@ namespace BeatFlashPlugin
 
                 var heightLabel = new Label
                 {
-                    Text = $"Flash Height: {flashHeight}",
+                    Text = "Flash Height: " + flashHeight,
                     Location = new Point(20, 60),
                     Size = new Size(200, 20),
                     ForeColor = Color.White,
@@ -58,7 +57,7 @@ namespace BeatFlashPlugin
                 heightTrack.ValueChanged += (s, e) =>
                 {
                     flashHeight = heightTrack.Value;
-                    heightLabel.Text = $"Flash Height: {flashHeight}";
+                    heightLabel.Text = "Flash Height: " + flashHeight;
                 };
                 panel.Controls.Add(heightTrack);
             });
