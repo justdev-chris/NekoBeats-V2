@@ -7,9 +7,9 @@ namespace BeatFlashPlugin
 {
     public class BeatFlashPlugin : INekoBeatsPlugin
     {
-        public string Name => "Beat Flash";
-        public string Version => "1.0";
-        public string Author => "justdev-chris";
+        public string Name { get { return "Beat Flash"; } }
+        public string Version { get { return "1.0"; } }
+        public string Author { get { return "justdev-chris"; } }
 
         private INekoBeatsHost host;
         private System.Threading.Timer timer;
@@ -90,14 +90,14 @@ namespace BeatFlashPlugin
 
         public void OnDisable()
         {
-            timer?.Dispose();
+            if (timer != null) timer.Dispose();
             host.SetOpacity(1.0f);
             host.SetBarHeight(80);
         }
 
         public void OnUnload()
         {
-            timer?.Dispose();
+            if (timer != null) timer.Dispose();
         }
     }
 }
