@@ -89,7 +89,7 @@ namespace NekoBeats
     {
         float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
         float hue = intensity * 300;
-        // Skip magenta
+        // Skip magenta if you want, but not needed with layered window
         if (hue >= 280 && hue <= 340)
             hue = 279;
         baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
@@ -99,22 +99,12 @@ namespace NekoBeats
         baseColor = barColor;
     }
     
-    // Apply opacity to the bar color (alpha channel)
+    // Apply opacity to alpha channel
     int alpha = (int)(255 * opacity);
     alpha = Math.Clamp(alpha, 0, 255);
     
     return Color.FromArgb(alpha, baseColor);
 }
-        private float GetBarHeight(int barIndex)
-        {
-            if (!fadeEffectEnabled)
-                return smoothedBarValues[barIndex];
-            
-            if (barIndex >= fadeValues.Length)
-                return smoothedBarValues[barIndex];
-            
-            return fadeValues[barIndex];
-        }
 
         private void DrawRectangle(Graphics g, Size clientSize)
         {
