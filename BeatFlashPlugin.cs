@@ -12,7 +12,6 @@ namespace BeatFlashPlugin
         public string Author { get { return "justdev-chris"; } }
 
         private INekoBeatsHost host;
-        private System.Threading.Timer timer;
         private float lastAudioLevel = 0;
         private bool flashing = false;
         private int flashHeight = 120;
@@ -66,6 +65,13 @@ namespace BeatFlashPlugin
             host.Log("Beat Flash loaded!");
         }
 
+        public void OnEnable()
+        {
+            enabled = true;
+            lastAudioLevel = 0;
+            flashing = false;
+        }
+
         public void OnUpdate(float deltaTime)
         {
             if (!enabled) return;
@@ -88,9 +94,15 @@ namespace BeatFlashPlugin
             lastAudioLevel = level;
         }
 
+        public void OnDisable()
+        {
+            enabled = false;
+            host.SetOpacity(1.0f);
+            host.SetBarHeight(80);
+        }
+
         public void Dispose()
         {
-            if (timer != null) timer.Dispose();
             host.SetOpacity(1.0f);
             host.SetBarHeight(80);
         }
