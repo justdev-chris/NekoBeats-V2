@@ -31,25 +31,6 @@ namespace NekoBeats
 
             try
             {
-                // Delete welcome flag file
-                string welcomeFlagPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "NekoBeats",
-                    "welcomed.flag"
-                );
-                
-                try
-                {
-                    if (File.Exists(welcomeFlagPath))
-                    {
-                        File.Delete(welcomeFlagPath);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Failed to delete welcome flag: {ex.Message}");
-                }
-
                 LoadIcon();
                 InitializeDiscordRPC();
                 InitializeVisualizer();
