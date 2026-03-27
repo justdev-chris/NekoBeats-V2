@@ -77,34 +77,48 @@ namespace NekoBeats
         }
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
-{
-    Color baseColor;
-    
-    if (useGradient && gradientColors != null && gradientColors.Length > 0)
-    {
-        int colorIndex = barIndex % gradientColors.Length;
-        baseColor = gradientColors[colorIndex];
-    }
-    else if (rainbowBars)
-    {
-        float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
-        float hue = intensity * 300;
-        // Skip magenta if you want, but not needed with layered window
-        if (hue >= 280 && hue <= 340)
-            hue = 279;
-        baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
-    }
-    else
-    {
-        baseColor = barColor;
-    }
-    
-    // Apply opacity to alpha channel
-    int alpha = (int)(255 * opacity);
-    alpha = Math.Clamp(alpha, 0, 255);
-    
-    return Color.FromArgb(alpha, baseColor);
-}
+        {
+            Color baseColor;
+            
+            if (useGradient && gradientColors != null && gradientColors.Length > 0)
+            {
+                int colorIndex = barIndex % gradientColors.Length;
+                baseColor = gradientColors[colorIndex];
+            }
+            else if (rainbowBars)
+            {
+                float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
+                float hue = intensity * 300;
+                if (hue >= 280 && hue <= 340)
+                    hue = 279;
+                baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
+            }
+            else
+            {
+                baseColor = barColor;
+            }
+            
+            if (baseColor == Color.Magenta || (baseColor.R == 255 && baseColor.G == 0 && baseColor.B == 255))
+            {
+                baseColor = Color.Cyan;
+            }
+            
+            int alpha = (int)(255 * opacity);
+            alpha = Math.Clamp(alpha, 0, 255);
+            
+            return Color.FromArgb(alpha, baseColor);
+        }
+
+        private float GetBarHeight(int barIndex)
+        {
+            if (!fadeEffectEnabled)
+                return smoothedBarValues[barIndex];
+            
+            if (barIndex >= fadeValues.Length)
+                return smoothedBarValues[barIndex];
+            
+            return fadeValues[barIndex];
+        }
 
         private void DrawRectangle(Graphics g, Size clientSize)
         {
@@ -149,18 +163,6 @@ namespace NekoBeats
             }
         }
 
-
-        private float GetBarHeight(int barIndex)
-{
-    if (!fadeEffectEnabled)
-        return smoothedBarValues[barIndex];
-    
-    if (barIndex >= fadeValues.Length)
-        return smoothedBarValues[barIndex];
-    
-    return fadeValues[barIndex];
-}
-        
         private void DrawLiquid(Graphics g, Size clientSize)
         {
             float barWidth = (float)clientSize.Width / barCount;
@@ -175,12 +177,11 @@ namespace NekoBeats
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
-                // Changed to solid colors - no alpha
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y),
                     new PointF(x, y + h),
-                    barColorToUse,
-                    barColorToUse))
+                    Color.FromArgb(200, barColorToUse),
+                    Color.FromArgb(100, barColorToUse)))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
@@ -262,17 +263,16 @@ namespace NekoBeats
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
-                // Changed to solid colors - no alpha
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y + h),
                     new PointF(x + barWidth - barSpacing, y),
                     barColorToUse,
-                    barColorToUse))
+                    Color.FromArgb(80, barColorToUse)))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
 
-                using (Pen gridPen = new Pen(barColorToUse, 1))
+                using (Pen gridPen = new Pen(Color.FromArgb(100, barColorToUse), 1))
                 {
                     for (int line = 0; line < 3; line++)
                     {
@@ -355,7 +355,13 @@ namespace NekoBeats
         public void UpdateFadeEffect()
         {
             if (!fadeEffectEnabled)
+            {
+                for (int i = 0; i < smoothedBarValues.Length && i < fadeValues.Length; i++)
+                {
+                    fadeValues[i] = smoothedBarValues[i];
+                }
                 return;
+            }
 
             for (int i = 0; i < fadeValues.Length; i++)
             {
@@ -390,29 +396,26 @@ namespace NekoBeats
         }
 
         private Color ColorFromHSV(double hue, double saturation, double value)
-{
-    // Clamp hue to avoid magenta (280-340 degrees)
-    if (hue >= 280 && hue <= 340)
-    {
-        hue = 279;
-    }
-    
-    int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-    double f = hue / 60 - Math.Floor(hue / 60);
+        {
+            if (hue >= 280 && hue <= 340)
+                hue = 279;
+                
+            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
 
-    value = value * 255;
-    int v = Convert.ToInt32(value);
-    int p = Convert.ToInt32(value * (1 - saturation));
-    int q = Convert.ToInt32(value * (1 - f * saturation));
-    int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+            value = value * 255;
+            int v = Convert.ToInt32(value);
+            int p = Convert.ToInt32(value * (1 - saturation));
+            int q = Convert.ToInt32(value * (1 - f * saturation));
+            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
 
-    if (hi == 0) return Color.FromArgb(255, v, t, p);
-    else if (hi == 1) return Color.FromArgb(255, q, v, p);
-    else if (hi == 2) return Color.FromArgb(255, p, v, t);
-    else if (hi == 3) return Color.FromArgb(255, p, q, v);
-    else if (hi == 4) return Color.FromArgb(255, t, p, v);
-    else return Color.FromArgb(255, v, p, q);
-}
+            if (hi == 0) return Color.FromArgb(255, v, t, p);
+            else if (hi == 1) return Color.FromArgb(255, q, v, p);
+            else if (hi == 2) return Color.FromArgb(255, p, v, t);
+            else if (hi == 3) return Color.FromArgb(255, p, q, v);
+            else if (hi == 4) return Color.FromArgb(255, t, p, v);
+            else return Color.FromArgb(255, v, p, q);
+        }
     }
 
     public static class GraphicsExtensions
