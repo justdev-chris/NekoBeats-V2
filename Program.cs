@@ -14,7 +14,6 @@ namespace NekoBeats
     {
         private const string CURRENT_VERSION = "2.3.3";
         private const string GITHUB_REPO = "justdev-chris/NekoBeats-V2";
-        private const string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/tags/v" + LATEST_VERSION;
         private const string GITHUB_RELEASES_URL = "https://github.com/" + GITHUB_REPO + "/releases";
 
         private static DiscordRpcClient discordRpc;
