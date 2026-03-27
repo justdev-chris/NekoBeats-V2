@@ -77,29 +77,28 @@ namespace NekoBeats
         }
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
-        {
-            if (useGradient && gradientColors != null && gradientColors.Length > 0)
-            {
-                int colorIndex = barIndex % gradientColors.Length;
-                return gradientColors[colorIndex];
-            }
-            
-            if (rainbowBars)
-            {
-                float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
-                float hue = intensity * 300;
-                // Skip magenta to prevent disappearing bars
-                if (hue >= 280 && hue <= 340)
-                {
-                    if (hue < 310)
-                        hue = 279;
-                    else
-                        hue = 341;
-                }
-                return ColorFromHSV(hue, 1.0f, 1.0f);
-            }
-            return barColor;
-        }
+{
+    if (useGradient && gradientColors != null && gradientColors.Length > 0)
+    {
+        int colorIndex = barIndex % gradientColors.Length;
+        Color c = gradientColors[colorIndex];
+        if (c == Color.Magenta) return Color.Cyan;
+        return c;
+    }
+    
+    if (rainbowBars)
+    {
+        float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
+        float hue = intensity * 300;
+        // Skip magenta
+        if (hue >= 280 && hue <= 340)
+            hue = 279;
+        return ColorFromHSV(hue, 1.0f, 1.0f);
+    }
+    
+    if (barColor == Color.Magenta) return Color.Cyan;
+    return barColor;
+}
 
         private float GetBarHeight(int barIndex)
         {
