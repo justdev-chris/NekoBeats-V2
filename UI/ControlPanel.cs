@@ -321,13 +321,8 @@ namespace NekoBeats
                     break;
 
                 case "WINDOW":
-                    var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 360);
+                    var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 280);
                     gy = 25;
-
-                    var streamingBtn = new Button { Text = "Streaming Mode: OFF", Location = new Point(20, gy), Size = new Size(200, 32), BackColor = Color.FromArgb(150, 50, 50), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand, Tag = false };
-                    streamingBtn.Click += (s, e) => { bool isEnabled = (bool)streamingBtn.Tag; visualizer.SetStreamingMode(!isEnabled); streamingBtn.Tag = !isEnabled; streamingBtn.Text = !isEnabled ? "Streaming Mode: ON" : "Streaming Mode: OFF"; };
-                    windowGroup.Controls.Add(streamingBtn);
-                    gy += 45;
 
                     var labelFps = new Label { Text = "FPS Limit:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
                     windowGroup.Controls.Add(labelFps);
