@@ -78,28 +78,33 @@ namespace NekoBeats
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
 {
+    Color baseColor;
+    
     if (useGradient && gradientColors != null && gradientColors.Length > 0)
     {
         int colorIndex = barIndex % gradientColors.Length;
-        Color c = gradientColors[colorIndex];
-        if (c == Color.Magenta) return Color.Cyan;
-        return c;
+        baseColor = gradientColors[colorIndex];
     }
-    
-    if (rainbowBars)
+    else if (rainbowBars)
     {
         float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
         float hue = intensity * 300;
         // Skip magenta
         if (hue >= 280 && hue <= 340)
             hue = 279;
-        return ColorFromHSV(hue, 1.0f, 1.0f);
+        baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
+    }
+    else
+    {
+        baseColor = barColor;
     }
     
-    if (barColor == Color.Magenta) return Color.Cyan;
-    return barColor;
+    // Apply opacity to the bar color (alpha channel)
+    int alpha = (int)(255 * opacity);
+    alpha = Math.Clamp(alpha, 0, 255);
+    
+    return Color.FromArgb(alpha, baseColor);
 }
-
         private float GetBarHeight(int barIndex)
         {
             if (!fadeEffectEnabled)
