@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace NekoBeats.Plugins
 {
@@ -8,7 +9,7 @@ namespace NekoBeats.Plugins
         string Name { get; }
         string Version { get; }
         string Author { get; }
-        
+
         void Initialize(INekoBeatsHost host);
         void OnEnable();
         void OnDisable();
@@ -30,5 +31,6 @@ namespace NekoBeats.Plugins
         void SetFadeEffect(bool enabled, float fadeSpeed);
         float GetAudioLevel();
         int GetCurrentFPS();
+        void AddControlPanelTab(string tabName, Action<Panel> buildTab);
     }
 }
