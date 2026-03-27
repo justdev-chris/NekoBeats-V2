@@ -15,9 +15,39 @@ namespace NekoBeats
         [DllImport("user32.dll")]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
+        [DllImport("user32.dll")]
+        private static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref Point pptDst, ref Size psize, IntPtr hdcSrc, ref Point pprSrc, uint crKey, ref BLENDFUNCTION pblend, uint dwFlags);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteDC(IntPtr hdc);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
         private const int GWL_EXSTYLE = -20;
         private const int WS_EX_LAYERED = 0x80000;
         private const int WS_EX_TRANSPARENT = 0x20;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct BLENDFUNCTION
+        {
+            public byte BlendOp;
+            public byte BlendFlags;
+            public byte SourceConstantAlpha;
+            public byte AlphaFormat;
+        }
 
         private VisualizerLogic logic;
         private Timer renderTimer;
@@ -47,10 +77,7 @@ namespace NekoBeats
 
             this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
-            this.BackColor = Color.Magenta;
-            this.TransparencyKey = Color.Magenta;
             this.TopMost = true;
-            this.DoubleBuffered = true;
             this.ShowInTaskbar = false;
             this.Paint += OnPaint;
             this.FormClosing += OnFormClosing;
@@ -59,6 +86,7 @@ namespace NekoBeats
             this.MouseMove += OnMouseMove;
             this.MouseUp += OnMouseUp;
 
+            // Make window layered for overlay mode
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
         }
@@ -87,7 +115,7 @@ namespace NekoBeats
                 30 => 33,
                 60 => 16,
                 120 => 8,
-                _ => 1
+                _ => 16
             };
         }
 
@@ -124,6 +152,10 @@ namespace NekoBeats
                 this.Size = new Size(1280, 720);
                 this.Text = "NekoBeats V2.3.3 - Streaming Mode";
                 SetClickThrough(false);
+                
+                // Remove layered window for streaming mode (better performance)
+                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
             }
             else
             {
@@ -135,51 +167,72 @@ namespace NekoBeats
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "NekoBeats V2.3.3";
                 SetClickThrough(true);
+                
+                // Re-enable layered window for overlay mode
+                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED);
             }
+            
+            this.Invalidate();
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
         {
             if (streamingMode)
             {
+                // Streaming mode: fast GDI+ drawing
                 e.Graphics.Clear(Color.Black);
                 logic.RenderCustomBackground(e.Graphics, this.ClientSize);
                 logic.Render(e.Graphics, this.ClientSize);
             }
             else
             {
-                using (Bitmap buffer = new Bitmap(this.ClientSize.Width, this.ClientSize.Height, PixelFormat.Format32bppArgb))
-                using (Graphics g = Graphics.FromImage(buffer))
-                {
-                    g.Clear(Color.Transparent);
-                    logic.RenderCustomBackground(g, this.ClientSize);
-                    logic.Render(g, this.ClientSize);
-                    
-                    float opacity = logic.opacity;
-                    if (opacity >= 0.99f)
-                    {
-                        e.Graphics.DrawImage(buffer, 0, 0);
-                    }
-                    else
-                    {
-                        float[][] matrixItems = new float[5][];
-                        matrixItems[0] = new float[] { 1, 0, 0, 0, 0 };
-                        matrixItems[1] = new float[] { 0, 1, 0, 0, 0 };
-                        matrixItems[2] = new float[] { 0, 0, 1, 0, 0 };
-                        matrixItems[3] = new float[] { 0, 0, 0, opacity, 0 };
-                        matrixItems[4] = new float[] { 0, 0, 0, 0, 1 };
-                        
-                        ColorMatrix colorMatrix = new ColorMatrix(matrixItems);
-                        ImageAttributes imageAttr = new ImageAttributes();
-                        imageAttr.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-                        
-                        e.Graphics.DrawImage(buffer, 
-                            new Rectangle(0, 0, buffer.Width, buffer.Height),
-                            0, 0, buffer.Width, buffer.Height,
-                            GraphicsUnit.Pixel, imageAttr);
-                    }
-                }
+                // Overlay mode: layered window with per-pixel alpha
+                DrawWithLayeredWindow();
             }
+        }
+
+        private void DrawWithLayeredWindow()
+        {
+            // Create bitmap with alpha channel
+            using (Bitmap bitmap = new Bitmap(this.ClientSize.Width, this.ClientSize.Height, PixelFormat.Format32bppArgb))
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Clear to fully transparent
+                g.Clear(Color.Transparent);
+                
+                // Draw everything with proper alpha
+                logic.RenderCustomBackground(g, this.ClientSize);
+                logic.Render(g, this.ClientSize);
+                
+                // Update layered window
+                UpdateLayeredWindow(bitmap);
+            }
+        }
+
+        private void UpdateLayeredWindow(Bitmap bitmap)
+        {
+            IntPtr screenDc = GetDC(IntPtr.Zero);
+            IntPtr memDc = CreateCompatibleDC(screenDc);
+            IntPtr hBitmap = bitmap.GetHbitmap(Color.FromArgb(0));
+            IntPtr oldBitmap = SelectObject(memDc, hBitmap);
+            
+            Size size = this.ClientSize;
+            Point pointSource = new Point(0, 0);
+            Point topPos = new Point(this.Left, this.Top);
+            
+            BLENDFUNCTION blend = new BLENDFUNCTION();
+            blend.BlendOp = 0; // AC_SRC_OVER
+            blend.BlendFlags = 0;
+            blend.SourceConstantAlpha = (byte)(logic.opacity * 255);
+            blend.AlphaFormat = 1; // AC_SRC_ALPHA
+            
+            UpdateLayeredWindow(this.Handle, screenDc, ref topPos, ref size, memDc, ref pointSource, 0, ref blend, 2);
+            
+            SelectObject(memDc, oldBitmap);
+            DeleteObject(hBitmap);
+            DeleteDC(memDc);
+            ReleaseDC(IntPtr.Zero, screenDc);
         }
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
