@@ -122,7 +122,12 @@ namespace NekoBeats
             visualizerForm.Show();
 
             // Show welcome before control panel
-            if (!File.Exists(WelcomeForm.FlagPath))
+            string flagPath = WelcomeForm.FlagPath;
+            string flagDir = Path.GetDirectoryName(flagPath);
+            if (!Directory.Exists(flagDir))
+                Directory.CreateDirectory(flagDir);
+
+            if (!File.Exists(flagPath))
             {
                 using var welcome = new WelcomeForm();
                 welcome.ShowDialog();
