@@ -31,6 +31,25 @@ namespace NekoBeats
 
             try
             {
+                // Delete welcome flag file
+                string welcomeFlagPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "NekoBeats",
+                    "welcomed.flag"
+                );
+                
+                try
+                {
+                    if (File.Exists(welcomeFlagPath))
+                    {
+                        File.Delete(welcomeFlagPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to delete welcome flag: {ex.Message}");
+                }
+
                 LoadIcon();
                 InitializeDiscordRPC();
                 InitializeVisualizer();
@@ -179,64 +198,63 @@ namespace NekoBeats
         }
 
         private static void CheckForUpdates()
-{
-    Task.Run(async () =>
-    {
-        try
         {
-            using (HttpClient client = new HttpClient())
+            Task.Run(async () =>
             {
-                client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
-                string url = $"https://api.github.com/repos/{GITHUB_REPO}/releases/latest";
-                HttpResponseMessage response = await client.GetAsync(url);
-
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-
-                    int tagStart = json.IndexOf("\"tag_name\":\"v") + 13;
-                    int tagEnd = json.IndexOf("\"", tagStart);
-                    string latestVersion = json.Substring(tagStart, tagEnd - tagStart);
-
-                    if (IsNewerVersion(latestVersion, CURRENT_VERSION))
+                    using (HttpClient client = new HttpClient())
                     {
-                        DialogResult result = MessageBox.Show(
-                            $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
-                            "Update Available",
-                            MessageBoxButtons.OKCancel,
-                            MessageBoxIcon.Information
-                        );
+                        client.DefaultRequestHeaders.Add("User-Agent", "NekoBeats");
+                        string url = $"https://api.github.com/repos/{GITHUB_REPO}/releases/latest";
+                        HttpResponseMessage response = await client.GetAsync(url);
 
-                        if (result == DialogResult.OK)
-                            OpenReleasesPage();
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string json = await response.Content.ReadAsStringAsync();
+
+                            int tagStart = json.IndexOf("\"tag_name\":\"v") + 13;
+                            int tagEnd = json.IndexOf("\"", tagStart);
+                            string latestVersion = json.Substring(tagStart, tagEnd - tagStart);
+
+                            if (IsNewerVersion(latestVersion, CURRENT_VERSION))
+                            {
+                                DialogResult result = MessageBox.Show(
+                                    $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
+                                    "Update Available",
+                                    MessageBoxButtons.OKCancel,
+                                    MessageBoxIcon.Information
+                                );
+
+                                if (result == DialogResult.OK)
+                                    OpenReleasesPage();
+                            }
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Update check failed: {ex.Message}");
+                }
+            });
+        }
+
+        private static bool IsNewerVersion(string latest, string current)
+        {
+            try
+            {
+                var l = Array.ConvertAll(latest.Split('.'), int.Parse);
+                var c = Array.ConvertAll(current.Split('.'), int.Parse);
+
+                for (int i = 0; i < Math.Min(l.Length, c.Length); i++)
+                {
+                    if (l[i] > c[i]) return true;
+                    if (l[i] < c[i]) return false;
+                }
+                return false;
             }
+            catch { return false; }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Update check failed: {ex.Message}");
-        }
-    });
-}
-
-private static bool IsNewerVersion(string latest, string current)
-{
-    try
-    {
-        var l = Array.ConvertAll(latest.Split('.'), int.Parse);
-        var c = Array.ConvertAll(current.Split('.'), int.Parse);
-
-        for (int i = 0; i < Math.Min(l.Length, c.Length); i++)
-        {
-            if (l[i] > c[i]) return true;
-            if (l[i] < c[i]) return false;
-        }
-        return false;
-    }
-    catch { return false; }
-}
-
 
         private static void OpenReleasesPage()
         {
