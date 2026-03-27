@@ -138,35 +138,35 @@ namespace NekoBeats
         }
         
         private void DrawCircle(Graphics g, Size clientSize)
-{
-    float centerX = clientSize.Width / 2f;
-    float centerY = clientSize.Height / 2f;
-    float angleStep = 360f / barCount;
-
-    // sync ALL color properties before drawing
-    barRenderer.barColor = barColor;
-    barRenderer.rainbowBars = rainbowBars;
-
-    for (int i = 0; i < barCount; i++)
-    {
-        float h = barRenderer.smoothedBarValues[i] * circleRadius;
-        float angle = i * angleStep * (float)Math.PI / 180f;
-
-        float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
-        float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
-        float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
-        float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
-
-        Color barColorToUse = barRenderer.GetBarColor(h, circleRadius * 2, i);
-        Color finalColor = barRenderer.ApplyOpacity(barColorToUse);
-
-        using (Pen pen = new Pen(finalColor, 3))
         {
-            g.DrawLine(pen, x1, y1, x2, y2);
-        }
-    }
-}
+            float centerX = clientSize.Width / 2f;
+            float centerY = clientSize.Height / 2f;
+            float angleStep = 360f / barCount;
 
+            // sync ALL color properties before drawing
+            barRenderer.barColor = barColor;
+            barRenderer.rainbowBars = rainbowBars;
+
+            for (int i = 0; i < barCount; i++)
+            {
+                float h = barRenderer.smoothedBarValues[i] * circleRadius;
+                float angle = i * angleStep * (float)Math.PI / 180f;
+
+                float x1 = centerX + (float)Math.Cos(angle) * circleRadius;
+                float y1 = centerY + (float)Math.Sin(angle) * circleRadius;
+                float x2 = centerX + (float)Math.Cos(angle) * (circleRadius + h);
+                float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
+
+                Color barColorToUse = barRenderer.GetBarColor(h, circleRadius * 2, i);
+                // REMOVED ApplyOpacity - just use the color directly since alpha is already in GetBarColor
+                Color finalColor = barColorToUse;
+
+                using (Pen pen = new Pen(finalColor, 3))
+                {
+                    g.DrawLine(pen, x1, y1, x2, y2);
+                }
+            }
+        }
         
         // V2.3.2 NEW METHODS
         public void SetGradient(Color[] colors)
