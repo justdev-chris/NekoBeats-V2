@@ -86,7 +86,7 @@ namespace NekoBeats
             this.MouseMove += OnMouseMove;
             this.MouseUp += OnMouseUp;
 
-            // Make window layered
+            // Make window layered for overlay mode
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
         }
@@ -115,7 +115,7 @@ namespace NekoBeats
                 30 => 33,
                 60 => 16,
                 120 => 8,
-                _ => 1
+                _ => 16
             };
         }
 
@@ -146,12 +146,14 @@ namespace NekoBeats
                 this.FormBorderStyle = FormBorderStyle.Sizable;
                 this.ShowInTaskbar = true;
                 this.TopMost = false;
+                this.BackColor = Color.Black;
+                this.TransparencyKey = Color.Empty;
                 this.WindowState = FormWindowState.Normal;
                 this.Size = new Size(1280, 720);
                 this.Text = "NekoBeats V2.3.3 - Streaming Mode";
                 SetClickThrough(false);
                 
-                // Switch to normal window for streaming
+                // Remove layered window for streaming mode (better performance)
                 int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
             }
@@ -160,28 +162,32 @@ namespace NekoBeats
                 this.FormBorderStyle = FormBorderStyle.None;
                 this.ShowInTaskbar = false;
                 this.TopMost = true;
+                this.BackColor = Color.Magenta;
+                this.TransparencyKey = Color.Magenta;
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "NekoBeats V2.3.3";
                 SetClickThrough(true);
                 
-                // Switch back to layered window
+                // Re-enable layered window for overlay mode
                 int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED);
             }
+            
+            this.Invalidate();
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
         {
             if (streamingMode)
             {
-                // Streaming mode: normal painting
+                // Streaming mode: fast GDI+ drawing
                 e.Graphics.Clear(Color.Black);
                 logic.RenderCustomBackground(e.Graphics, this.ClientSize);
                 logic.Render(e.Graphics, this.ClientSize);
             }
             else
             {
-                // Layered window: draw with per-pixel alpha
+                // Overlay mode: layered window with per-pixel alpha
                 DrawWithLayeredWindow();
             }
         }
@@ -218,7 +224,7 @@ namespace NekoBeats
             BLENDFUNCTION blend = new BLENDFUNCTION();
             blend.BlendOp = 0; // AC_SRC_OVER
             blend.BlendFlags = 0;
-            blend.SourceConstantAlpha = 255; // Full opacity
+            blend.SourceConstantAlpha = (byte)(logic.opacity * 255);
             blend.AlphaFormat = 1; // AC_SRC_ALPHA
             
             UpdateLayeredWindow(this.Handle, screenDc, ref topPos, ref size, memDc, ref pointSource, 0, ref blend, 2);
