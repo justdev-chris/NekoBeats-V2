@@ -46,7 +46,8 @@ namespace NekoBeats
 
             this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
-            this.BackColor = Color.Black;
+            this.BackColor = Color.Magenta;
+            this.TransparencyKey = Color.Magenta;
             this.TopMost = true;
             this.DoubleBuffered = true;
             this.ShowInTaskbar = false;
@@ -58,7 +59,9 @@ namespace NekoBeats
             this.MouseMove += OnMouseMove;
             this.MouseUp += OnMouseUp;
 
-            MakeClickThrough(true);
+            // Make click-through enabled by default
+            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+            SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
         }
 
         private void InitializeLogic()
@@ -94,13 +97,17 @@ namespace NekoBeats
             logic?.Resize(this.ClientSize);
         }
 
-        public void MakeClickThrough(bool enable)
+        public void SetClickThrough(bool enable)
         {
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             if (enable)
+            {
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+            }
             else
+            {
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+            }
         }
 
         public void SetStreamingMode(bool enable)
@@ -113,26 +120,28 @@ namespace NekoBeats
                 this.ShowInTaskbar = true;
                 this.TopMost = false;
                 this.BackColor = Color.Black;
+                this.TransparencyKey = Color.Empty;
                 this.WindowState = FormWindowState.Normal;
                 this.Size = new Size(1280, 720);
                 this.Text = "NekoBeats V2.3.3 - Streaming Mode";
-                MakeClickThrough(false);
+                SetClickThrough(false);
             }
             else
             {
                 this.FormBorderStyle = FormBorderStyle.None;
                 this.ShowInTaskbar = false;
                 this.TopMost = true;
-                this.BackColor = Color.Black;
+                this.BackColor = Color.Magenta;
+                this.TransparencyKey = Color.Magenta;
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "NekoBeats V2.3.3";
-                MakeClickThrough(true);
+                SetClickThrough(true);
             }
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
         {
-            e.Graphics.Clear(Color.Black);
+            e.Graphics.Clear(this.BackColor);
             logic.RenderCustomBackground(e.Graphics, this.ClientSize);
             logic.Render(e.Graphics, this.ClientSize);
         }
@@ -144,8 +153,11 @@ namespace NekoBeats
 
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
-            if (logic.draggable && e.Button == MouseButtons.Left)
+            if (logic.draggable && e.Button == MouseButtons.Left && !streamingMode)
             {
+                // Disable click-through temporarily while dragging
+                SetClickThrough(false);
+                
                 if (this.WindowState == FormWindowState.Maximized)
                 {
                     this.WindowState = FormWindowState.Normal;
@@ -169,7 +181,12 @@ namespace NekoBeats
 
         private void OnMouseUp(object sender, MouseEventArgs e)
         {
-            isDragging = false;
+            if (isDragging)
+            {
+                // Re-enable click-through after dragging
+                SetClickThrough(true);
+                isDragging = false;
+            }
         }
 
         public void SavePreset(string filename)
