@@ -17,8 +17,9 @@ namespace BeatFlashPlugin
         private bool flashing = false;
         private int flashHeight = 120;
         private TrackBar heightTrack;
+        private bool enabled = false;
 
-        public void OnLoad(INekoBeatsHost host)
+        public void Initialize(INekoBeatsHost host)
         {
             this.host = host;
 
@@ -65,39 +66,33 @@ namespace BeatFlashPlugin
             host.Log("Beat Flash loaded!");
         }
 
-        public void OnEnable()
+        public void OnUpdate(float deltaTime)
         {
-            timer = new System.Threading.Timer(_ =>
+            if (!enabled) return;
+            
+            float level = host.GetAudioLevel();
+
+            if (level > lastAudioLevel + 0.15f && !flashing)
             {
-                float level = host.GetAudioLevel();
+                flashing = true;
+                host.SetOpacity(1.0f);
+                host.SetBarHeight(flashHeight);
+            }
+            else if (flashing)
+            {
+                host.SetOpacity(0.75f);
+                host.SetBarHeight(80);
+                flashing = false;
+            }
 
-                if (level > lastAudioLevel + 0.15f && !flashing)
-                {
-                    flashing = true;
-                    host.SetOpacity(1.0f);
-                    host.SetBarHeight(flashHeight);
-                }
-                else if (flashing)
-                {
-                    host.SetOpacity(0.75f);
-                    host.SetBarHeight(80);
-                    flashing = false;
-                }
-
-                lastAudioLevel = level;
-            }, null, 0, 30);
+            lastAudioLevel = level;
         }
 
-        public void OnDisable()
+        public void Dispose()
         {
             if (timer != null) timer.Dispose();
             host.SetOpacity(1.0f);
             host.SetBarHeight(80);
-        }
-
-        public void OnUnload()
-        {
-            if (timer != null) timer.Dispose();
         }
     }
 }
