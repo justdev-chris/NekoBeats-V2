@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.IO;
@@ -52,6 +51,7 @@ namespace NekoBeats
             this.TopMost = true;
             this.DoubleBuffered = true;
             this.ShowInTaskbar = false;
+            this.Opacity = 1.0f;
             this.Paint += OnPaint;
             this.FormClosing += OnFormClosing;
             this.Resize += OnResize;
@@ -124,6 +124,7 @@ namespace NekoBeats
                 this.Size = new Size(1280, 720);
                 this.Text = "NekoBeats V2.3.3 - Streaming Mode";
                 SetClickThrough(false);
+                this.Opacity = 1.0f;
             }
             else
             {
@@ -135,6 +136,21 @@ namespace NekoBeats
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "NekoBeats V2.3.3";
                 SetClickThrough(true);
+                
+                // Reset opacity handling
+                float currentOpacity = logic.opacity;
+                if (currentOpacity >= 0.99f)
+                {
+                    this.Opacity = 1.0f;
+                    this.BackColor = Color.Magenta;
+                    this.TransparencyKey = Color.Magenta;
+                }
+                else
+                {
+                    this.TransparencyKey = Color.Empty;
+                    this.BackColor = Color.Black;
+                    this.Opacity = currentOpacity;
+                }
             }
         }
 
@@ -148,10 +164,34 @@ namespace NekoBeats
             }
             else
             {
-                // Clear with transparent - no magenta background
-                e.Graphics.Clear(Color.Transparent);
-                logic.RenderCustomBackground(e.Graphics, this.ClientSize);
-                logic.Render(e.Graphics, this.ClientSize);
+                float opacity = logic.opacity;
+                
+                if (opacity >= 0.99f)
+                {
+                    // Full opacity - use magenta key for transparency
+                    if (this.TransparencyKey != Color.Magenta)
+                    {
+                        this.TransparencyKey = Color.Magenta;
+                        this.BackColor = Color.Magenta;
+                        this.Opacity = 1.0f;
+                    }
+                    e.Graphics.Clear(Color.Magenta);
+                    logic.RenderCustomBackground(e.Graphics, this.ClientSize);
+                    logic.Render(e.Graphics, this.ClientSize);
+                }
+                else
+                {
+                    // Reduced opacity - disable transparency key, use black bg
+                    if (this.TransparencyKey != Color.Empty)
+                    {
+                        this.TransparencyKey = Color.Empty;
+                        this.BackColor = Color.Black;
+                    }
+                    this.Opacity = opacity;
+                    e.Graphics.Clear(Color.Black);
+                    logic.RenderCustomBackground(e.Graphics, this.ClientSize);
+                    logic.Render(e.Graphics, this.ClientSize);
+                }
             }
         }
 
