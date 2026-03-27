@@ -88,6 +88,14 @@ namespace NekoBeats
             {
                 float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
                 float hue = intensity * 300;
+                // Skip magenta to prevent disappearing bars
+                if (hue >= 280 && hue <= 340)
+                {
+                    if (hue < 310)
+                        hue = 279;
+                    else
+                        hue = 341;
+                }
                 return ColorFromHSV(hue, 1.0f, 1.0f);
             }
             return barColor;
@@ -161,11 +169,12 @@ namespace NekoBeats
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
+                // Changed to solid colors - no alpha
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y),
                     new PointF(x, y + h),
-                    Color.FromArgb(200, barColorToUse),
-                    Color.FromArgb(100, barColorToUse)))
+                    barColorToUse,
+                    barColorToUse))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
@@ -247,16 +256,17 @@ namespace NekoBeats
                 float x = i * barWidth;
                 float y = clientSize.Height - h;
 
+                // Changed to solid colors - no alpha
                 using (LinearGradientBrush brush = new LinearGradientBrush(
                     new PointF(x, y + h),
                     new PointF(x + barWidth - barSpacing, y),
                     barColorToUse,
-                    Color.FromArgb(80, barColorToUse)))
+                    barColorToUse))
                 {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
                 }
 
-                using (Pen gridPen = new Pen(Color.FromArgb(100, barColorToUse), 1))
+                using (Pen gridPen = new Pen(barColorToUse, 1))
                 {
                     for (int line = 0; line < 3; line++)
                     {
@@ -374,32 +384,23 @@ namespace NekoBeats
         }
 
         private Color ColorFromHSV(double hue, double saturation, double value)
-{
-    // Skip magenta (hue 280-340) so bars never disappear
-    if (hue >= 280 && hue <= 340)
-    {
-        if (hue < 310)
-            hue = 279;
-        else
-            hue = 341;
-    }
-    
-    int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-    double f = hue / 60 - Math.Floor(hue / 60);
+        {
+            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
 
-    value = value * 255;
-    int v = Convert.ToInt32(value);
-    int p = Convert.ToInt32(value * (1 - saturation));
-    int q = Convert.ToInt32(value * (1 - f * saturation));
-    int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+            value = value * 255;
+            int v = Convert.ToInt32(value);
+            int p = Convert.ToInt32(value * (1 - saturation));
+            int q = Convert.ToInt32(value * (1 - f * saturation));
+            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
 
-    if (hi == 0) return Color.FromArgb(255, v, t, p);
-    else if (hi == 1) return Color.FromArgb(255, q, v, p);
-    else if (hi == 2) return Color.FromArgb(255, p, v, t);
-    else if (hi == 3) return Color.FromArgb(255, p, q, v);
-    else if (hi == 4) return Color.FromArgb(255, t, p, v);
-    else return Color.FromArgb(255, v, p, q);
-}
+            if (hi == 0) return Color.FromArgb(255, v, t, p);
+            else if (hi == 1) return Color.FromArgb(255, q, v, p);
+            else if (hi == 2) return Color.FromArgb(255, p, v, t);
+            else if (hi == 3) return Color.FromArgb(255, p, q, v);
+            else if (hi == 4) return Color.FromArgb(255, t, p, v);
+            else return Color.FromArgb(255, v, p, q);
+        }
     }
 
     public static class GraphicsExtensions
