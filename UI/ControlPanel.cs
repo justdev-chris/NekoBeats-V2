@@ -407,6 +407,7 @@ namespace NekoBeats
                         gy += 30;
                     }
 
+                    // NBP Presets
                     var nbpLabel = new Label { Text = "NBP Presets (Settings)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
                     presetsGroup.Controls.Add(nbpLabel);
                     gy += 30;
@@ -438,11 +439,20 @@ namespace NekoBeats
                             presetsGroup.Controls.Add(new Label { Text = "No NBP presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) });
                             gy += 30;
                         }
-
-                        var nbbarLabel = new Label { Text = "NBBAR Presets (Bar Themes)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
-                        presetsGroup.Controls.Add(nbbarLabel);
+                    }
+                    else
+                    {
+                        presetsGroup.Controls.Add(new Label { Text = "No NBP presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) });
                         gy += 30;
+                    }
 
+                    // NBBAR Presets — separate from NBP
+                    var nbbarLabel = new Label { Text = "NBBAR Presets (Bar Themes)", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
+                    presetsGroup.Controls.Add(nbbarLabel);
+                    gy += 30;
+
+                    if (Directory.Exists(presetsPath))
+                    {
                         var nbbarFiles = Directory.GetFiles(presetsPath, "*.nbbar");
                         if (nbbarFiles.Length > 0)
                         {
@@ -465,6 +475,11 @@ namespace NekoBeats
                             presetsGroup.Controls.Add(new Label { Text = "No NBBAR presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) });
                             gy += 30;
                         }
+                    }
+                    else
+                    {
+                        presetsGroup.Controls.Add(new Label { Text = "No NBBAR presets found", Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = dimText, Font = new Font("Courier New", 9) });
+                        gy += 30;
                     }
 
                     currentTabPanel.Controls.Add(presetsGroup);
