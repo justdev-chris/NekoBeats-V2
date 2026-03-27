@@ -28,7 +28,6 @@ namespace NekoBeats
         public bool rainbowBars;
         public float opacity = 1.0f;
         
-        // V2.3.2 NEW
         public Color[] gradientColors;
         public bool useGradient = false;
         public bool fadeEffectEnabled = false;
@@ -79,11 +78,9 @@ namespace NekoBeats
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
         {
-            // Calculate alpha based on bar height (optional - makes bars fade at the top)
-            int alpha = (int)(Math.Min(1.0f, h / (clientHeight * 0.5f)) * 255);
-            alpha = Math.Clamp(alpha, 50, 255); // Minimum 50 alpha so bars are always visible
+            int alpha = (int)(opacity * 255);
+            alpha = Math.Clamp(alpha, 0, 255);
             
-            // Check gradient first
             if (useGradient && gradientColors != null && gradientColors.Length > 0)
             {
                 int colorIndex = barIndex % gradientColors.Length;

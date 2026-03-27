@@ -340,7 +340,7 @@ namespace NekoBeats
 
                     clickThroughCheck = AddCheckboxControl(windowGroup, "Click Through", 20, gy);
                     clickThroughCheck.Checked = visualizer.Logic.clickThrough;
-                    clickThroughCheck.CheckedChanged += (s, e) => { visualizer.Logic.clickThrough = clickThroughCheck.Checked; visualizer.MakeClickThrough(visualizer.Logic.clickThrough); };
+                    clickThroughCheck.CheckedChanged += (s, e) => { visualizer.Logic.clickThrough = clickThroughCheck.Checked; visualizer.SetClickThrough(visualizer.Logic.clickThrough); };
                     gy += 35;
 
                     draggableCheck = AddCheckboxControl(windowGroup, "Draggable", 20, gy);

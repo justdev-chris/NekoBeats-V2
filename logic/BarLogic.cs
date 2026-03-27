@@ -143,7 +143,6 @@ namespace NekoBeats
             float centerY = clientSize.Height / 2f;
             float angleStep = 360f / barCount;
 
-            // sync ALL color properties before drawing
             barRenderer.barColor = barColor;
             barRenderer.rainbowBars = rainbowBars;
 
@@ -158,17 +157,14 @@ namespace NekoBeats
                 float y2 = centerY + (float)Math.Sin(angle) * (circleRadius + h);
 
                 Color barColorToUse = barRenderer.GetBarColor(h, circleRadius * 2, i);
-                // REMOVED ApplyOpacity - just use the color directly since alpha is already in GetBarColor
-                Color finalColor = barColorToUse;
-
-                using (Pen pen = new Pen(finalColor, 3))
+                
+                using (Pen pen = new Pen(barColorToUse, 3))
                 {
                     g.DrawLine(pen, x1, y1, x2, y2);
                 }
             }
         }
         
-        // V2.3.2 NEW METHODS
         public void SetGradient(Color[] colors)
         {
             barRenderer.SetGradient(colors);
