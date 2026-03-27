@@ -81,14 +81,12 @@ namespace NekoBeats
             var tempForm = new VisualizerForm(null);
             tempForm.Icon = nekoIcon;
 
-            // create control panel first so plugin host can reference it
             visualizerForm = new VisualizerForm(null);
             visualizerForm.Icon = nekoIcon;
 
             controlPanel = new ControlPanel(visualizerForm, null);
             controlPanel.Icon = nekoIcon;
 
-            // now create plugin host with both visualizer and control panel
             var pluginHost = new NekoBeatsPluginHost(visualizerForm, controlPanel);
             pluginLoader = new PluginLoader(pluginHost);
 
@@ -104,7 +102,6 @@ namespace NekoBeats
 
             tempForm.Dispose();
 
-            // recreate with plugin loader
             visualizerForm.Dispose();
             visualizerForm = new VisualizerForm(pluginLoader);
             visualizerForm.Icon = nekoIcon;
@@ -124,7 +121,7 @@ namespace NekoBeats
 
             visualizerForm.Show();
 
-            // show welcome before control panel
+            // Show welcome before control panel
             if (!File.Exists(WelcomeForm.FlagPath))
             {
                 using var welcome = new WelcomeForm();
