@@ -7,10 +7,10 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>NekoBeatsLogo.ico</ApplicationIcon>
-    <FileVersion>2.3.3.0</FileVersion>
-    <ProductVersion>2.3.3.0</ProductVersion>
-    <AssemblyVersion>2.3.3.0</AssemblyVersion>
-    <InformationalVersion>2.3.3</InformationalVersion>
+    <FileVersion>2.3.4.0</FileVersion>
+    <ProductVersion>2.3.4.0</ProductVersion>
+    <AssemblyVersion>2.3.4.0</AssemblyVersion>
+    <InformationalVersion>2.3.4</InformationalVersion>
   </PropertyGroup>
   
   <ItemGroup>
