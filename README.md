@@ -1,5 +1,5 @@
 # NekoBeats 
-> v2.3
+> v2.3.3
 
 <p align="center">
   <img src="NekoBeatsLogo.png" width="150" height="150">
