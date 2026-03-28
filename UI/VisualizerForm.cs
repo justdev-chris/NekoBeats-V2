@@ -68,7 +68,7 @@ namespace NekoBeats
 
         private void InitializeForm()
         {
-            this.Text = "NekoBeats V2.3.3";
+            this.Text = "NekoBeats V2.3.4";
 
             if (File.Exists("NekoBeatsLogo.ico"))
             {
@@ -149,7 +149,7 @@ namespace NekoBeats
                 this.TransparencyKey = Color.Empty;
                 this.WindowState = FormWindowState.Normal;
                 this.Size = new Size(1280, 720);
-                this.Text = "NekoBeats V2.3.3 - Streaming Mode";
+                this.Text = "NekoBeats V2.3.4 - Streaming Mode";
                 SetClickThrough(false);
                 
                 int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
@@ -167,7 +167,7 @@ namespace NekoBeats
                 this.BackColor = Color.Magenta;
                 this.TransparencyKey = Color.Magenta;
                 this.WindowState = FormWindowState.Maximized;
-                this.Text = "NekoBeats V2.3.3";
+                this.Text = "NekoBeats V2.3.4";
                 SetClickThrough(true);
                 
                 int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
@@ -177,6 +177,32 @@ namespace NekoBeats
                 this.BringToFront();
                 this.Invalidate();
             }
+        }
+
+        // Monitor methods
+        public void SetMonitor(int monitorIndex)
+        {
+            if (monitorIndex < 0 || monitorIndex >= Screen.AllScreens.Length) return;
+            
+            var screen = Screen.AllScreens[monitorIndex];
+            this.Location = screen.Bounds.Location;
+            this.Size = screen.Bounds.Size;
+            
+            if (!streamingMode)
+            {
+                this.Invalidate();
+            }
+        }
+
+        public void SpanAllMonitors()
+        {
+            Rectangle bounds = Rectangle.Empty;
+            foreach (var screen in Screen.AllScreens)
+                bounds = Rectangle.Union(bounds, screen.Bounds);
+            
+            this.Location = bounds.Location;
+            this.Size = bounds.Size;
+            this.Invalidate();
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
