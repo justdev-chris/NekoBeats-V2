@@ -14,6 +14,8 @@ namespace NekoBeats
 
         private CheckBox rainbowCheck;
         private CheckBox gradientToggle;
+        private CheckBox mirrorModeCheck;
+        private CheckBox waveformCheck;
         private TrackBar spacingTrack;
         private ComboBox themeCombo;
         private ComboBox fpsCombo;
