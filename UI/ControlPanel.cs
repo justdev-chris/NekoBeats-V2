@@ -365,9 +365,9 @@ namespace NekoBeats
                     
                     monitorCombo.SelectedIndexChanged += (s, e) =>
                     {
+                        if (monitorCombo.SelectedIndex < 0) return;
                         var screen = Screen.AllScreens[monitorCombo.SelectedIndex];
-                        visualizer.Location = screen.Bounds.Location;
-                        visualizer.Size = screen.Bounds.Size;
+                        visualizer.SetBounds(screen.Bounds.X, screen.Bounds.Y, screen.Bounds.Width, screen.Bounds.Height);
                     };
                     windowGroup.Controls.Add(monitorCombo);
                     gy += 45;
@@ -379,8 +379,7 @@ namespace NekoBeats
                         Rectangle bounds = Rectangle.Empty;
                         foreach (var screen in Screen.AllScreens)
                             bounds = Rectangle.Union(bounds, screen.Bounds);
-                        visualizer.Location = bounds.Location;
-                        visualizer.Size = bounds.Size;
+                        visualizer.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
                     };
                     windowGroup.Controls.Add(spanBtn);
                     gy += 45;
@@ -392,8 +391,7 @@ namespace NekoBeats
                         foreach (var screen in Screen.AllScreens)
                         {
                             var clone = new VisualizerForm(null);
-                            clone.Location = screen.Bounds.Location;
-                            clone.Size = screen.Bounds.Size;
+                            clone.SetBounds(screen.Bounds.X, screen.Bounds.Y, screen.Bounds.Width, screen.Bounds.Height);
                             clone.Show();
                         }
                     };
