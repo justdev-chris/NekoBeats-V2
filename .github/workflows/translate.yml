@@ -208,7 +208,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: translations
-          path: lang/
+          path: lang/*.json
       
       - name: Create PR with translations
         uses: peter-evans/create-pull-request@v6
