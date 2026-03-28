@@ -28,7 +28,6 @@ namespace NekoBeats
         public bool rainbowBars;
         public float opacity = 1.0f;
         
-        // v2.3.4 New properties
         public bool mirrorMode = false;
         public bool invertColors = false;
         public bool waveformMode = false;
@@ -65,55 +64,67 @@ namespace NekoBeats
             spectrumData = data;
         }
 
-        v
+        public void Render(Graphics g, Size clientSize)
+        {
+            try
+            {
+                if (waveformMode)
+                {
+                    DrawWaveform(g, clientSize);
+                }
+                else if (spectrumMode)
+                {
+                    DrawSpectrum(g, clientSize);
+                }
+                else
+                {
+                    DrawBars(g, clientSize);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"BarRenderer.Render ERROR: {ex.Message}");
+            }
+        }
 
         private void DrawBars(Graphics g, Size clientSize)
-{
-    float barWidth = (float)clientSize.Width / barCount;
-    float heightMultiplier = barHeight / 100f;
-    
-    int barsDrawn = 0;
-    
-    if (mirrorMode)
-    {
-        int halfCount = barCount / 2;
-        for (int i = 0; i < halfCount; i++)
         {
-            float leftHeight = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
-            float rightHeight = GetBarHeight(barCount - 1 - i) * (clientSize.Height * heightMultiplier);
+            float barWidth = (float)clientSize.Width / barCount;
+            float heightMultiplier = barHeight / 100f;
             
-            if (leftHeight < 2) leftHeight = 2;
-            if (rightHeight < 2) rightHeight = 2;
-            
-            // Left bar
-            float leftX = i * barWidth;
-            float leftY = clientSize.Height - leftHeight;
-            DrawBar(g, leftX, leftY, barWidth, leftHeight, i, clientSize.Height);
-            
-            // Right bar (mirrored)
-            float rightX = (barCount - 1 - i) * barWidth;
-            float rightY = clientSize.Height - rightHeight;
-            DrawBar(g, rightX, rightY, barWidth, rightHeight, barCount - 1 - i, clientSize.Height);
-            
-            barsDrawn += 2;
+            if (mirrorMode)
+            {
+                int halfCount = barCount / 2;
+                for (int i = 0; i < halfCount; i++)
+                {
+                    float leftHeight = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
+                    float rightHeight = GetBarHeight(barCount - 1 - i) * (clientSize.Height * heightMultiplier);
+                    
+                    if (leftHeight < 2) leftHeight = 2;
+                    if (rightHeight < 2) rightHeight = 2;
+                    
+                    float leftX = i * barWidth;
+                    float leftY = clientSize.Height - leftHeight;
+                    DrawBar(g, leftX, leftY, barWidth, leftHeight, i, clientSize.Height);
+                    
+                    float rightX = (barCount - 1 - i) * barWidth;
+                    float rightY = clientSize.Height - rightHeight;
+                    DrawBar(g, rightX, rightY, barWidth, rightHeight, barCount - 1 - i, clientSize.Height);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < barCount; i++)
+                {
+                    float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
+                    if (h < 2) h = 2;
+                    
+                    float x = i * barWidth;
+                    float y = clientSize.Height - h;
+                    DrawBar(g, x, y, barWidth, h, i, clientSize.Height);
+                }
+            }
         }
-    }
-    else
-    {
-        for (int i = 0; i < barCount; i++)
-        {
-            float h = GetBarHeight(i) * (clientSize.Height * heightMultiplier);
-            if (h < 2) h = 2;
-            
-            float x = i * barWidth;
-            float y = clientSize.Height - h;
-            DrawBar(g, x, y, barWidth, h, i, clientSize.Height);
-            barsDrawn++;
-        }
-    }
-    
-    Logger.Log($"DrawBars - Bars drawn: {barsDrawn}, First bar height: {GetBarHeight(0) * (clientSize.Height * heightMultiplier):F2}");
-}
 
         private void DrawBar(Graphics g, float x, float y, float width, float height, int index, float clientHeight)
         {
@@ -230,7 +241,7 @@ namespace NekoBeats
                         }
                     }
                     break;
-                default: // Rectangle
+                default:
                     using (SolidBrush brush = new SolidBrush(barColorToUse))
                     {
                         g.FillRectangle(brush, x, y, width - barSpacing, height);
@@ -315,7 +326,6 @@ namespace NekoBeats
             {
                 float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
                 float hue = intensity * 300;
-                // Skip magenta
                 if (hue >= 280 && hue <= 340)
                     hue = 279;
                 baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
@@ -343,7 +353,6 @@ namespace NekoBeats
         {
             if (!fadeEffectEnabled)
             {
-                // Sync fadeValues with smoothed values when fade is off
                 for (int i = 0; i < smoothedBarValues.Length && i < fadeValues.Length; i++)
                 {
                     fadeValues[i] = smoothedBarValues[i];
