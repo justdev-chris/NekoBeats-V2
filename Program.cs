@@ -43,7 +43,7 @@ namespace NekoBeats
                 ExitApplication();
             }
 
-            Application.Run(visualizerForm);
+            Application.Run();
         }
 
         private static void LoadIcon()
@@ -78,18 +78,11 @@ namespace NekoBeats
 
         private static void InitializeVisualizer()
         {
-            var tempForm = new VisualizerForm(null);
-            tempForm.Icon = nekoIcon;
-
-            visualizerForm = new VisualizerForm(null);
-            visualizerForm.Icon = nekoIcon;
-
-            controlPanel = new ControlPanel(visualizerForm, null);
-            controlPanel.Icon = nekoIcon;
-
-            var pluginHost = new NekoBeatsPluginHost(visualizerForm, controlPanel);
+            // Create plugin host
+            var pluginHost = new NekoBeatsPluginHost(null, null);
             pluginLoader = new PluginLoader(pluginHost);
 
+            // Ask about plugins first
             var result = MessageBox.Show(
                 "Load plugins? (Security Warning: Only load plugins you trust)",
                 "NekoBeats Plugin System",
@@ -100,16 +93,18 @@ namespace NekoBeats
             if (result == DialogResult.Yes)
                 pluginLoader.LoadAllPlugins();
 
-            tempForm.Dispose();
-
-            visualizerForm.Dispose();
+            // Create visualizer form
             visualizerForm = new VisualizerForm(pluginLoader);
             visualizerForm.Icon = nekoIcon;
-
-            controlPanel.Dispose();
+            
+            // Create control panel with reference to visualizer
             controlPanel = new ControlPanel(visualizerForm, pluginLoader);
             controlPanel.Icon = nekoIcon;
+            
+            // Update plugin host with actual references
+            ((NekoBeatsPluginHost)pluginHost).SetForms(visualizerForm, controlPanel);
 
+            // Handle control panel closing - hide instead of close
             controlPanel.FormClosing += (s, e) =>
             {
                 if (e.CloseReason == CloseReason.UserClosing)
@@ -119,9 +114,20 @@ namespace NekoBeats
                 }
             };
 
+            // Handle visualizer closing - exit the app
+            visualizerForm.FormClosing += (s, e) =>
+            {
+                if (e.CloseReason == CloseReason.UserClosing)
+                {
+                    e.Cancel = true;
+                    visualizerForm.Hide();
+                }
+            };
+
+            // Show visualizer window
             visualizerForm.Show();
 
-            // Show welcome before control panel
+            // Show welcome page if needed
             string flagPath = WelcomeForm.FlagPath;
             string flagDir = Path.GetDirectoryName(flagPath);
             if (!Directory.Exists(flagDir))
@@ -133,6 +139,7 @@ namespace NekoBeats
                 welcome.ShowDialog();
             }
 
+            // Show control panel
             controlPanel.Show();
         }
 
@@ -145,7 +152,17 @@ namespace NekoBeats
 
             ContextMenuStrip menu = new ContextMenuStrip();
 
-            var showItem = new ToolStripMenuItem("Show", null, (s, e) =>
+            var showItem = new ToolStripMenuItem("Show Visualizer", null, (s, e) =>
+            {
+                if (visualizerForm != null && !visualizerForm.IsDisposed)
+                {
+                    visualizerForm.Show();
+                    visualizerForm.BringToFront();
+                }
+            });
+            menu.Items.Add(showItem);
+
+            var showPanelItem = new ToolStripMenuItem("Show Control Panel", null, (s, e) =>
             {
                 if (controlPanel != null && !controlPanel.IsDisposed)
                 {
@@ -154,7 +171,7 @@ namespace NekoBeats
                     controlPanel.BringToFront();
                 }
             });
-            menu.Items.Add(showItem);
+            menu.Items.Add(showPanelItem);
 
             var updateItem = new ToolStripMenuItem("Check for Updates", null, (s, e) =>
             {
@@ -178,6 +195,16 @@ namespace NekoBeats
             menu.Items.Add(exitItem);
 
             trayIcon.ContextMenuStrip = menu;
+            
+            // Double click tray icon to show visualizer
+            trayIcon.DoubleClick += (s, e) =>
+            {
+                if (visualizerForm != null && !visualizerForm.IsDisposed)
+                {
+                    visualizerForm.Show();
+                    visualizerForm.BringToFront();
+                }
+            };
         }
 
         private static void CheckForUpdates()
@@ -310,6 +337,12 @@ namespace NekoBeats
             controlPanel = panel;
         }
 
+        public void SetForms(VisualizerForm form, ControlPanel panel)
+        {
+            visualizerForm = form;
+            controlPanel = panel;
+        }
+
         public void Log(string message)
         {
             Console.WriteLine($"[Plugin] {message}");
@@ -317,51 +350,52 @@ namespace NekoBeats
 
         public void SetBarColor(Color color)
         {
-            visualizerForm.Logic.barColor = color;
+            visualizerForm?.Logic.SetBarColor(color);
         }
 
         public void SetOpacity(float opacity)
         {
-            visualizerForm.Logic.opacity = Math.Clamp(opacity, 0f, 1f);
+            visualizerForm?.Logic.SetOpacity(Math.Clamp(opacity, 0f, 1f));
         }
 
         public void SetBarHeight(int height)
         {
-            visualizerForm.Logic.barHeight = Math.Max(10, height);
+            visualizerForm?.Logic.SetBarHeight(Math.Max(10, height));
         }
 
         public void SetBarCount(int count)
         {
-            visualizerForm.Logic.barCount = Math.Clamp(count, 32, 512);
+            visualizerForm?.Logic.SetBarCount(Math.Clamp(count, 32, 512));
         }
 
         public void SetCustomBackground(string imagePath)
         {
-            visualizerForm.Logic.SetCustomBackground(imagePath);
+            visualizerForm?.Logic.SetCustomBackground(imagePath);
         }
 
         public void ClearCustomBackground()
         {
-            visualizerForm.Logic.ClearCustomBackground();
+            visualizerForm?.Logic.ClearCustomBackground();
         }
 
         public void ApplyGradient(Color[] colors)
         {
-            visualizerForm.Logic.ApplyGradient(colors);
+            visualizerForm?.Logic.ApplyGradient(colors);
         }
 
         public void SetLatencyCompensation(int milliseconds)
         {
-            visualizerForm.Logic.SetLatencyCompensation(milliseconds);
+            visualizerForm?.Logic.SetLatencyCompensation(milliseconds);
         }
 
         public void SetFadeEffect(bool enabled, float fadeSpeed)
         {
-            visualizerForm.Logic.SetFadeEffect(enabled, fadeSpeed);
+            visualizerForm?.Logic.SetFadeEffect(enabled, fadeSpeed);
         }
 
         public float GetAudioLevel()
         {
+            if (visualizerForm?.Logic == null) return 0;
             float sum = 0;
             int count = Math.Min(12, visualizerForm.Logic.barCount);
             for (int i = 0; i < count; i++)
@@ -371,7 +405,7 @@ namespace NekoBeats
 
         public int GetCurrentFPS()
         {
-            return visualizerForm.Logic.fpsLimit;
+            return visualizerForm?.Logic.fpsLimit ?? 60;
         }
 
         public void AddControlPanelTab(string tabName, Action<Panel> buildTab)
