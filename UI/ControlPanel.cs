@@ -364,31 +364,11 @@ namespace NekoBeats
                     monitorCombo.SelectedIndex = 0;
                     
                     monitorCombo.SelectedIndexChanged += (s, e) =>
-                    {
-                        if (monitorCombo.SelectedIndex >= 0)
-                            visualizer.SetMonitor(monitorCombo.SelectedIndex);
-                    };
+{
+    if (monitorCombo.SelectedIndex >= 0)
+        visualizer.SetMonitor(monitorCombo.SelectedIndex);
+};
                     windowGroup.Controls.Add(monitorCombo);
-                    gy += 45;
-                    
-                    // Span button
-                    Button spanBtn = new Button { Text = "Span All Monitors", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black };
-                    spanBtn.Click += (s, e) => visualizer.SpanAllMonitors();
-                    windowGroup.Controls.Add(spanBtn);
-                    gy += 45;
-                    
-                    // Clone button
-                    Button cloneBtn = new Button { Text = "Clone on All Monitors", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black };
-                    cloneBtn.Click += (s, e) =>
-                    {
-                        foreach (var screen in Screen.AllScreens)
-                        {
-                            var clone = new VisualizerForm(null);
-                            clone.SetMonitor(Array.IndexOf(Screen.AllScreens, screen));
-                            clone.Show();
-                        }
-                    };
-                    windowGroup.Controls.Add(cloneBtn);
                     gy += 45;
 
                     var bgBtn = new Button { Text = "Set Background", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
