@@ -203,6 +203,19 @@ jobs:
         run: |
           echo "Generated translation files:"
           ls -la lang/
+
+      - name: Copy translations to root lang folder
+        run: |
+          # Copy all language files if they exist
+          for lang in es fr de ja zh ru pt it ko ar; do
+            file=$(find . -name "${lang}.json" | head -1)
+            if [ -n "$file" ]; then
+              echo "Copying $file to lang/"
+              cp "$file" lang/
+            fi
+          done
+          echo "Files in lang folder after copy:"
+          ls -la lang/
       
       - name: Upload translations
         uses: actions/upload-artifact@v4
