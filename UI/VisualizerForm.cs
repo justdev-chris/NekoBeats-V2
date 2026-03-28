@@ -180,32 +180,6 @@ namespace NekoBeats
             }
         }
 
-        // Monitor methods
-        public void SetMonitor(int monitorIndex)
-        {
-            if (monitorIndex < 0 || monitorIndex >= Screen.AllScreens.Length) return;
-            
-            var screen = Screen.AllScreens[monitorIndex];
-            this.Location = screen.Bounds.Location;
-            this.Size = screen.Bounds.Size;
-            
-            if (!streamingMode)
-            {
-                this.Invalidate();
-            }
-        }
-
-        public void SpanAllMonitors()
-        {
-            Rectangle bounds = Rectangle.Empty;
-            foreach (var screen in Screen.AllScreens)
-                bounds = Rectangle.Union(bounds, screen.Bounds);
-            
-            this.Location = bounds.Location;
-            this.Size = bounds.Size;
-            this.Invalidate();
-        }
-
         public void SetMonitor(int monitorIndex)
 {
     if (monitorIndex < 0 || monitorIndex >= Screen.AllScreens.Length) return;
