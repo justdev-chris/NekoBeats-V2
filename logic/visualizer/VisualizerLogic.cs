@@ -95,7 +95,12 @@ namespace NekoBeats
                 barColor = ColorFromHSV(colorHue, 1.0f, 1.0f);
             }
         }
-        
+
+        public List<string> GetAudioDevices()
+{
+    return audioCapture.GetAudioDevices();
+}
+
         private void UpdateParticles()
         {
             float audioLevel = 0;
@@ -152,7 +157,6 @@ namespace NekoBeats
             barLogic.barRenderer.opacity = opacity;
             barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
             barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
-            barLogic.isCircleMode = barLogic.isCircleMode;
             barLogic.circleRadius = circleRadius;
             
             barLogic.Render(g, clientSize);
