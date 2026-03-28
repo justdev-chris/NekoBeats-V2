@@ -194,10 +194,10 @@ jobs:
           echo "Files in lang folder:"
           ls -la lang/
       
-      - name: Run translation generator
+      - name: Run translation
         run: |
-          cd TranslationTool/TranslationTool
-          dotnet run -- ../../../lang/en.json
+         cd TranslationTool/TranslationTool
+         dotnet run -- /home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/en.json
       
       - name: List generated files
         run: |
