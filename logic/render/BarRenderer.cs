@@ -20,12 +20,12 @@ namespace NekoBeats
 
         public BarTheme currentTheme = BarTheme.Rectangle;
         public float[] smoothedBarValues;
-        public Color barColor;
-        public float sensitivity;
-        public int barHeight;
-        public int barCount;
-        public int barSpacing;
-        public bool rainbowBars;
+        public Color barColor = Color.Cyan;
+        public float sensitivity = 1.5f;
+        public int barHeight = 80;
+        public int barCount = 256;
+        public int barSpacing = 1;
+        public bool rainbowBars = true;
         public float opacity = 1.0f;
         
         public bool mirrorMode = false;
@@ -38,8 +38,8 @@ namespace NekoBeats
         public bool fadeEffectEnabled = false;
         public float fadeEffectSpeed = 0.5f;
         private float[] fadeValues = new float[512];
-        private float[] waveformData;
-        private float[] spectrumData;
+        private float[] waveformData = new float[512];
+        private float[] spectrumData = new float[256];
 
         public BarRenderer(float[] smoothedValues, Color color, float sens, int height, int count, int spacing, bool rainbow)
         {
@@ -50,41 +50,19 @@ namespace NekoBeats
             barCount = count;
             barSpacing = spacing;
             rainbowBars = rainbow;
-            waveformData = new float[512];
-            spectrumData = new float[256];
         }
 
-        public void SetWaveformData(float[] data)
-        {
-            waveformData = data;
-        }
-
-        public void SetSpectrumData(float[] data)
-        {
-            spectrumData = data;
-        }
+        public void SetWaveformData(float[] data) => waveformData = data;
+        public void SetSpectrumData(float[] data) => spectrumData = data;
 
         public void Render(Graphics g, Size clientSize)
         {
-            try
-            {
-                if (waveformMode)
-                {
-                    DrawWaveform(g, clientSize);
-                }
-                else if (spectrumMode)
-                {
-                    DrawSpectrum(g, clientSize);
-                }
-                else
-                {
-                    DrawBars(g, clientSize);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"BarRenderer.Render ERROR: {ex.Message}");
-            }
+            if (waveformMode)
+                DrawWaveform(g, clientSize);
+            else if (spectrumMode)
+                DrawSpectrum(g, clientSize);
+            else
+                DrawBars(g, clientSize);
         }
 
         private void DrawBars(Graphics g, Size clientSize)
@@ -144,23 +122,15 @@ namespace NekoBeats
             {
                 case BarTheme.NeonTubes:
                     using (SolidBrush brush = new SolidBrush(barColorToUse))
-                    {
                         g.FillRoundedRectangle(brush, x, y, width - barSpacing, height, 5);
-                    }
                     break;
                 case BarTheme.Liquid:
                     using (LinearGradientBrush brush = new LinearGradientBrush(
-                        new PointF(x, y),
-                        new PointF(x, y + height),
-                        Color.FromArgb(200, barColorToUse),
-                        Color.FromArgb(100, barColorToUse)))
-                    {
+                        new PointF(x, y), new PointF(x, y + height),
+                        Color.FromArgb(200, barColorToUse), Color.FromArgb(100, barColorToUse)))
                         g.FillRectangle(brush, x, y, width - barSpacing, height);
-                    }
                     using (Pen pen = new Pen(barColorToUse, 2))
-                    {
                         g.DrawLine(pen, x, y, x + width - barSpacing, y);
-                    }
                     break;
                 case BarTheme.Crystalline:
                     float mid = x + (width - barSpacing) / 2;
@@ -172,116 +142,78 @@ namespace NekoBeats
                         new PointF(x, y + height / 2)
                     };
                     using (SolidBrush brush = new SolidBrush(barColorToUse))
-                    {
                         g.FillPolygon(brush, points);
-                    }
                     using (Pen outline = new Pen(barColorToUse, 1))
-                    {
                         g.DrawPolygon(outline, points);
-                    }
                     break;
                 case BarTheme.Wireframe:
                     using (Pen pen = new Pen(barColorToUse, 2))
-                    {
                         g.DrawRectangle(pen, x, y, width - barSpacing, height);
-                    }
                     break;
                 case BarTheme.GradientMesh:
                     using (LinearGradientBrush brush = new LinearGradientBrush(
-                        new PointF(x, y + height),
-                        new PointF(x + width - barSpacing, y),
-                        barColorToUse,
-                        Color.FromArgb(80, barColorToUse)))
-                    {
+                        new PointF(x, y + height), new PointF(x + width - barSpacing, y),
+                        barColorToUse, Color.FromArgb(80, barColorToUse)))
                         g.FillRectangle(brush, x, y, width - barSpacing, height);
-                    }
                     using (Pen gridPen = new Pen(Color.FromArgb(100, barColorToUse), 1))
-                    {
                         for (int line = 0; line < 3; line++)
                         {
                             float lineY = y + (height / 3) * line;
                             g.DrawLine(gridPen, x, lineY, x + width - barSpacing, lineY);
                         }
-                    }
                     break;
                 case BarTheme.Pixelated:
                     int pixelSize = 4;
                     using (SolidBrush brush = new SolidBrush(barColorToUse))
-                    {
                         for (float py = y; py < y + height; py += pixelSize)
-                        {
                             for (float px = x; px < x + width - barSpacing; px += pixelSize)
-                            {
                                 g.FillRectangle(brush, px, py, pixelSize, pixelSize);
-                            }
-                        }
-                    }
                     break;
                 case BarTheme.SmoothWaves:
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     using (GraphicsPath path = new GraphicsPath())
                     {
                         float midX = x + (width - barSpacing) / 2;
-                        path.AddBezier(
-                            new PointF(x, y + height),
-                            new PointF(x, y),
-                            new PointF(midX, y),
-                            new PointF(midX, y)
-                        );
-                        path.AddBezier(
-                            new PointF(midX, y),
-                            new PointF(x + width - barSpacing, y),
-                            new PointF(x + width - barSpacing, y + height),
-                            new PointF(x + width - barSpacing, y + height)
-                        );
+                        path.AddBezier(new PointF(x, y + height), new PointF(x, y), new PointF(midX, y), new PointF(midX, y));
+                        path.AddBezier(new PointF(midX, y), new PointF(x + width - barSpacing, y), new PointF(x + width - barSpacing, y + height), new PointF(x + width - barSpacing, y + height));
                         path.CloseFigure();
                         using (SolidBrush brush = new SolidBrush(barColorToUse))
-                        {
                             g.FillPath(brush, path);
-                        }
                     }
                     break;
                 default:
                     using (SolidBrush brush = new SolidBrush(barColorToUse))
-                    {
                         g.FillRectangle(brush, x, y, width - barSpacing, height);
-                    }
                     break;
             }
         }
 
         private void DrawWaveform(Graphics g, Size clientSize)
         {
-            if (waveformData == null || waveformData.Length == 0) return;
+            if (waveformData == null) return;
             
             float width = clientSize.Width;
             float height = clientSize.Height;
             float centerY = height / 2;
             
-            using (Pen pen = new Pen(barColor, 2))
+            for (int i = 0; i < waveformData.Length - 1; i++)
             {
-                for (int i = 0; i < waveformData.Length - 1; i++)
-                {
-                    float x1 = i * (width / waveformData.Length);
-                    float y1 = centerY + (waveformData[i] * centerY);
-                    float x2 = (i + 1) * (width / waveformData.Length);
-                    float y2 = centerY + (waveformData[i + 1] * centerY);
-                    
-                    Color lineColor = invertColors ? 
-                        Color.FromArgb(255, 255 - barColor.R, 255 - barColor.G, 255 - barColor.B) : 
-                        barColor;
-                    
-                    using (Pen colorPen = new Pen(lineColor, 2))
-                    {
-                        g.DrawLine(colorPen, x1, y1, x2, y2);
-                    }
-                }
+                float x1 = i * (width / waveformData.Length);
+                float y1 = centerY + (waveformData[i] * centerY);
+                float x2 = (i + 1) * (width / waveformData.Length);
+                float y2 = centerY + (waveformData[i + 1] * centerY);
+                
+                Color lineColor = invertColors ? 
+                    Color.FromArgb(255, 255 - barColor.R, 255 - barColor.G, 255 - barColor.B) : barColor;
+                
+                using (Pen pen = new Pen(lineColor, 2))
+                    g.DrawLine(pen, x1, y1, x2, y2);
             }
         }
 
         private void DrawSpectrum(Graphics g, Size clientSize)
         {
-            if (spectrumData == null || spectrumData.Length == 0) return;
+            if (spectrumData == null) return;
             
             float barWidth = (float)clientSize.Width / spectrumData.Length;
             float heightMultiplier = barHeight / 100f;
@@ -295,53 +227,40 @@ namespace NekoBeats
                 float y = clientSize.Height - h;
                 
                 Color barColorToUse = GetBarColor(h, clientSize.Height, i);
-                
                 if (invertColors)
-                {
-                    barColorToUse = Color.FromArgb(
-                        barColorToUse.A,
-                        255 - barColorToUse.R,
-                        255 - barColorToUse.G,
-                        255 - barColorToUse.B
-                    );
-                }
+                    barColorToUse = Color.FromArgb(barColorToUse.A, 255 - barColorToUse.R, 255 - barColorToUse.G, 255 - barColorToUse.B);
                 
                 using (SolidBrush brush = new SolidBrush(barColorToUse))
-                {
                     g.FillRectangle(brush, x, y, barWidth - barSpacing, h);
-                }
             }
         }
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
-{
-    Color baseColor;
-    
-    if (useGradient && gradientColors != null && gradientColors.Length > 0)
-    {
-        int colorIndex = barIndex % gradientColors.Length;
-        baseColor = gradientColors[colorIndex];
-    }
-    else if (rainbowBars)
-    {
-        float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
-        float hue = intensity * 300;
-        if (hue >= 280 && hue <= 340)
-            hue = 279;
-        baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
-    }
-    else
-    {
-        baseColor = barColor;
-    }
-    
-    // Final guard: never return magenta
-    if (baseColor == Color.Magenta || (baseColor.R == 255 && baseColor.G == 0 && baseColor.B == 255))
-        baseColor = Color.Cyan;
-    
-    // Apply opacity (now handled by form opacity, but keep for safety)
-    return baseColor;
-}
+        {
+            Color baseColor;
+            
+            if (useGradient && gradientColors != null && gradientColors.Length > 0)
+            {
+                int colorIndex = barIndex % gradientColors.Length;
+                baseColor = gradientColors[colorIndex];
+            }
+            else if (rainbowBars)
+            {
+                float intensity = Math.Min(1.0f, h / (clientHeight * 0.5f));
+                float hue = intensity * 300;
+                if (hue >= 280 && hue <= 340) hue = 279;
+                baseColor = ColorFromHSV(hue, 1.0f, 1.0f);
+            }
+            else
+            {
+                baseColor = barColor;
+            }
+            
+            if (baseColor == Color.Magenta || (baseColor.R == 255 && baseColor.G == 0 && baseColor.B == 255))
+                baseColor = Color.Cyan;
+            
+            return baseColor;
+        }
 
         private float GetBarHeight(int barIndex)
         {
@@ -359,21 +278,15 @@ namespace NekoBeats
             if (!fadeEffectEnabled)
             {
                 for (int i = 0; i < smoothedBarValues.Length && i < fadeValues.Length; i++)
-                {
                     fadeValues[i] = smoothedBarValues[i];
-                }
                 return;
             }
 
             for (int i = 0; i < fadeValues.Length; i++)
-            {
                 fadeValues[i] = Math.Max(0, fadeValues[i] - fadeEffectSpeed);
-            }
 
             for (int i = 0; i < smoothedBarValues.Length && i < fadeValues.Length; i++)
-            {
                 fadeValues[i] = Math.Max(fadeValues[i], smoothedBarValues[i]);
-            }
         }
 
         public void SetGradient(Color[] colors)
@@ -399,8 +312,7 @@ namespace NekoBeats
 
         private Color ColorFromHSV(double hue, double saturation, double value)
         {
-            if (hue >= 280 && hue <= 340)
-                hue = 279;
+            if (hue >= 280 && hue <= 340) hue = 279;
             
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
             double f = hue / 60 - Math.Floor(hue / 60);
