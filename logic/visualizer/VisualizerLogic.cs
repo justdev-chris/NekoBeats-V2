@@ -144,65 +144,78 @@ namespace NekoBeats
 }
         
         public void Render(Graphics g, Size clientSize)
+{
+    try
+    {
+        Logger.Log($"Render called - mirrorMode: {mirrorMode}, waveformMode: {waveformMode}, spectrumMode: {spectrumMode}");
+        
+        // Pass new mode properties to bar renderer
+        barLogic.barRenderer.mirrorMode = mirrorMode;
+        barLogic.barRenderer.invertColors = invertColors;
+        barLogic.barRenderer.waveformMode = waveformMode;
+        barLogic.barRenderer.spectrumMode = spectrumMode;
+        
+        // Set waveform and spectrum data if in those modes
+        if (waveformMode)
         {
-            // Pass new mode properties to bar renderer
-            barLogic.barRenderer.mirrorMode = mirrorMode;
-            barLogic.barRenderer.invertColors = invertColors;
-            barLogic.barRenderer.waveformMode = waveformMode;
-            barLogic.barRenderer.spectrumMode = spectrumMode;
-            
-            // Set waveform and spectrum data if in those modes
-            if (waveformMode)
+            barLogic.barRenderer.SetWaveformData(audioCapture.GetWaveformData());
+        }
+        if (spectrumMode)
+        {
+            barLogic.barRenderer.SetSpectrumData(audioCapture.GetSpectrumData());
+        }
+        
+        // Set bar renderer properties
+        barLogic.barRenderer.smoothedBarValues = smoothedBarValues;
+        barLogic.barRenderer.barColor = barColor;
+        barLogic.barRenderer.sensitivity = sensitivity;
+        barLogic.barRenderer.barHeight = barHeight;
+        barLogic.barRenderer.barCount = barCount;
+        barLogic.barRenderer.barSpacing = barSpacing;
+        barLogic.barRenderer.rainbowBars = rainbowBars;
+        barLogic.barRenderer.opacity = opacity;
+        barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
+        barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
+        
+        // Set circle mode properties
+        barLogic.isCircleMode = barLogic.isCircleMode;
+        barLogic.circleRadius = circleRadius;
+        
+        // Check bar values
+        float barSum = 0;
+        for (int i = 0; i < Math.Min(10, smoothedBarValues.Length); i++)
+        {
+            barSum += smoothedBarValues[i];
+        }
+        Logger.Log($"Render - Smoothed bar sum (first 10): {barSum:F4}");
+        
+        // Apply bloom effect
+        if (bloomEnabled && bloomIntensity > 0)
+        {
+            using (Bitmap temp = new Bitmap(clientSize.Width, clientSize.Height))
+            using (Graphics tempG = Graphics.FromImage(temp))
             {
-                barLogic.barRenderer.SetWaveformData(audioCapture.GetWaveformData());
-            }
-            if (spectrumMode)
-            {
-                barLogic.barRenderer.SetSpectrumData(audioCapture.GetSpectrumData());
-            }
-            
-            // Set bar renderer properties
-            barLogic.barRenderer.smoothedBarValues = smoothedBarValues;
-            barLogic.barRenderer.barColor = barColor;
-            barLogic.barRenderer.sensitivity = sensitivity;
-            barLogic.barRenderer.barHeight = barHeight;
-            barLogic.barRenderer.barCount = barCount;
-            barLogic.barRenderer.barSpacing = barSpacing;
-            barLogic.barRenderer.rainbowBars = rainbowBars;
-            barLogic.barRenderer.opacity = opacity;
-            barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
-            barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
-            
-            // Set circle mode properties
-          //  barLogic.isCircleMode = barLogic.isCircleMode; this is set somewhere else
-            barLogic.circleRadius = circleRadius;
-            
-            // Apply bloom effect
-            if (bloomEnabled && bloomIntensity > 0)
-            {
-                // Draw to temporary bitmap for bloom effect
-                using (Bitmap temp = new Bitmap(clientSize.Width, clientSize.Height))
-                using (Graphics tempG = Graphics.FromImage(temp))
-                {
-                    tempG.Clear(Color.Transparent);
-                    barLogic.Render(tempG, clientSize);
-                    
-                    // Apply bloom (simple blur + additive blend)
-                    ApplyBloom(g, temp, clientSize);
-                }
-            }
-            else
-            {
-                // Normal rendering
-                barLogic.Render(g, clientSize);
-            }
-            
-            // Draw particles
-            if (particlesEnabled)
-            {
-                DrawParticles(g);
+                tempG.Clear(Color.Transparent);
+                barLogic.Render(tempG, clientSize);
+                ApplyBloom(g, temp, clientSize);
             }
         }
+        else
+        {
+            barLogic.Render(g, clientSize);
+        }
+        
+        // Draw particles
+        if (particlesEnabled)
+        {
+            DrawParticles(g);
+        }
+    }
+    catch (Exception ex)
+    {
+        Logger.Log($"Render ERROR: {ex.Message}");
+    }
+}
         
         private void ApplyBloom(Graphics g, Bitmap source, Size clientSize)
         {
