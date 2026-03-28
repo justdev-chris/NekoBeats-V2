@@ -7,7 +7,7 @@
 
 A sleek audio visualizer that turns your music into floating light bars. Revived and better than ever.
 
-![NekoBeats](https://img.shields.io/badge/NekoBeats-V2.3-blueviolet)
+![NekoBeats](https://img.shields.io/badge/NekoBeats-v2.3.3-blueviolet)
 
 ## Features 🌟
 
