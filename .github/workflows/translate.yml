@@ -208,7 +208,7 @@ jobs:
       - name: Run translation generator
         run: |
           cd TranslationTool/TranslationTool
-          dotnet run -- D:/a/NekoBeats-V2/NekoBeats-V2/lang/en.json
+          dotnet run -- /home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/en.json
       
       - name: Upload translations
         uses: actions/upload-artifact@v4
