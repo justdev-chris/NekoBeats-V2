@@ -76,11 +76,6 @@ namespace NekoBeats
                 }
             }
         }
-
-        public void ClearGradient()
-{
-    barRenderer.ClearGradient();
-}
         
         private void DrawNormal(Graphics g, Size clientSize)
         {

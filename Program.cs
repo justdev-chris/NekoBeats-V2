@@ -32,6 +32,7 @@ namespace NekoBeats
             try
             {
                 LoadIcon();
+                LanguageManager.Initialize();
                 InitializeDiscordRPC();
                 InitializeVisualizer();
                 InitializeSystemTray();

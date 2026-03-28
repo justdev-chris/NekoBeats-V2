@@ -67,35 +67,28 @@ namespace NekoBeats
         }
 
         private void InitializeForm()
-{
-    this.Text = "NekoBeats V2.3.4";
+        {
+            this.Text = LanguageManager.Get("VisualizerTitle");
 
-    if (File.Exists("NekoBeatsLogo.ico"))
-    {
-        this.Icon = new Icon("NekoBeatsLogo.ico");
-    }
+            if (File.Exists("NekoBeatsLogo.ico"))
+            {
+                this.Icon = new Icon("NekoBeatsLogo.ico");
+            }
 
-    this.WindowState = FormWindowState.Maximized;
-    this.FormBorderStyle = FormBorderStyle.None;
-    this.BackColor = Color.Magenta;
-    this.TransparencyKey = Color.Magenta;
-    this.TopMost = true;
-    this.DoubleBuffered = true;
-    this.ShowInTaskbar = false;
-    this.Paint += OnPaint;
-    this.FormClosing += OnFormClosing;
-    this.Resize += OnResize;
-    this.MouseDown += OnMouseDown;
-    this.MouseMove += OnMouseMove;
-    this.MouseUp += OnMouseUp;
+            this.WindowState = FormWindowState.Maximized;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.TopMost = true;
+            this.ShowInTaskbar = false;
+            this.Paint += OnPaint;
+            this.FormClosing += OnFormClosing;
+            this.Resize += OnResize;
+            this.MouseDown += OnMouseDown;
+            this.MouseMove += OnMouseMove;
+            this.MouseUp += OnMouseUp;
 
-    int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-    SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-    
-    this.Visible = true;
-    this.BringToFront();
-    this.Invalidate();
-}
+            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+            SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+        }
 
         private void InitializeLogic()
         {
@@ -143,32 +136,99 @@ namespace NekoBeats
             }
         }
 
+        public void SetStreamingMode(bool enable)
+        {
+            streamingMode = enable;
+
+            if (enable)
+            {
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+                this.ShowInTaskbar = true;
+                this.TopMost = false;
+                this.BackColor = Color.Black;
+                this.TransparencyKey = Color.Empty;
+                this.WindowState = FormWindowState.Normal;
+                this.Size = new Size(1280, 720);
+                this.Text = "NekoBeats V2.3.4 - Streaming Mode";
+                SetClickThrough(false);
+                
+                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
+                
+                this.Show();
+                this.BringToFront();
+                this.Invalidate();
+            }
+            else
+            {
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.ShowInTaskbar = false;
+                this.TopMost = true;
+                this.BackColor = Color.Magenta;
+                this.TransparencyKey = Color.Magenta;
+                this.WindowState = FormWindowState.Maximized;
+                this.Text = LanguageManager.Get("VisualizerTitle");
+                SetClickThrough(true);
+                
+                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED);
+                
+                this.Show();
+                this.BringToFront();
+                this.Invalidate();
+            }
+        }
+
+        public void SetMonitor(int monitorIndex)
+        {
+            if (monitorIndex < 0 || monitorIndex >= Screen.AllScreens.Length) return;
+            
+            var screen = Screen.AllScreens[monitorIndex];
+            this.Location = screen.Bounds.Location;
+            this.Size = screen.Bounds.Size;
+            this.Invalidate();
+        }
+
+        public void SpanAllMonitors()
+        {
+            Rectangle bounds = Rectangle.Empty;
+            foreach (var screen in Screen.AllScreens)
+                bounds = Rectangle.Union(bounds, screen.Bounds);
+            
+            this.Location = bounds.Location;
+            this.Size = bounds.Size;
+            this.Invalidate();
+        }
+
         private void OnPaint(object sender, PaintEventArgs e)
         {
-            // Overlay mode: layered window with per-pixel alpha
-            DrawWithLayeredWindow();
+            if (streamingMode)
+            {
+                e.Graphics.Clear(Color.Black);
+                logic.RenderCustomBackground(e.Graphics, this.ClientSize);
+                logic.Render(e.Graphics, this.ClientSize);
+            }
+            else
+            {
+                DrawWithLayeredWindow();
+            }
         }
 
         private void DrawWithLayeredWindow()
-{
-    try
-    {
-        Logger.Log($"DrawWithLayeredWindow - Size: {this.ClientSize.Width}x{this.ClientSize.Height}, Opacity: {logic.opacity}");
-        
-        using (Bitmap bitmap = new Bitmap(this.ClientSize.Width, this.ClientSize.Height, PixelFormat.Format32bppArgb))
-        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.Transparent);
-            logic.RenderCustomBackground(g, this.ClientSize);
-            logic.Render(g, this.ClientSize);
-            UpdateLayeredWindow(bitmap);
+            if (this.ClientSize.Width <= 0 || this.ClientSize.Height <= 0)
+                return;
+                
+            using (Bitmap bitmap = new Bitmap(this.ClientSize.Width, this.ClientSize.Height, PixelFormat.Format32bppArgb))
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.Transparent);
+                logic.RenderCustomBackground(g, this.ClientSize);
+                logic.Render(g, this.ClientSize);
+                UpdateLayeredWindow(bitmap);
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        Logger.Log($"DrawWithLayeredWindow ERROR: {ex.Message}");
-    }
-}
+
         private void UpdateLayeredWindow(Bitmap bitmap)
         {
             IntPtr screenDc = GetDC(IntPtr.Zero);
@@ -181,10 +241,10 @@ namespace NekoBeats
             Point topPos = new Point(this.Left, this.Top);
             
             BLENDFUNCTION blend = new BLENDFUNCTION();
-            blend.BlendOp = 0; // AC_SRC_OVER
+            blend.BlendOp = 0;
             blend.BlendFlags = 0;
             blend.SourceConstantAlpha = (byte)(logic.opacity * 255);
-            blend.AlphaFormat = 1; // AC_SRC_ALPHA
+            blend.AlphaFormat = 1;
             
             UpdateLayeredWindow(this.Handle, screenDc, ref topPos, ref size, memDc, ref pointSource, 0, ref blend, 2);
             
@@ -201,7 +261,7 @@ namespace NekoBeats
 
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
-            if (logic.draggable && e.Button == MouseButtons.Left)
+            if (logic.draggable && e.Button == MouseButtons.Left && !streamingMode)
             {
                 SetClickThrough(false);
                 

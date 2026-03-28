@@ -1,572 +1,393 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using NAudio.Wave;
+using NAudio.Dsp;
 using System.IO;
 using System.Text.Json;
-using System.Collections.Generic;
-using System.Drawing.Imaging;
-using System.Drawing.Drawing2D;
+using System.Linq;
 
 namespace NekoBeats
 {
     public class VisualizerLogic : IDisposable
     {
-        private AudioCapture audioCapture;
-        private BarLogic barLogic;
-        private float[] smoothedBarValues;
-        private float[] previousBarValues;
+        // Audio
+        private WasapiLoopbackCapture capture;
+        private float[] fftBuffer = new float[2048];
+        private Complex[] fftComplex = new Complex[2048];
+        private int fftPos = 0;
         
-        // Visual effects
-        private List<Particle> particles;
-        private Random random = new Random();
-        public float bloomIntensity = 0;
-        private float colorHue = 0;
+        // Audio processing
+        public float[] barValues = new float[512];
+        public float[] smoothedBarValues = new float[512];
+        public float smoothSpeed = 0.15f;
+        public float sensitivity = 1.5f;
         
-        // Settings
-        public int barCount = 256;
-        public int barHeight = 80;
-        public int barSpacing = 1;
+        // Core visualizer
         public Color barColor = Color.Cyan;
         public float opacity = 1.0f;
-        public float sensitivity = 1.5f;
-        public float smoothSpeed = 0.2f;
-        public bool rainbowBars = true;
-        public bool useGradient = false;
-        public bool bloomEnabled = false;
-        public bool particlesEnabled = false;
-        public bool colorCycling = false;
-        public float colorSpeed = 0.02f;
-        public int particleCount = 100;
-        public int fpsLimit = 60;
+        public int barHeight = 80;
+        public int barCount = 256;
         public bool clickThrough = true;
-        public bool draggable = true;
-        public bool fadeEffectEnabled = false;
-        public float fadeEffectSpeed = 0.5f;
-        public int latencyCompensationMs = 0;
+        public bool draggable = false;
+        public int fpsLimit = 60;
+        public bool colorCycling = false;
+        public float colorSpeed = 1.0f;
+        
+        // Bar themes & animations
+        public bool rainbowBars = true;
+        public int barSpacing = 1;
+        private BarLogic barLogic;
+        public BarLogic BarLogic => barLogic;
+        
+        // Effects
+        public bool bloomEnabled = false;
+        public int bloomIntensity = 10;
+        public bool particlesEnabled = false;
+        public int particleCount = 100;
         public float circleRadius = 200f;
         
-        // v2.3.4 New properties
-        public bool mirrorMode = false;
-        public bool invertColors = false;
-        public bool waveformMode = false;
-        public bool spectrumMode = false;
+        // v2.3.4 properties
+        public bool MirrorMode { get; set; } = false;
+        public bool WaveformMode { get; set; } = false;
+        public bool SpectrumMode { get; set; } = false;
+        public bool InvertColors { get; set; } = false;
         
-        private Size currentSize;
-        private Bitmap customBackground = null;
-        private string customBackgroundPath = null;
+        // Bar Preset System
+        public BarPreset barPreset { get; private set; } = null;
+        private System.Diagnostics.Stopwatch animationTimer = new System.Diagnostics.Stopwatch();
+        
+        // Animation style with smooth transition
+        private BarLogic.AnimationStyle _animationStyle = BarLogic.AnimationStyle.Bars;
+        private BarLogic.AnimationStyle targetAnimationStyle;
+        private float transitionProgress = 1.0f;
+        private bool isTransitioning = false;
+        private DateTime transitionStartTime;
+        private float transitionDuration = 0.5f;
+        
+        public BarLogic.AnimationStyle animationStyle
+        {
+            get => _animationStyle;
+            set
+            {
+                if (_animationStyle != value)
+                {
+                    targetAnimationStyle = value;
+                    isTransitioning = true;
+                    transitionProgress = 0;
+                    transitionStartTime = DateTime.Now;
+                }
+            }
+        }
+        
+        // V2.3.2 NEW FEATURES
+        public int latencyCompensationMs = 0;
+        public bool fadeEffectEnabled = false;
+        public float fadeEffectSpeed = 0.5f;
+        private float[] fadeValues = new float[512];
+        public string customBackgroundPath = null;
+        private Bitmap customBackgroundImage = null;
+        public Color[] gradientColors = null;
+        public bool useGradient = false;
+        
+        // Internal
+        private float hue = 0;
+        private List<Particle> particles = new List<Particle>();
+        private Random random = new Random();
+        private Bitmap bloomBuffer;
+        private Graphics bloomGraphics;
+        private AudioCapture audioCapture;
         
         public VisualizerLogic()
         {
             audioCapture = new AudioCapture();
-            smoothedBarValues = new float[512];
-            previousBarValues = new float[512];
-            particles = new List<Particle>();
+            InitializeAudio();
+            InitializeParticles();
+            animationTimer.Start();
             barLogic = new BarLogic(smoothedBarValues);
         }
         
-        public void Initialize(Size size)
+        public void Initialize(Size clientSize)
         {
-            currentSize = size;
+            InitializeBloomBuffer(clientSize);
             audioCapture.BarCount = barCount;
             audioCapture.Start();
-            
-            for (int i = 0; i < smoothedBarValues.Length; i++)
+        }
+        
+        private void InitializeAudio()
+        {
+            try 
             {
-                smoothedBarValues[i] = 0;
-                previousBarValues[i] = 0;
-            }
-            
-            if (particlesEnabled)
+                capture = new WasapiLoopbackCapture();
+                capture.DataAvailable += OnData;
+                capture.StartRecording();
+            } 
+            catch (Exception ex) 
             {
-                ResetParticles(size);
+                MessageBox.Show("Audio init failed: " + ex.Message);
             }
+        }
+        
+        private void InitializeParticles()
+        {
+            particles.Clear();
+        }
+        
+        private void InitializeBloomBuffer(Size clientSize)
+        {
+            bloomBuffer?.Dispose();
+            bloomGraphics?.Dispose();
+            
+            if (clientSize.Width > 0 && clientSize.Height > 0)
+            {
+                bloomBuffer = new Bitmap(clientSize.Width, clientSize.Height);
+                bloomGraphics = Graphics.FromImage(bloomBuffer);
+            }
+        }
+        
+        public void Resize(Size clientSize)
+        {
+            InitializeBloomBuffer(clientSize);
+            if (particlesEnabled) ResetParticles(clientSize);
+        }
+        
+        public void ResetParticles(Size clientSize)
+        {
+            particles.Clear();
+            for (int i = 0; i < particleCount; i++)
+            {
+                particles.Add(new Particle
+                {
+                    X = random.Next(0, Math.Max(1, clientSize.Width)),
+                    Y = random.Next(0, Math.Max(1, clientSize.Height)),
+                    Size = random.Next(2, 6),
+                    SpeedX = (random.NextSingle() - 0.5f) * 2,
+                    SpeedY = (random.NextSingle() - 0.5f) * 2,
+                    Life = random.Next(50, 200)
+                });
+            }
+        }
+        
+        private void OnData(object sender, WaveInEventArgs e)
+        {
+            for (int i = 0; i < e.BytesRecorded && fftPos < 2048; i += 4)
+            {
+                fftBuffer[fftPos++] = BitConverter.ToSingle(e.Buffer, i);
+                if (fftPos >= 2048) ProcessFFT();
+            }
+        }
+        
+        private void ProcessFFT()
+        {
+            for (int i = 0; i < 2048; i++)
+            {
+                fftComplex[i].X = fftBuffer[i];
+                fftComplex[i].Y = 0;
+            }
+            FastFourierTransform.FFT(true, 11, fftComplex);
+            
+            for (int i = 0; i < barCount; i++)
+            {
+                float mag = (float)Math.Sqrt(fftComplex[i].X * fftComplex[i].X + 
+                                            fftComplex[i].Y * fftComplex[i].Y);
+                float finalVal = mag * 100 * sensitivity;
+                barValues[i] = Math.Clamp(finalVal, 0, 1.0f);
+            }
+            fftPos = 0;
         }
         
         public void UpdateSmoothing()
-{
-    try
-    {
-        // Get fresh audio data
-        float[] rawValues = audioCapture.SmoothedBarValues;
-        
-        // Debug: Check audio levels
-        float rawSum = 0;
-        for (int i = 0; i < Math.Min(10, rawValues.Length); i++)
         {
-            rawSum += rawValues[i];
-        }
-        Logger.Log($"UpdateSmoothing - Raw audio sum (first 10): {rawSum:F4}");
-        
-        // Apply latency compensation
-        if (latencyCompensationMs > 0)
-        {
-            float[] delayedValues = new float[rawValues.Length];
-            Array.Copy(rawValues, delayedValues, rawValues.Length);
-            rawValues = delayedValues;
-        }
-        
-        // Apply sensitivity
-        for (int i = 0; i < barCount && i < rawValues.Length; i++)
-        {
-            float raw = rawValues[i] * sensitivity;
-            raw = Math.Min(1f, raw);
+            // Get fresh audio data from AudioCapture
+            float[] rawValues = audioCapture.SmoothedBarValues;
             
-            // Smoothing
-            smoothedBarValues[i] = smoothedBarValues[i] * (1 - smoothSpeed) + raw * smoothSpeed;
-            
-            // Apply fade effect if enabled
-            if (fadeEffectEnabled)
+            for (int i = 0; i < barCount && i < rawValues.Length; i++)
             {
-                barLogic.barRenderer.UpdateFadeEffect();
+                float raw = rawValues[i] * sensitivity;
+                raw = Math.Min(1f, raw);
+                smoothedBarValues[i] = smoothedBarValues[i] * (1 - smoothSpeed) + raw * smoothSpeed;
             }
-        }
-        
-        // Update bar logic animations
-        barLogic.Update();
-        
-        // Update particles
-        if (particlesEnabled)
-        {
-            UpdateParticles();
-        }
-        
-        // Update color cycling
-        if (colorCycling)
-        {
-            colorHue += colorSpeed;
-            if (colorHue >= 360) colorHue -= 360;
-            barColor = ColorFromHSV(colorHue, 1.0f, 1.0f);
-        }
-    }
-    catch (Exception ex)
-    {
-        Logger.Log($"UpdateSmoothing ERROR: {ex.Message}");
-    }
-}
-        
-        public void Render(Graphics g, Size clientSize)
-{
-    try
-    {
-        Logger.Log($"Render called - mirrorMode: {mirrorMode}, waveformMode: {waveformMode}, spectrumMode: {spectrumMode}");
-        
-        // Pass new mode properties to bar renderer
-        barLogic.barRenderer.mirrorMode = mirrorMode;
-        barLogic.barRenderer.invertColors = invertColors;
-        barLogic.barRenderer.waveformMode = waveformMode;
-        barLogic.barRenderer.spectrumMode = spectrumMode;
-        
-        // Set waveform and spectrum data if in those modes
-        if (waveformMode)
-        {
-            barLogic.barRenderer.SetWaveformData(audioCapture.GetWaveformData());
-        }
-        if (spectrumMode)
-        {
-            barLogic.barRenderer.SetSpectrumData(audioCapture.GetSpectrumData());
-        }
-        
-        // Set bar renderer properties
-        barLogic.barRenderer.smoothedBarValues = smoothedBarValues;
-        barLogic.barRenderer.barColor = barColor;
-        barLogic.barRenderer.sensitivity = sensitivity;
-        barLogic.barRenderer.barHeight = barHeight;
-        barLogic.barRenderer.barCount = barCount;
-        barLogic.barRenderer.barSpacing = barSpacing;
-        barLogic.barRenderer.rainbowBars = rainbowBars;
-        barLogic.barRenderer.opacity = opacity;
-        barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
-        barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
-        
-        // Set circle mode properties
-        barLogic.isCircleMode = barLogic.isCircleMode;
-        barLogic.circleRadius = circleRadius;
-        
-        // Check bar values
-        float barSum = 0;
-        for (int i = 0; i < Math.Min(10, smoothedBarValues.Length); i++)
-        {
-            barSum += smoothedBarValues[i];
-        }
-        Logger.Log($"Render - Smoothed bar sum (first 10): {barSum:F4}");
-        
-        // Apply bloom effect
-        if (bloomEnabled && bloomIntensity > 0)
-        {
-            using (Bitmap temp = new Bitmap(clientSize.Width, clientSize.Height))
-            using (Graphics tempG = Graphics.FromImage(temp))
-            {
-                tempG.Clear(Color.Transparent);
-                barLogic.Render(tempG, clientSize);
-                ApplyBloom(g, temp, clientSize);
-            }
-        }
-        else
-        {
-            barLogic.Render(g, clientSize);
-        }
-        
-        // Draw particles
-        if (particlesEnabled)
-        {
-            DrawParticles(g);
-        }
-    }
-    catch (Exception ex)
-    {
-        Logger.Log($"Render ERROR: {ex.Message}");
-    }
-}
-        
-        private void ApplyBloom(Graphics g, Bitmap source, Size clientSize)
-        {
-            // Simple bloom: draw original, then draw blurred version on top with additive blend
-            g.DrawImage(source, 0, 0);
             
-            // Create blurred version (simple box blur for performance)
-            using (Bitmap blurred = new Bitmap(clientSize.Width, clientSize.Height))
+            // Update fade effect
+            UpdateFadeEffect();
+            
+            // Update transition
+            if (isTransitioning)
             {
-                for (int x = 0; x < clientSize.Width; x += 4)
-                {
-                    for (int y = 0; y < clientSize.Height; y += 4)
-                    {
-                        Color avg = Color.Transparent;
-                        int count = 0;
-                        for (int dx = -2; dx <= 2; dx++)
-                        {
-                            for (int dy = -2; dy <= 2; dy++)
-                            {
-                                int px = Math.Min(clientSize.Width - 1, Math.Max(0, x + dx));
-                                int py = Math.Min(clientSize.Height - 1, Math.Max(0, y + dy));
-                                Color c = source.GetPixel(px, py);
-                                if (c.A > 0)
-                                {
-                                    avg = Color.FromArgb(avg.A + c.A, avg.R + c.R, avg.G + c.G, avg.B + c.B);
-                                    count++;
-                                }
-                            }
-                        }
-                        if (count > 0)
-                        {
-                            avg = Color.FromArgb(avg.A / count, avg.R / count, avg.G / count, avg.B / count);
-                            for (int dx = -2; dx <= 2; dx++)
-                            {
-                                for (int dy = -2; dy <= 2; dy++)
-                                {
-                                    int px = Math.Min(clientSize.Width - 1, Math.Max(0, x + dx));
-                                    int py = Math.Min(clientSize.Height - 1, Math.Max(0, y + dy));
-                                    blurred.SetPixel(px, py, avg);
-                                }
-                            }
-                        }
-                    }
-                }
+                float elapsed = (float)(DateTime.Now - transitionStartTime).TotalSeconds;
+                transitionProgress = Math.Min(1.0f, elapsed / transitionDuration);
                 
-                // Draw blurred version with opacity
-                using (ImageAttributes attr = new ImageAttributes())
+                if (transitionProgress >= 1.0f)
                 {
-                    float intensity = Math.Min(1f, bloomIntensity / 50f);
-                    float[][] matrix = new float[5][];
-                    matrix[0] = new float[] { 1, 0, 0, 0, 0 };
-                    matrix[1] = new float[] { 0, 1, 0, 0, 0 };
-                    matrix[2] = new float[] { 0, 0, 1, 0, 0 };
-                    matrix[3] = new float[] { 0, 0, 0, intensity, 0 };
-                    matrix[4] = new float[] { 0, 0, 0, 0, 1 };
-                    attr.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(matrix));
-                    
-                    g.DrawImage(blurred, new Rectangle(0, 0, clientSize.Width, clientSize.Height), 0, 0, clientSize.Width, clientSize.Height, GraphicsUnit.Pixel, attr);
+                    isTransitioning = false;
+                    _animationStyle = targetAnimationStyle;
+                    barLogic.currentStyle = _animationStyle;
                 }
+            }
+            
+            // Update bar logic
+            barLogic.barColor = barColor;
+            barLogic.sensitivity = sensitivity;
+            barLogic.barHeight = barHeight;
+            barLogic.barCount = barCount;
+            barLogic.barSpacing = barSpacing;
+            barLogic.rainbowBars = rainbowBars;
+            barLogic.circleRadius = circleRadius;
+            barLogic.currentStyle = _animationStyle;
+            
+            barLogic.barRenderer.opacity = opacity;
+            barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
+            barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
+            barLogic.barRenderer.useGradient = useGradient;
+            barLogic.barRenderer.gradientColors = gradientColors;
+            barLogic.barRenderer.currentTheme = barLogic.currentTheme;
+            barLogic.barRenderer.mirrorMode = MirrorMode;
+            barLogic.barRenderer.waveformMode = WaveformMode;
+            barLogic.barRenderer.spectrumMode = SpectrumMode;
+            barLogic.barRenderer.invertColors = InvertColors;
+            
+            barLogic.Update();
+            
+            // Update particles
+            if (particlesEnabled)
+                UpdateParticles();
+            
+            // Update color cycling
+            if (colorCycling)
+            {
+                hue += colorSpeed * 2f;
+                if (hue >= 360) hue -= 360;
+                barColor = ColorFromHSV(hue, 0.8f, 1.0f);
             }
         }
         
         private void UpdateParticles()
         {
             float audioLevel = 0;
-            for (int i = 0; i < Math.Min(12, barCount); i++)
-            {
+            for (int i = 0; i < Math.Min(12, smoothedBarValues.Length); i++)
                 audioLevel += smoothedBarValues[i];
-            }
             audioLevel /= 12;
             
-            // Add new particles on beats
-            if (audioLevel > 0.7f && random.Next(100) < 30)
+            if (audioLevel > 0.5f && random.Next(100) < 20)
             {
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     particles.Add(new Particle
                     {
-                        X = random.Next(currentSize.Width),
-                        Y = currentSize.Height - random.Next(100),
-                        VX = (float)(random.NextDouble() - 0.5) * 5,
-                        VY = (float)(random.NextDouble() - 1) * 8,
-                        Life = 1.0f,
-                        Color = barColor
+                        X = random.Next(0, Math.Max(1, 800)),
+                        Y = 600 - random.Next(100),
+                        SpeedX = (random.NextSingle() - 0.5f) * 2,
+                        SpeedY = (random.NextSingle() - 1.0f) * 2,
+                        Size = random.Next(2, 5),
+                        Life = 1.0f
                     });
                 }
             }
             
-            // Update existing particles
             for (int i = particles.Count - 1; i >= 0; i--)
             {
-                particles[i].X += particles[i].VX;
-                particles[i].Y += particles[i].VY;
-                particles[i].Life -= 0.02f;
+                Particle p = particles[i];
+                p.X += p.SpeedX;
+                p.Y += p.SpeedY;
+                p.Life -= 0.02f;
                 
-                if (particles[i].Life <= 0 || particles[i].Y < 0 || particles[i].X < 0 || particles[i].X > currentSize.Width)
-                {
+                if (p.Life <= 0 || p.Y < 0 || p.X < 0 || p.X > 800)
                     particles.RemoveAt(i);
-                }
+                else
+                    particles[i] = p;
             }
         }
         
-        private void DrawParticles(Graphics g)
+        public void Render(Graphics g, Size clientSize)
+        {
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            
+            // Render custom background first
+            RenderCustomBackground(g, clientSize);
+            
+            // Sync all properties to BarLogic
+            barLogic.barColor = barColor;
+            barLogic.sensitivity = sensitivity;
+            barLogic.barHeight = barHeight;
+            barLogic.barCount = barCount;
+            barLogic.barSpacing = barSpacing;
+            barLogic.rainbowBars = rainbowBars;
+            barLogic.circleRadius = circleRadius;
+            barLogic.currentStyle = _animationStyle;
+            
+            barLogic.barRenderer.currentTheme = barLogic.currentTheme;
+            barLogic.barRenderer.opacity = opacity;
+            barLogic.barRenderer.fadeEffectEnabled = fadeEffectEnabled;
+            barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
+            barLogic.barRenderer.useGradient = useGradient;
+            barLogic.barRenderer.gradientColors = gradientColors;
+            barLogic.barRenderer.mirrorMode = MirrorMode;
+            barLogic.barRenderer.waveformMode = WaveformMode;
+            barLogic.barRenderer.spectrumMode = SpectrumMode;
+            barLogic.barRenderer.invertColors = InvertColors;
+            
+            if (useGradient && gradientColors != null)
+                barLogic.SetGradient(gradientColors);
+            
+            if (fadeEffectEnabled)
+                barLogic.SetFadeEffect(fadeEffectEnabled, fadeEffectSpeed);
+            
+            barLogic.UpdateFadeEffect();
+            
+            // Render visualization
+            barLogic.Render(g, clientSize);
+            
+            // Draw particles if enabled
+            if (particlesEnabled && particles.Count > 0)
+                DrawParticles(g, clientSize);
+            
+            if (bloomEnabled)
+                ApplyBloomEffect(g, clientSize);
+        }
+        
+        private void DrawParticles(Graphics g, Size clientSize)
         {
             foreach (var p in particles)
             {
                 int alpha = (int)(p.Life * 200);
-                using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, p.Color)))
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, barColor)))
                 {
-                    g.FillEllipse(brush, p.X - 2, p.Y - 2, 4, 4);
+                    g.FillEllipse(brush, p.X - 2, p.Y - 2, p.Size, p.Size);
                 }
             }
         }
         
-        public void ResetParticles(Size size)
+        private void ApplyBloomEffect(Graphics g, Size clientSize)
         {
-            currentSize = size;
-            particles.Clear();
-        }
-        
-        public void RenderCustomBackground(Graphics g, Size clientSize)
-        {
-            if (customBackground != null)
-            {
-                g.DrawImage(customBackground, 0, 0, clientSize.Width, clientSize.Height);
-            }
-        }
-        
-        public void SetCustomBackground(string imagePath)
-        {
-            try
-            {
-                if (File.Exists(imagePath))
-                {
-                    customBackground?.Dispose();
-                    customBackground = new Bitmap(imagePath);
-                    customBackgroundPath = imagePath;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to load background: {ex.Message}");
-            }
-        }
-        
-        public void ClearCustomBackground()
-        {
-            customBackground?.Dispose();
-            customBackground = null;
-            customBackgroundPath = null;
-        }
-        
-        public void SetAudioDevice(int deviceIndex)
-        {
-            audioCapture.SetDevice(deviceIndex);
-        }
-        
-        public void SetLatencyCompensation(int milliseconds)
-        {
-            latencyCompensationMs = milliseconds;
-        }
-        
-        public void ApplyGradient(Color[] colors)
-        {
-            barLogic.SetGradient(colors);
-        }
-        
-        public void ClearGradient()
-        {
-            barLogic.ClearGradient();
-        }
-        
-        public void SetFadeEffect(bool enabled, float speed)
-        {
-            fadeEffectEnabled = enabled;
-            fadeEffectSpeed = speed;
-            barLogic.SetFadeEffect(enabled, speed);
-        }
-        
-        public void Resize(Size newSize)
-        {
-            currentSize = newSize;
-            if (particlesEnabled)
-            {
-                ResetParticles(newSize);
-            }
-        }
-        
-        public void SavePreset(string filename)
-        {
-            var preset = new PresetData
-            {
-                barCount = barCount,
-                barHeight = barHeight,
-                barSpacing = barSpacing,
-                barColor = barColor.ToArgb(),
-                opacity = opacity,
-                sensitivity = sensitivity,
-                smoothSpeed = smoothSpeed,
-                rainbowBars = rainbowBars,
-                useGradient = useGradient,
-                bloomEnabled = bloomEnabled,
-                bloomIntensity = bloomIntensity,
-                particlesEnabled = particlesEnabled,
-                particleCount = particleCount,
-                colorCycling = colorCycling,
-                colorSpeed = colorSpeed,
-                fpsLimit = fpsLimit,
-                clickThrough = clickThrough,
-                draggable = draggable,
-                fadeEffectEnabled = fadeEffectEnabled,
-                fadeEffectSpeed = fadeEffectSpeed,
-                latencyCompensationMs = latencyCompensationMs,
-                circleRadius = circleRadius,
-                barTheme = (int)barLogic.currentTheme,
-                animationStyle = (int)barLogic.currentStyle,
-                // v2.3.4
-                mirrorMode = mirrorMode,
-                invertColors = invertColors,
-                waveformMode = waveformMode,
-                spectrumMode = spectrumMode
-            };
+            if (!bloomEnabled || bloomBuffer == null) return;
             
-            string json = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filename, json);
-        }
-        
-        public void LoadPreset(string filename)
-        {
-            try
+            for (int i = 0; i < bloomIntensity / 5; i++)
             {
-                string json = File.ReadAllText(filename);
-                var preset = JsonSerializer.Deserialize<PresetData>(json);
-                if (preset != null)
+                var blur = new Bitmap(bloomBuffer);
+                using (var g2 = Graphics.FromImage(bloomBuffer))
                 {
-                    barCount = preset.barCount;
-                    barHeight = preset.barHeight;
-                    barSpacing = preset.barSpacing;
-                    barColor = Color.FromArgb(preset.barColor);
-                    opacity = preset.opacity;
-                    sensitivity = preset.sensitivity;
-                    smoothSpeed = preset.smoothSpeed;
-                    rainbowBars = preset.rainbowBars;
-                    useGradient = preset.useGradient;
-                    bloomEnabled = preset.bloomEnabled;
-                    bloomIntensity = preset.bloomIntensity;
-                    particlesEnabled = preset.particlesEnabled;
-                    particleCount = preset.particleCount;
-                    colorCycling = preset.colorCycling;
-                    colorSpeed = preset.colorSpeed;
-                    fpsLimit = preset.fpsLimit;
-                    clickThrough = preset.clickThrough;
-                    draggable = preset.draggable;
-                    fadeEffectEnabled = preset.fadeEffectEnabled;
-                    fadeEffectSpeed = preset.fadeEffectSpeed;
-                    latencyCompensationMs = preset.latencyCompensationMs;
-                    circleRadius = preset.circleRadius;
-                    barLogic.currentTheme = (BarRenderer.BarTheme)preset.barTheme;
-                    barLogic.currentStyle = (BarLogic.AnimationStyle)preset.animationStyle;
-                    // v2.3.4
-                    mirrorMode = preset.mirrorMode;
-                    invertColors = preset.invertColors;
-                    waveformMode = preset.waveformMode;
-                    spectrumMode = preset.spectrumMode;
+                    g2.Clear(Color.Transparent);
+                    g2.DrawImage(blur, 1, 1, blur.Width - 2, blur.Height - 2);
+                    g2.DrawImage(blur, -1, -1, blur.Width + 2, blur.Height + 2);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to load preset: {ex.Message}");
-            }
-        }
-        
-        public void LoadBarPreset(string filename)
-        {
-            try
-            {
-                string json = File.ReadAllText(filename);
-                var preset = JsonSerializer.Deserialize<BarPresetData>(json);
-                if (preset != null)
-                {
-                    barLogic.currentTheme = (BarRenderer.BarTheme)preset.barTheme;
-                    barColor = Color.FromArgb(preset.barColor);
-                    rainbowBars = preset.rainbowBars;
-                    useGradient = preset.useGradient;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to load bar preset: {ex.Message}");
-            }
-        }
-        
-        public void ResetToDefault()
-        {
-            barCount = 256;
-            barHeight = 80;
-            barSpacing = 1;
-            barColor = Color.Cyan;
-            opacity = 1.0f;
-            sensitivity = 1.5f;
-            smoothSpeed = 0.2f;
-            rainbowBars = true;
-            useGradient = false;
-            bloomEnabled = false;
-            bloomIntensity = 0;
-            particlesEnabled = false;
-            particleCount = 100;
-            colorCycling = false;
-            colorSpeed = 0.02f;
-            fpsLimit = 60;
-            clickThrough = true;
-            draggable = true;
-            fadeEffectEnabled = false;
-            fadeEffectSpeed = 0.5f;
-            latencyCompensationMs = 0;
-            circleRadius = 200f;
-            barLogic.currentTheme = BarRenderer.BarTheme.Rectangle;
-            barLogic.currentStyle = BarLogic.AnimationStyle.Bars;
-            barLogic.isCircleMode = false;
-            // v2.3.4
-            mirrorMode = false;
-            invertColors = false;
-            waveformMode = false;
-            spectrumMode = false;
             
-            ClearGradient();
+            g.DrawImage(bloomBuffer, 0, 0, clientSize.Width, clientSize.Height);
         }
-        
-        public void Dispose()
-        {
-            audioCapture?.Dispose();
-            customBackground?.Dispose();
-        }
-        
-        // Properties
-        public BarLogic BarLogic => barLogic;
-        public float bloomIntensityValue { get => bloomIntensity; set => bloomIntensity = Math.Max(0, Math.Min(50, value)); }
-        public int particleCountValue { get => particleCount; set => particleCount = Math.Max(10, Math.Min(500, value)); }
-        public float circleRadiusValue { get => circleRadius; set => circleRadius = Math.Max(50, Math.Min(500, value)); }
         
         private Color ColorFromHSV(double hue, double saturation, double value)
         {
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
             double f = hue / 60 - Math.Floor(hue / 60);
-            
+
             value = value * 255;
             int v = Convert.ToInt32(value);
             int p = Convert.ToInt32(value * (1 - saturation));
             int q = Convert.ToInt32(value * (1 - f * saturation));
             int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-            
+
             if (hi == 0) return Color.FromArgb(255, v, t, p);
             else if (hi == 1) return Color.FromArgb(255, q, v, p);
             else if (hi == 2) return Color.FromArgb(255, p, v, t);
@@ -574,54 +395,312 @@ namespace NekoBeats
             else if (hi == 4) return Color.FromArgb(255, t, p, v);
             else return Color.FromArgb(255, v, p, q);
         }
-        
-        private class Particle
+
+        public void LoadBarPreset(string filePath)
         {
-            public float X, Y;
-            public float VX, VY;
+            barPreset = BarPreset.LoadFromFile(filePath);
+            if (barPreset != null)
+            {
+                barHeight = barPreset.BarHeight;
+                barSpacing = barPreset.BarSpacing;
+                barLogic.currentTheme = (BarRenderer.BarTheme)barPreset.BarShape;
+                
+                Color[] colors = new Color[barPreset.Colors.Length];
+                for (int i = 0; i < barPreset.Colors.Length; i++)
+                    colors[i] = ColorTranslator.FromHtml(barPreset.Colors[i]);
+                gradientColors = colors;
+                useGradient = true;
+            }
+        }
+
+        public void SaveBarPreset(string filePath)
+        {
+            barPreset.SaveToFile(filePath);
+        }
+        
+        public List<string> GetAudioDevices()
+        {
+            return audioCapture.GetAudioDevices();
+        }
+        
+        public void SetAudioDevice(int deviceIndex)
+        {
+            audioCapture.SetDevice(deviceIndex);
+        }
+        
+        public void ResetToDefault()
+        {
+            barColor = Color.Cyan;
+            opacity = 1.0f;
+            barHeight = 80;
+            barCount = 256;
+            smoothSpeed = 0.15f;
+            sensitivity = 1.5f;
+            clickThrough = true;
+            draggable = false;
+            colorCycling = false;
+            colorSpeed = 1.0f;
+            bloomEnabled = false;
+            bloomIntensity = 10;
+            particlesEnabled = false;
+            particleCount = 100;
+            circleRadius = 200f;
+            latencyCompensationMs = 0;
+            fadeEffectEnabled = false;
+            fadeEffectSpeed = 0.5f;
+            customBackgroundPath = null;
+            ClearCustomBackground();
+            useGradient = false;
+            gradientColors = null;
+            barPreset = null;
+            hue = 0;
+            MirrorMode = false;
+            WaveformMode = false;
+            SpectrumMode = false;
+            InvertColors = false;
+        }
+
+        public void SetCustomBackground(string imagePath)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(imagePath) || !File.Exists(imagePath))
+                {
+                    ClearCustomBackground();
+                    return;
+                }
+
+                customBackgroundImage?.Dispose();
+                customBackgroundImage = new Bitmap(imagePath);
+                customBackgroundPath = imagePath;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading background: {ex.Message}");
+                ClearCustomBackground();
+            }
+        }
+
+        public void ClearCustomBackground()
+        {
+            customBackgroundImage?.Dispose();
+            customBackgroundImage = null;
+            customBackgroundPath = null;
+        }
+
+        public void SetLatencyCompensation(int milliseconds)
+        {
+            latencyCompensationMs = Math.Max(0, Math.Min(milliseconds, 200));
+        }
+
+        public void SetFadeEffect(bool enabled, float speed)
+        {
+            fadeEffectEnabled = enabled;
+            fadeEffectSpeed = Math.Max(0.01f, Math.Min(speed, 1.0f));
+        }
+
+        public void ApplyGradient(Color[] colors)
+        {
+            if (colors != null && colors.Length > 0)
+            {
+                gradientColors = colors;
+                useGradient = true;
+            }
+        }
+
+        public void ClearGradient()
+        {
+            useGradient = false;
+            gradientColors = null;
+        }
+
+        public Color GetBarColor(int barIndex)
+        {
+            if (useGradient && gradientColors != null && gradientColors.Length > 0)
+            {
+                int colorIndex = barIndex % gradientColors.Length;
+                return gradientColors[colorIndex];
+            }
+            return barColor;
+        }
+
+        public void UpdateFadeEffect()
+        {
+            if (!fadeEffectEnabled)
+                return;
+
+            for (int i = 0; i < fadeValues.Length; i++)
+            {
+                fadeValues[i] = Math.Max(0, fadeValues[i] - fadeEffectSpeed);
+            }
+
+            for (int i = 0; i < barValues.Length && i < fadeValues.Length; i++)
+            {
+                fadeValues[i] = Math.Max(fadeValues[i], barValues[i]);
+            }
+        }
+
+        public float GetFadeValue(int barIndex)
+        {
+            if (!fadeEffectEnabled || barIndex >= fadeValues.Length)
+                return barValues[barIndex];
+
+            return fadeValues[barIndex];
+        }
+
+        public void RenderCustomBackground(Graphics g, Size clientSize)
+        {
+            if (customBackgroundImage != null)
+            {
+                g.DrawImage(customBackgroundImage, 0, 0, clientSize.Width, clientSize.Height);
+            }
+        }
+        
+        public void SavePreset(string filename)
+        {
+            try 
+            {
+                var preset = new
+                {
+                    barColor = barColor.ToArgb(),
+                    opacity,
+                    barHeight,
+                    barCount,
+                    smoothSpeed,
+                    sensitivity,
+                    animationStyle = (int)_animationStyle,
+                    particleCount,
+                    particlesEnabled,
+                    circleRadius,
+                    bloomEnabled,
+                    bloomIntensity,
+                    colorCycling,
+                    colorSpeed,
+                    fpsLimit,
+                    clickThrough,
+                    draggable,
+                    rainbowBars,
+                    barSpacing,
+                    latencyCompensationMs,
+                    fadeEffectEnabled,
+                    fadeEffectSpeed,
+                    customBackgroundPath,
+                    useGradient,
+                    gradientColors = gradientColors?.Select(c => c.ToArgb()).ToArray(),
+                    barTheme = (int)barLogic.currentTheme,
+                    mirrorMode = MirrorMode,
+                    waveformMode = WaveformMode,
+                    spectrumMode = SpectrumMode,
+                    invertColors = InvertColors
+                };
+
+                string json = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(filename, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Save failed: " + ex.Message);
+            }
+        }
+
+        public void LoadPreset(string filename)
+        {
+            if (!File.Exists(filename)) return;
+            try 
+            {
+                string json = File.ReadAllText(filename);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                
+                barColor = Color.FromArgb(root.GetProperty("barColor").GetInt32());
+                opacity = root.GetProperty("opacity").GetSingle();
+                barHeight = root.GetProperty("barHeight").GetInt32();
+                barCount = root.GetProperty("barCount").GetInt32();
+                smoothSpeed = root.GetProperty("smoothSpeed").GetSingle();
+                sensitivity = root.GetProperty("sensitivity").GetSingle();
+                animationStyle = (BarLogic.AnimationStyle)root.GetProperty("animationStyle").GetInt32();
+                particleCount = root.GetProperty("particleCount").GetInt32();
+                particlesEnabled = root.GetProperty("particlesEnabled").GetBoolean();
+                circleRadius = root.GetProperty("circleRadius").GetSingle();
+                bloomEnabled = root.GetProperty("bloomEnabled").GetBoolean();
+                bloomIntensity = root.GetProperty("bloomIntensity").GetInt32();
+                colorCycling = root.GetProperty("colorCycling").GetBoolean();
+                colorSpeed = root.GetProperty("colorSpeed").GetSingle();
+                fpsLimit = root.GetProperty("fpsLimit").GetInt32();
+                clickThrough = root.GetProperty("clickThrough").GetBoolean();
+                draggable = root.GetProperty("draggable").GetBoolean();
+                
+                if (root.TryGetProperty("rainbowBars", out var rainbowProp))
+                    rainbowBars = rainbowProp.GetBoolean();
+                    
+                if (root.TryGetProperty("barSpacing", out var spacingProp))
+                    barSpacing = spacingProp.GetInt32();
+                    
+                if (root.TryGetProperty("barTheme", out var themeProp))
+                    barLogic.currentTheme = (BarRenderer.BarTheme)themeProp.GetInt32();
+                
+                if (root.TryGetProperty("latencyCompensationMs", out var latencyProp))
+                    latencyCompensationMs = latencyProp.GetInt32();
+                    
+                if (root.TryGetProperty("fadeEffectEnabled", out var fadeProp))
+                    fadeEffectEnabled = fadeProp.GetBoolean();
+                    
+                if (root.TryGetProperty("fadeEffectSpeed", out var fadeSpeedProp))
+                    fadeEffectSpeed = fadeSpeedProp.GetSingle();
+                    
+                if (root.TryGetProperty("customBackgroundPath", out var bgProp))
+                    SetCustomBackground(bgProp.GetString());
+                    
+                if (root.TryGetProperty("useGradient", out var gradientProp))
+                    useGradient = gradientProp.GetBoolean();
+                    
+                if (root.TryGetProperty("gradientColors", out var colorsProp) && colorsProp.ValueKind != JsonValueKind.Null)
+                {
+                    var colors = new List<Color>();
+                    foreach (var colorInt in colorsProp.EnumerateArray())
+                    {
+                        colors.Add(Color.FromArgb(colorInt.GetInt32()));
+                    }
+                    if (colors.Count > 0)
+                        gradientColors = colors.ToArray();
+                }
+                
+                if (root.TryGetProperty("mirrorMode", out var mirrorProp))
+                    MirrorMode = mirrorProp.GetBoolean();
+                    
+                if (root.TryGetProperty("waveformMode", out var waveformProp))
+                    WaveformMode = waveformProp.GetBoolean();
+                    
+                if (root.TryGetProperty("spectrumMode", out var spectrumProp))
+                    SpectrumMode = spectrumProp.GetBoolean();
+                    
+                if (root.TryGetProperty("invertColors", out var invertProp))
+                    InvertColors = invertProp.GetBoolean();
+            } 
+            catch (Exception ex)
+            {
+                MessageBox.Show("Load failed: " + ex.Message);
+            }
+        }
+        
+        public void Dispose()
+        {
+            audioCapture?.Dispose();
+            if (capture != null)
+            {
+                capture.StopRecording();
+                capture.Dispose();
+            }
+            bloomBuffer?.Dispose();
+            bloomGraphics?.Dispose();
+            customBackgroundImage?.Dispose();
+        }
+
+        private struct Particle 
+        {
+            public float X, Y, SpeedX, SpeedY;
+            public int Size;
             public float Life;
-            public Color Color;
-        }
-        
-        private class PresetData
-        {
-            public int barCount { get; set; }
-            public int barHeight { get; set; }
-            public int barSpacing { get; set; }
-            public int barColor { get; set; }
-            public float opacity { get; set; }
-            public float sensitivity { get; set; }
-            public float smoothSpeed { get; set; }
-            public bool rainbowBars { get; set; }
-            public bool useGradient { get; set; }
-            public bool bloomEnabled { get; set; }
-            public float bloomIntensity { get; set; }
-            public bool particlesEnabled { get; set; }
-            public int particleCount { get; set; }
-            public bool colorCycling { get; set; }
-            public float colorSpeed { get; set; }
-            public int fpsLimit { get; set; }
-            public bool clickThrough { get; set; }
-            public bool draggable { get; set; }
-            public bool fadeEffectEnabled { get; set; }
-            public float fadeEffectSpeed { get; set; }
-            public int latencyCompensationMs { get; set; }
-            public float circleRadius { get; set; }
-            public int barTheme { get; set; }
-            public int animationStyle { get; set; }
-            // v2.3.4
-            public bool mirrorMode { get; set; }
-            public bool invertColors { get; set; }
-            public bool waveformMode { get; set; }
-            public bool spectrumMode { get; set; }
-        }
-        
-        private class BarPresetData
-        {
-            public int barTheme { get; set; }
-            public int barColor { get; set; }
-            public bool rainbowBars { get; set; }
-            public bool useGradient { get; set; }
         }
     }
 }

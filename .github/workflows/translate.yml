@@ -1,0 +1,257 @@
+name: Generate Translations
+on:
+  workflow_dispatch:
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Create translation tool
+        run: |
+          mkdir -p TranslationTool
+          cd TranslationTool
+          dotnet new console -n TranslationTool
+          cd TranslationTool
+          
+          cat > TranslateHelper.cs << 'EOF'
+          using System;
+          using System.Collections.Generic;
+          using System.IO;
+          using System.Net.Http;
+          using System.Text;
+          using System.Text.Json;
+          using System.Threading.Tasks;
+          
+          namespace TranslationTool
+          {
+              public static class TranslateHelper
+              {
+                  private static readonly HttpClient client = new HttpClient();
+                  private static readonly string[] languages = { "es", "fr", "de", "ja", "zh", "ru", "pt", "it", "ko", "ar" };
+                  
+                  public static async Task GenerateAllTranslations(string englishPath)
+                  {
+                      if (!File.Exists(englishPath))
+                      {
+                          Console.WriteLine($"en.json not found at {englishPath}");
+                          return;
+                      }
+                      
+                      string englishJson = File.ReadAllText(englishPath);
+                      var englishStrings = JsonSerializer.Deserialize<Dictionary<string, string>>(englishJson);
+                      
+                      foreach (string lang in languages)
+                      {
+                          string outputPath = $"/home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/{lang}.json";
+                          
+                          if (File.Exists(outputPath))
+                          {
+                              Console.WriteLine($"Skipping {lang} — already exists");
+                              continue;
+                          }
+                          
+                          Console.WriteLine($"Translating to {lang}...");
+                          var translated = await TranslateDictionary(englishStrings, lang);
+                          string json = JsonSerializer.Serialize(translated, new JsonSerializerOptions { WriteIndented = true });
+                          Directory.CreateDirectory("/home/runner/work/NekoBeats-V2/NekoBeats-V2/lang");
+                          File.WriteAllText(outputPath, json);
+                          Console.WriteLine($"Saved: {outputPath}");
+                          
+                          await Task.Delay(500);
+                      }
+                  }
+                  
+                  private static async Task<Dictionary<string, string>> TranslateDictionary(Dictionary<string, string> strings, string targetLang)
+                  {
+                      var translated = new Dictionary<string, string>();
+                      int count = 0;
+                      int total = strings.Count;
+                      
+                      foreach (var kvp in strings)
+                      {
+                          string translatedText = await TranslateText(kvp.Value, targetLang);
+                          translated[kvp.Key] = translatedText;
+                          count++;
+                          Console.Write($"\r  {count}/{total} translated");
+                      }
+                      Console.WriteLine();
+                      
+                      return translated;
+                  }
+                  
+                  private static async Task<string> TranslateText(string text, string targetLang)
+                  {
+                      if (string.IsNullOrWhiteSpace(text)) return text;
+                      
+                      try
+                      {
+                          string url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(text)}&langpair=en|{targetLang}";
+                          var response = await client.GetAsync(url);
+                          
+                          if (response.IsSuccessStatusCode)
+                          {
+                              string json = await response.Content.ReadAsStringAsync();
+                              using var doc = JsonDocument.Parse(json);
+                              string translated = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString();
+                              return translated ?? text;
+                          }
+                      }
+                      catch (Exception ex)
+                      {
+                          Console.WriteLine($"\nError translating '{text}': {ex.Message}");
+                      }
+                      
+                      return text;
+                  }
+              }
+          }
+          EOF
+          
+          cat > Program.cs << 'EOF'
+          using System;
+          using System.Threading.Tasks;
+          
+          namespace TranslationTool
+          {
+              class Program
+              {
+                  static async Task Main(string[] args)
+                  {
+                      string englishPath = "/home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/en.json";
+                      await TranslateHelper.GenerateAllTranslations(englishPath);
+                      Console.WriteLine("Done!");
+                  }
+              }
+          }
+          EOF
+      
+      - name: Create lang directory and en.json
+        run: |
+          mkdir -p lang
+          cat > lang/en.json << 'EOF'
+          {
+            "WindowTitle": "NekoBeats Control",
+            "VisualizerTitle": "NekoBeats V2.3.4",
+            "WelcomeTitle": "Welcome to NekoBeats! 🐱",
+            "WelcomeDesc": "A sleek audio visualizer that turns your music\ninto floating light bars.",
+            "WelcomeSetup": "Let's get you set up! ✨",
+            "Tut1Title": "🎵 Getting Started",
+            "Tut1Content": "1. Play some music through your speakers or headphones.\n\n2. NekoBeats automatically captures your system audio — no setup needed!\n\n3. The floating bars will appear on your screen, reacting to the music in real time.\n\n4. The control panel lets you customize everything — colors, bar count, height, effects and more.",
+            "Tut2Title": "🎨 Customization",
+            "Tip1": "VIZ tab — adjust bar count, height, opacity and spacing",
+            "Tip2": "COLORS tab — pick bar colors, enable rainbow or gradient",
+            "Tip3": "FX tab — bloom, particles, circle mode, fade effect",
+            "Tip4": "AUDIO tab — sensitivity, smooth speed, latency comp",
+            "Tip5": "WINDOW tab — click-through, FPS limit, monitor selection",
+            "Tip6": "PRESETS tab — load .nbp and .nbbar preset files",
+            "Tut3Title": "💡 Tips & Tricks",
+            "Tut3Content": "• Enable Click-Through so bars don't block your mouse\n\n• Use Streaming Mode to capture NekoBeats in OBS\n\n• The system tray icon lets you show/hide the control panel\n\n• Check for updates anytime via the tray icon menu\n\n• Share your presets at catsdevs.online/NekoBeats-V2/community-themes.html",
+            "FinishTitle": "You're all set! 🐱✨",
+            "FinishContent": "Play some music and watch the magic happen!\n\nMade with ❤️ by justdev-chris",
+            "Next": "NEXT ▶",
+            "Back": "◀ BACK",
+            "LetsGo": "LET'S GO! 🐱",
+            "DontShowAgain": "Don't show this again",
+            "VIZTab": "VIZ",
+            "COLORSTab": "COLORS",
+            "FXTab": "FX",
+            "AUDIOTab": "AUDIO",
+            "WINDOWTab": "WINDOW",
+            "PRESETSTab": "PRESETS",
+            "CREDITSTab": "CREDITS",
+            "Visualization": "Visualization",
+            "BarCount": "Bar Count:",
+            "BarHeight": "Bar Height:",
+            "Opacity": "Opacity:",
+            "BarSpacing": "Bar Spacing:",
+            "MirrorMode": "Mirror Mode",
+            "WaveformView": "Waveform View",
+            "SpectrumAnalyzer": "Spectrum Analyzer",
+            "InvertColors": "Invert Colors",
+            "ColorsEffects": "Colors & Effects",
+            "BarColor": "Bar Color",
+            "RainbowBars": "Rainbow Bars",
+            "BarTheme": "Bar Theme:",
+            "RainbowGradient": "Rainbow Gradient",
+            "ColorCycle": "Color Cycle",
+            "ColorSpeed": "Color Speed:",
+            "Effects": "Effects",
+            "Bloom": "Bloom",
+            "BloomIntensity": "Bloom Intensity:",
+            "Particles": "Particles",
+            "ParticleCount": "Particle Count:",
+            "CircleMode": "Circle Mode",
+            "CircleRadius": "Circle Radius:",
+            "FadeEffect": "Fade Effect",
+            "FadeSpeed": "Fade Speed:",
+            "AudioSettings": "Audio Settings",
+            "AudioDevice": "Audio Device:",
+            "Sensitivity": "Sensitivity:",
+            "SmoothSpeed": "Smooth Speed:",
+            "LatencyComp": "Latency Comp (ms):",
+            "WindowDisplay": "Window & Display",
+            "FPSLimit": "FPS Limit:",
+            "ClickThrough": "Click Through",
+            "Draggable": "Draggable",
+            "Monitor": "Monitor:",
+            "SpanAll": "Span All Monitors",
+            "CloneAll": "Clone on All Monitors",
+            "SetBackground": "Set Background",
+            "ClearBackground": "Clear Background",
+            "PresetsPlugins": "Presets & Plugins",
+            "Plugins": "Plugins",
+            "NoPlugins": "No plugins loaded",
+            "NBPPresets": "NBP Presets (Settings)",
+            "NoNBPPresets": "No NBP presets found",
+            "NBBARPresets": "NBBAR Presets (Bar Themes)",
+            "NoNBBARPresets": "No NBBAR presets found",
+            "Reset": "RESET",
+            "Exit": "EXIT",
+            "ResetConfirm": "Reset all settings to default?",
+            "ConfirmReset": "Confirm Reset",
+            "Uncapped": "Uncapped",
+            "BackgroundSet": "Background set!",
+            "BackgroundCleared": "Background cleared!",
+            "UninstallConfirm": "Are you sure you want to uninstall NekoBeats?",
+            "NotFound": "Not Found",
+            "UninstallNotFound": "Uninstaller not found. Try uninstalling via Windows Settings.",
+            "About": "About",
+            "CreatedBy": "Created by: justdev-chris",
+            "Version": "NekoBeats V2.3.4",
+            "GitHub": "github.com/justdev-chris/NekoBeats-V2",
+            "Uninstall": "Uninstall NekoBeats"
+          }
+          EOF
+      
+      - name: Run translation generator
+        run: |
+          cd TranslationTool/TranslationTool
+          dotnet run
+      
+      - name: List generated files
+        run: |
+          echo "Generated translation files:"
+          ls -la lang/
+      
+      - name: Upload translations
+        uses: actions/upload-artifact@v4
+        with:
+          name: translations
+          path: lang/*.json
+      
+      - name: Create PR with translations
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Add translations for v2.3.4"
+          body: "Auto-generated translations from MyMemory API"
+          commit-message: "Add translations for all languages"
+          branch: "translations"
+          add-paths: |
+            lang/*.json
