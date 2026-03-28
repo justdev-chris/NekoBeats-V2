@@ -82,52 +82,66 @@ namespace NekoBeats
         }
         
         public void UpdateSmoothing()
+{
+    try
+    {
+        // Get fresh audio data
+        float[] rawValues = audioCapture.SmoothedBarValues;
+        
+        // Debug: Check audio levels
+        float rawSum = 0;
+        for (int i = 0; i < Math.Min(10, rawValues.Length); i++)
         {
-            // Get fresh audio data
-            float[] rawValues = audioCapture.SmoothedBarValues;
+            rawSum += rawValues[i];
+        }
+        Logger.Log($"UpdateSmoothing - Raw audio sum (first 10): {rawSum:F4}");
+        
+        // Apply latency compensation
+        if (latencyCompensationMs > 0)
+        {
+            float[] delayedValues = new float[rawValues.Length];
+            Array.Copy(rawValues, delayedValues, rawValues.Length);
+            rawValues = delayedValues;
+        }
+        
+        // Apply sensitivity
+        for (int i = 0; i < barCount && i < rawValues.Length; i++)
+        {
+            float raw = rawValues[i] * sensitivity;
+            raw = Math.Min(1f, raw);
             
-            // Apply latency compensation
-            if (latencyCompensationMs > 0)
+            // Smoothing
+            smoothedBarValues[i] = smoothedBarValues[i] * (1 - smoothSpeed) + raw * smoothSpeed;
+            
+            // Apply fade effect if enabled
+            if (fadeEffectEnabled)
             {
-                // Simple delay buffer
-                float[] delayedValues = new float[rawValues.Length];
-                Array.Copy(rawValues, delayedValues, rawValues.Length);
-                rawValues = delayedValues;
-            }
-            
-            // Apply sensitivity
-            for (int i = 0; i < barCount && i < rawValues.Length; i++)
-            {
-                float raw = rawValues[i] * sensitivity;
-                raw = Math.Min(1f, raw);
-                
-                // Smoothing
-                smoothedBarValues[i] = smoothedBarValues[i] * (1 - smoothSpeed) + raw * smoothSpeed;
-                
-                // Apply fade effect if enabled
-                if (fadeEffectEnabled)
-                {
-                    barLogic.barRenderer.UpdateFadeEffect();
-                }
-            }
-            
-            // Update bar logic animations
-            barLogic.Update();
-            
-            // Update particles
-            if (particlesEnabled)
-            {
-                UpdateParticles();
-            }
-            
-            // Update color cycling
-            if (colorCycling)
-            {
-                colorHue += colorSpeed;
-                if (colorHue >= 360) colorHue -= 360;
-                barColor = ColorFromHSV(colorHue, 1.0f, 1.0f);
+                barLogic.barRenderer.UpdateFadeEffect();
             }
         }
+        
+        // Update bar logic animations
+        barLogic.Update();
+        
+        // Update particles
+        if (particlesEnabled)
+        {
+            UpdateParticles();
+        }
+        
+        // Update color cycling
+        if (colorCycling)
+        {
+            colorHue += colorSpeed;
+            if (colorHue >= 360) colorHue -= 360;
+            barColor = ColorFromHSV(colorHue, 1.0f, 1.0f);
+        }
+    }
+    catch (Exception ex)
+    {
+        Logger.Log($"UpdateSmoothing ERROR: {ex.Message}");
+    }
+}
         
         public void Render(Graphics g, Size clientSize)
         {
