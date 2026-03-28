@@ -1,0 +1,227 @@
+name: Generate Translations
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Create translation tool
+        run: |
+          mkdir TranslationTool
+          cd TranslationTool
+          dotnet new console -n TranslationTool
+          cd TranslationTool
+          
+          # Add HttpClient reference
+          dotnet add package System.Text.Json
+          
+          # Create TranslateHelper.cs
+          cat > TranslateHelper.cs << 'EOF'
+          using System;
+          using System.Collections.Generic;
+          using System.IO;
+          using System.Net.Http;
+          using System.Text;
+          using System.Text.Json;
+          using System.Threading.Tasks;
+          
+          namespace TranslationTool
+          {
+              public static class TranslateHelper
+              {
+                  private static readonly HttpClient client = new HttpClient();
+                  
+                  private static readonly string[] languages = { "es", "fr", "de", "ja", "zh", "ru", "pt", "it", "ko", "ar" };
+                  
+                  public static async Task GenerateAllTranslations(string englishPath)
+                  {
+                      if (!File.Exists(englishPath))
+                      {
+                          Console.WriteLine("en.json not found!");
+                          return;
+                      }
+                      
+                      string englishJson = File.ReadAllText(englishPath);
+                      var englishStrings = JsonSerializer.Deserialize<Dictionary<string, string>>(englishJson);
+                      
+                      foreach (string lang in languages)
+                      {
+                          string outputPath = $"lang/{lang}.json";
+                          
+                          if (File.Exists(outputPath))
+                          {
+                              Console.WriteLine($"Skipping {lang} — already exists");
+                              continue;
+                          }
+                          
+                          Console.WriteLine($"Translating to {lang}...");
+                          var translated = await TranslateDictionary(englishStrings, lang);
+                          string json = JsonSerializer.Serialize(translated, new JsonSerializerOptions { WriteIndented = true });
+                          Directory.CreateDirectory("lang");
+                          File.WriteAllText(outputPath, json);
+                          Console.WriteLine($"Saved: {outputPath}");
+                          
+                          await Task.Delay(500);
+                      }
+                  }
+                  
+                  private static async Task<Dictionary<string, string>> TranslateDictionary(Dictionary<string, string> strings, string targetLang)
+                  {
+                      var translated = new Dictionary<string, string>();
+                      int count = 0;
+                      
+                      foreach (var kvp in strings)
+                      {
+                          string translatedText = await TranslateText(kvp.Value, targetLang);
+                          translated[kvp.Key] = translatedText;
+                          count++;
+                          Console.Write($"\r  {count}/{strings.Count} translated");
+                      }
+                      Console.WriteLine();
+                      
+                      return translated;
+                  }
+                  
+                  private static async Task<string> TranslateText(string text, string targetLang)
+                  {
+                      if (string.IsNullOrWhiteSpace(text)) return text;
+                      
+                      try
+                      {
+                          string url = "https://translate.astian.org/translate";
+                          
+                          var payload = new
+                          {
+                              q = text,
+                              source = "en",
+                              target = targetLang,
+                              format = "text"
+                          };
+                          
+                          string jsonPayload = JsonSerializer.Serialize(payload);
+                          var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                          
+                          var response = await client.PostAsync(url, content);
+                          
+                          if (response.IsSuccessStatusCode)
+                          {
+                              string json = await response.Content.ReadAsStringAsync();
+                              using var doc = JsonDocument.Parse(json);
+                              return doc.RootElement.GetProperty("translatedText").GetString();
+                          }
+                      }
+                      catch (Exception ex)
+                      {
+                          Console.WriteLine($"\nError: {ex.Message}");
+                      }
+                      
+                      return text;
+                  }
+              }
+          }
+          EOF
+          
+          # Create Program.cs
+          cat > Program.cs << 'EOF'
+          using System;
+          using System.IO;
+          using System.Threading.Tasks;
+          
+          namespace TranslationTool
+          {
+              class Program
+              {
+                  static async Task Main(string[] args)
+                  {
+                      string englishPath = args.Length > 0 ? args[0] : "../lang/en.json";
+                      await TranslateHelper.GenerateAllTranslations(englishPath);
+                      Console.WriteLine("Done!");
+                  }
+              }
+          }
+          EOF
+      
+      - name: Create lang directory and en.json
+        run: |
+          mkdir -p lang
+          cat > lang/en.json << 'EOF'
+          {
+            "WelcomeTitle": "Welcome to NekoBeats! 🐱",
+            "VIZTab": "VIZ",
+            "COLORSTab": "COLORS",
+            "FXTab": "FX",
+            "AUDIOTab": "AUDIO",
+            "WINDOWTab": "WINDOW",
+            "PRESETSTab": "PRESETS",
+            "CREDITSTab": "CREDITS",
+            "BarCount": "Bar Count:",
+            "BarHeight": "Bar Height:",
+            "Opacity": "Opacity:",
+            "BarSpacing": "Bar Spacing:",
+            "MirrorMode": "Mirror Mode",
+            "WaveformView": "Waveform View",
+            "RainbowBars": "Rainbow Bars",
+            "BarTheme": "Bar Theme:",
+            "RainbowGradient": "Rainbow Gradient",
+            "ColorCycle": "Color Cycle",
+            "ColorSpeed": "Color Speed:",
+            "Bloom": "Bloom",
+            "BloomIntensity": "Bloom Intensity:",
+            "Particles": "Particles",
+            "ParticleCount": "Particle Count:",
+            "CircleMode": "Circle Mode",
+            "CircleRadius": "Circle Radius:",
+            "FadeEffect": "Fade Effect",
+            "FadeSpeed": "Fade Speed:",
+            "AudioDevice": "Audio Device:",
+            "Sensitivity": "Sensitivity:",
+            "SmoothSpeed": "Smooth Speed:",
+            "LatencyComp": "Latency Comp (ms):",
+            "FPSLimit": "FPS Limit:",
+            "ClickThrough": "Click Through",
+            "Draggable": "Draggable",
+            "Monitor": "Monitor:",
+            "SpanAll": "Span All Monitors",
+            "CloneAll": "Clone on All Monitors",
+            "SetBackground": "Set Background",
+            "ClearBackground": "Clear Background",
+            "Plugins": "Plugins",
+            "NBPPresets": "NBP Presets (Settings)",
+            "NBBARPresets": "NBBAR Presets (Bar Themes)",
+            "Reset": "RESET",
+            "Exit": "EXIT",
+            "CreatedBy": "Created by: justdev-chris",
+            "Version": "NekoBeats V2.3.4",
+            "GitHub": "github.com/justdev-chris/NekoBeats-V2",
+            "Uninstall": "Uninstall NekoBeats"
+          }
+          EOF
+      
+      - name: Run translation generator
+        run: |
+          cd TranslationTool/TranslationTool
+          dotnet run -- ../lang/en.json
+      
+      - name: Upload translations
+        uses: actions/upload-artifact@v4
+        with:
+          name: translations
+          path: lang/
+      
+      - name: Create PR with translations
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Add translations"
+          body: "Auto-generated translations from LibreTranslate"
+          commit-message: "Add translations for all languages"
+          branch: "translations"
+          add-paths: |
+            lang/*.json
