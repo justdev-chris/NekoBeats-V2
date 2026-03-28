@@ -49,7 +49,7 @@ jobs:
                       
                       foreach (string lang in languages)
                       {
-                          string outputPath = $"../../../lang/{lang}.json";
+                          string outputPath = $"/home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/{lang}.json";
                           
                           if (File.Exists(outputPath))
                           {
