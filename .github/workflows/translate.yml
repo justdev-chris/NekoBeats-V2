@@ -1,6 +1,6 @@
 name: Generate Translations
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:
 
 jobs:
   translate:
@@ -15,15 +15,11 @@ jobs:
       
       - name: Create translation tool
         run: |
-          mkdir TranslationTool
+          mkdir -p TranslationTool
           cd TranslationTool
           dotnet new console -n TranslationTool
           cd TranslationTool
           
-          # Add HttpClient reference
-          dotnet add package System.Text.Json
-          
-          # Create TranslateHelper.cs
           cat > TranslateHelper.cs << 'EOF'
           using System;
           using System.Collections.Generic;
@@ -38,14 +34,13 @@ jobs:
               public static class TranslateHelper
               {
                   private static readonly HttpClient client = new HttpClient();
-                  
                   private static readonly string[] languages = { "es", "fr", "de", "ja", "zh", "ru", "pt", "it", "ko", "ar" };
                   
                   public static async Task GenerateAllTranslations(string englishPath)
                   {
                       if (!File.Exists(englishPath))
                       {
-                          Console.WriteLine("en.json not found!");
+                          Console.WriteLine($"en.json not found at {englishPath}");
                           return;
                       }
                       
@@ -54,7 +49,7 @@ jobs:
                       
                       foreach (string lang in languages)
                       {
-                          string outputPath = $"lang/{lang}.json";
+                          string outputPath = $"../../../lang/{lang}.json";
                           
                           if (File.Exists(outputPath))
                           {
@@ -65,7 +60,7 @@ jobs:
                           Console.WriteLine($"Translating to {lang}...");
                           var translated = await TranslateDictionary(englishStrings, lang);
                           string json = JsonSerializer.Serialize(translated, new JsonSerializerOptions { WriteIndented = true });
-                          Directory.CreateDirectory("lang");
+                          Directory.CreateDirectory("../../../lang");
                           File.WriteAllText(outputPath, json);
                           Console.WriteLine($"Saved: {outputPath}");
                           
@@ -77,13 +72,14 @@ jobs:
                   {
                       var translated = new Dictionary<string, string>();
                       int count = 0;
+                      int total = strings.Count;
                       
                       foreach (var kvp in strings)
                       {
                           string translatedText = await TranslateText(kvp.Value, targetLang);
                           translated[kvp.Key] = translatedText;
                           count++;
-                          Console.Write($"\r  {count}/{strings.Count} translated");
+                          Console.Write($"\r  {count}/{total} translated");
                       }
                       Console.WriteLine();
                       
@@ -96,31 +92,20 @@ jobs:
                       
                       try
                       {
-                          string url = "https://translate.astian.org/translate";
-                          
-                          var payload = new
-                          {
-                              q = text,
-                              source = "en",
-                              target = targetLang,
-                              format = "text"
-                          };
-                          
-                          string jsonPayload = JsonSerializer.Serialize(payload);
-                          var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                          
-                          var response = await client.PostAsync(url, content);
+                          string url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(text)}&langpair=en|{targetLang}";
+                          var response = await client.GetAsync(url);
                           
                           if (response.IsSuccessStatusCode)
                           {
                               string json = await response.Content.ReadAsStringAsync();
                               using var doc = JsonDocument.Parse(json);
-                              return doc.RootElement.GetProperty("translatedText").GetString();
+                              string translated = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString();
+                              return translated ?? text;
                           }
                       }
                       catch (Exception ex)
                       {
-                          Console.WriteLine($"\nError: {ex.Message}");
+                          Console.WriteLine($"\nError translating '{text}': {ex.Message}");
                       }
                       
                       return text;
@@ -129,10 +114,8 @@ jobs:
           }
           EOF
           
-          # Create Program.cs
           cat > Program.cs << 'EOF'
           using System;
-          using System.IO;
           using System.Threading.Tasks;
           
           namespace TranslationTool
@@ -141,7 +124,7 @@ jobs:
               {
                   static async Task Main(string[] args)
                   {
-                      string englishPath = args.Length > 0 ? args[0] : "../lang/en.json";
+                      string englishPath = args.Length > 0 ? args[0] : "../../../lang/en.json";
                       await TranslateHelper.GenerateAllTranslations(englishPath);
                       Console.WriteLine("Done!");
                   }
@@ -205,10 +188,21 @@ jobs:
           }
           EOF
       
+      - name: Verify files
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in lang folder:"
+          ls -la lang/
+      
       - name: Run translation generator
         run: |
           cd TranslationTool/TranslationTool
-          dotnet run -- /home/runner/work/NekoBeats-V2/NekoBeats-V2/lang/en.json
+          dotnet run -- ../../../lang/en.json
+      
+      - name: List generated files
+        run: |
+          echo "Generated translation files:"
+          ls -la lang/
       
       - name: Upload translations
         uses: actions/upload-artifact@v4
@@ -219,8 +213,8 @@ jobs:
       - name: Create PR with translations
         uses: peter-evans/create-pull-request@v6
         with:
-          title: "Add translations"
-          body: "Auto-generated translations from LibreTranslate"
+          title: "Add translations for v2.3.4"
+          body: "Auto-generated translations from MyMemory API"
           commit-message: "Add translations for all languages"
           branch: "translations"
           add-paths: |
