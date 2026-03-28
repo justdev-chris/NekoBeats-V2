@@ -335,17 +335,12 @@ namespace NekoBeats
         baseColor = barColor;
     }
     
-    // Force full opacity when opacity is 1
-    if (opacity >= 0.99f)
-    {
-        return Color.FromArgb(255, baseColor);
-    }
-    else
-    {
-        int alpha = (int)(255 * opacity);
-        alpha = Math.Clamp(alpha, 0, 255);
-        return Color.FromArgb(alpha, baseColor);
-    }
+    // Final guard: never return magenta
+    if (baseColor == Color.Magenta || (baseColor.R == 255 && baseColor.G == 0 && baseColor.B == 255))
+        baseColor = Color.Cyan;
+    
+    // Apply opacity (now handled by form opacity, but keep for safety)
+    return baseColor;
 }
 
         private float GetBarHeight(int barIndex)
