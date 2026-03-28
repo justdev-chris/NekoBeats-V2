@@ -14,8 +14,6 @@ namespace NekoBeats
 
         private CheckBox rainbowCheck;
         private CheckBox gradientToggle;
-        private CheckBox mirrorModeCheck;
-        private CheckBox waveformCheck;
         private TrackBar spacingTrack;
         private ComboBox themeCombo;
         private ComboBox fpsCombo;
@@ -201,16 +199,6 @@ namespace NekoBeats
                     spacingTrack = AddSliderControl(vizGroup, "Bar Spacing:", ref gy, 0, 10, visualizer.Logic.barSpacing);
                     spacingTrack.ValueChanged += (s, e) => visualizer.Logic.barSpacing = spacingTrack.Value;
 
-                    mirrorModeCheck = AddCheckboxControl(vizGroup, "Mirror Mode", 20, gy);
-                    mirrorModeCheck.Checked = visualizer.Logic.MirrorMode;
-                    mirrorModeCheck.CheckedChanged += (s, e) => { visualizer.Logic.MirrorMode = mirrorModeCheck.Checked; visualizer.Invalidate(); };
-                    gy += 35;
-                        
-                    waveformCheck = AddCheckboxControl(vizGroup, "Waveform View", 20, gy);
-                    waveformCheck.Checked = visualizer.Logic.WaveformMode;
-                    waveformCheck.CheckedChanged += (s, e) => { visualizer.Logic.WaveformMode = waveformCheck.Checked; visualizer.Invalidate(); };
-                    gy += 35;
-
                     currentTabPanel.Controls.Add(vizGroup);
                     break;
 
@@ -276,8 +264,7 @@ namespace NekoBeats
                     bloomCheck.CheckedChanged += (s, e) => visualizer.Logic.bloomEnabled = bloomCheck.Checked;
                     gy += 35;
 
-                    int bloomDefault = (int)visualizer.Logic.bloomIntensity;
-                    bloomIntensityTrack = AddSliderControl(fxGroup, "Bloom Intensity:", 20, gy, 0, 50, bloomDefault);
+                    bloomIntensityTrack = AddSliderControl(fxGroup, "Bloom Intensity:", 20, gy, 0, 50, visualizer.Logic.bloomIntensity);
                     bloomIntensityTrack.ValueChanged += (s, e) => visualizer.Logic.bloomIntensity = bloomIntensityTrack.Value;
                     gy += 45;
 
@@ -355,64 +342,6 @@ namespace NekoBeats
                     draggableCheck.Checked = visualizer.Logic.draggable;
                     draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
                     gy += 35;
-
-                    // Monitor selection
-var monitorLabel = new Label { Text = "Monitor:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText };
-windowGroup.Controls.Add(monitorLabel);
-
-ComboBox monitorCombo = new ComboBox 
-{ 
-    Location = new Point(170, gy), 
-    Size = new Size(220, 25), 
-    DropDownStyle = ComboBoxStyle.DropDownList,
-    BackColor = Color.FromArgb(30, 30, 40),
-    ForeColor = neonCyan
-};
-
-for (int i = 0; i < Screen.AllScreens.Length; i++)
-{
-    var screen = Screen.AllScreens[i];
-    monitorCombo.Items.Add($"{screen.DeviceName} - {screen.Bounds.Width}x{screen.Bounds.Height}");
-}
-monitorCombo.SelectedIndex = 0;
-
-monitorCombo.SelectedIndexChanged += (s, e) =>
-{
-    var screen = Screen.AllScreens[monitorCombo.SelectedIndex];
-    visualizer.Location = screen.Bounds.Location;
-    visualizer.Size = screen.Bounds.Size;
-};
-
-windowGroup.Controls.Add(monitorCombo);
-gy += 45;
-
-// Span button
-Button spanBtn = new Button { Text = "Span All Monitors", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black };
-spanBtn.Click += (s, e) =>
-{
-    Rectangle bounds = Rectangle.Empty;
-    foreach (var screen in Screen.AllScreens)
-        bounds = Rectangle.Union(bounds, screen.Bounds);
-    visualizer.Location = bounds.Location;
-    visualizer.Size = bounds.Size;
-};
-windowGroup.Controls.Add(spanBtn);
-gy += 45;
-
-// Clone button
-Button cloneBtn = new Button { Text = "Clone on All Monitors", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black };
-cloneBtn.Click += (s, e) =>
-{
-    foreach (var screen in Screen.AllScreens)
-    {
-        var clone = new VisualizerForm(null);
-        clone.Location = screen.Bounds.Location;
-        clone.Size = screen.Bounds.Size;
-        clone.Show();
-    }
-};
-                    windowGroup.Controls.Add(cloneBtn);
-                    gy += 45;
 
                     var bgBtn = new Button { Text = "Set Background", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
                     bgBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SetCustomBackground(dialog.FileName); MessageBox.Show("Background set!"); } };
