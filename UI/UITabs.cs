@@ -264,40 +264,139 @@ namespace NekoBeats
         }
 
         private void ShowWindowTab(int y)
+{
+    var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 420);
+    int gy = 25;
+
+    var labelFps = new Label { Text = "FPS Limit:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+    windowGroup.Controls.Add(labelFps);
+    fpsCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
+    fpsCombo.Items.AddRange(new string[] { "30", "60", "120", "Uncapped" });
+    fpsCombo.SelectedIndex = visualizer.Logic.fpsLimit switch { 30 => 0, 60 => 1, 120 => 2, _ => 3 };
+    fpsCombo.SelectedIndexChanged += (s, e) => { visualizer.Logic.fpsLimit = fpsCombo.Text switch { "30" => 30, "60" => 60, "120" => 120, _ => 999 }; visualizer.UpdateFPSTimer(); };
+    windowGroup.Controls.Add(fpsCombo);
+    gy += 45;
+
+    clickThroughCheck = AddCheckboxControl(windowGroup, "Click Through", 20, gy);
+    clickThroughCheck.Checked = visualizer.Logic.clickThrough;
+    clickThroughCheck.CheckedChanged += (s, e) => { visualizer.Logic.clickThrough = clickThroughCheck.Checked; visualizer.SetClickThrough(visualizer.Logic.clickThrough); };
+    gy += 35;
+
+    draggableCheck = AddCheckboxControl(windowGroup, "Draggable", 20, gy);
+    draggableCheck.Checked = visualizer.Logic.draggable;
+    draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
+    gy += 35;
+
+    // ========== MONITOR LOGIC ==========
+    var monitorLabel = new Label { Text = "Monitor:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
+    windowGroup.Controls.Add(monitorLabel);
+    
+    ComboBox monitorCombo = new ComboBox 
+    { 
+        Location = new Point(170, gy), 
+        Size = new Size(300, 25), 
+        DropDownStyle = ComboBoxStyle.DropDownList, 
+        BackColor = Color.FromArgb(30, 30, 40), 
+        ForeColor = neonCyan, 
+        FlatStyle = FlatStyle.Flat, 
+        Font = new Font("Courier New", 9) 
+    };
+    
+    // Add all monitors to dropdown
+    int selectedIndex = 0;
+    for (int i = 0; i < Screen.AllScreens.Length; i++)
+    {
+        var screen = Screen.AllScreens[i];
+        string isPrimary = screen.Primary ? " (Primary)" : "";
+        monitorCombo.Items.Add($"{i}: {screen.DeviceName}{isPrimary} - {screen.Bounds.Width}x{screen.Bounds.Height}");
+        
+        // Find which monitor currently contains the window
+        if (visualizer.Bounds.IntersectsWith(screen.Bounds))
         {
-            var windowGroup = CreateGroupBox("Window & Display", 10, y, 900, 320);
-            int gy = 25;
-
-            var labelFps = new Label { Text = "FPS Limit:", Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText, Font = new Font("Courier New", 9) };
-            windowGroup.Controls.Add(labelFps);
-            fpsCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(220, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9) };
-            fpsCombo.Items.AddRange(new string[] { "30", "60", "120", "Uncapped" });
-            fpsCombo.SelectedIndex = visualizer.Logic.fpsLimit switch { 30 => 0, 60 => 1, 120 => 2, _ => 3 };
-            fpsCombo.SelectedIndexChanged += (s, e) => { visualizer.Logic.fpsLimit = fpsCombo.Text switch { "30" => 30, "60" => 60, "120" => 120, _ => 999 }; visualizer.UpdateFPSTimer(); };
-            windowGroup.Controls.Add(fpsCombo);
-            gy += 45;
-
-            clickThroughCheck = AddCheckboxControl(windowGroup, "Click Through", 20, gy);
-            clickThroughCheck.Checked = visualizer.Logic.clickThrough;
-            clickThroughCheck.CheckedChanged += (s, e) => { visualizer.Logic.clickThrough = clickThroughCheck.Checked; visualizer.SetClickThrough(visualizer.Logic.clickThrough); };
-            gy += 35;
-
-            draggableCheck = AddCheckboxControl(windowGroup, "Draggable", 20, gy);
-            draggableCheck.Checked = visualizer.Logic.draggable;
-            draggableCheck.CheckedChanged += (s, e) => visualizer.Logic.draggable = draggableCheck.Checked;
-            gy += 35;
-
-            var bgBtn = new Button { Text = "Set Background", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-            bgBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SetCustomBackground(dialog.FileName); MessageBox.Show("Background set!"); } };
-            windowGroup.Controls.Add(bgBtn);
-            gy += 35;
-
-            var clearBgBtn = new Button { Text = "Clear Background", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
-            clearBgBtn.Click += (s, e) => { visualizer.Logic.ClearCustomBackground(); MessageBox.Show("Background cleared!"); };
-            windowGroup.Controls.Add(clearBgBtn);
-
-            currentTabPanel.Controls.Add(windowGroup);
+            selectedIndex = i;
         }
+    }
+    monitorCombo.SelectedIndex = selectedIndex;
+    
+    monitorCombo.SelectedIndexChanged += (s, e) =>
+    {
+        var selected = Screen.AllScreens[monitorCombo.SelectedIndex];
+        visualizer.Location = selected.Bounds.Location;
+        visualizer.Size = selected.Bounds.Size;
+        visualizer.WindowState = FormWindowState.Normal;
+        visualizer.Invalidate();
+    };
+    windowGroup.Controls.Add(monitorCombo);
+    gy += 45;
+    
+    // Span all monitors button
+    Button spanBtn = new Button 
+    { 
+        Text = "Span All Monitors", 
+        Location = new Point(20, gy), 
+        Size = new Size(150, 32), 
+        BackColor = neonCyan, 
+        ForeColor = Color.Black, 
+        FlatStyle = FlatStyle.Flat, 
+        Font = new Font("Courier New", 9, FontStyle.Bold), 
+        Cursor = Cursors.Hand 
+    };
+    spanBtn.Click += (s, e) =>
+    {
+        Rectangle bounds = Rectangle.Empty;
+        foreach (var screen in Screen.AllScreens)
+        {
+            bounds = Rectangle.Union(bounds, screen.Bounds);
+        }
+        visualizer.Location = bounds.Location;
+        visualizer.Size = bounds.Size;
+        visualizer.WindowState = FormWindowState.Normal;
+        visualizer.Invalidate();
+        
+        // Update dropdown selection
+        monitorCombo.SelectedIndex = -1;
+    };
+    windowGroup.Controls.Add(spanBtn);
+    gy += 45;
+    
+    // Clone on all monitors button
+    Button cloneBtn = new Button 
+    { 
+        Text = "Clone on All Monitors", 
+        Location = new Point(180, gy), 
+        Size = new Size(150, 32), 
+        BackColor = neonCyan, 
+        ForeColor = Color.Black, 
+        FlatStyle = FlatStyle.Flat, 
+        Font = new Font("Courier New", 9, FontStyle.Bold), 
+        Cursor = Cursors.Hand 
+    };
+    cloneBtn.Click += (s, e) =>
+    {
+        foreach (var screen in Screen.AllScreens)
+        {
+            // Create new visualizer form for each monitor
+            var clone = new VisualizerForm(null); // Pass null for plugin loader
+            clone.Location = screen.Bounds.Location;
+            clone.Size = screen.Bounds.Size;
+            clone.Show();
+        }
+    };
+    windowGroup.Controls.Add(cloneBtn);
+    gy += 45;
+    // ========== END MONITOR LOGIC ==========
+
+    var bgBtn = new Button { Text = "Set Background", Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+    bgBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SetCustomBackground(dialog.FileName); MessageBox.Show("Background set!"); } };
+    windowGroup.Controls.Add(bgBtn);
+    gy += 35;
+
+    var clearBgBtn = new Button { Text = "Clear Background", Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
+    clearBgBtn.Click += (s, e) => { visualizer.Logic.ClearCustomBackground(); MessageBox.Show("Background cleared!"); };
+    windowGroup.Controls.Add(clearBgBtn);
+
+    currentTabPanel.Controls.Add(windowGroup);
+}
 
         private void ShowPresetsTab(int y)
         {
