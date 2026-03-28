@@ -199,6 +199,16 @@ namespace NekoBeats
                     spacingTrack = AddSliderControl(vizGroup, "Bar Spacing:", ref gy, 0, 10, visualizer.Logic.barSpacing);
                     spacingTrack.ValueChanged += (s, e) => visualizer.Logic.barSpacing = spacingTrack.Value;
 
+                    mirrorModeCheck = AddCheckboxControl(vizGroup, "Mirror Mode", 20, gy);
+                    mirrorModeCheck.Checked = visualizer.Logic.MirrorMode;
+                    mirrorModeCheck.CheckedChanged += (s, e) => { visualizer.Logic.MirrorMode = mirrorModeCheck.Checked; visualizer.Invalidate(); };
+                    gy += 35;
+                        
+                    waveformCheck = AddCheckboxControl(vizGroup, "Waveform View", 20, gy);
+                    waveformCheck.Checked = visualizer.Logic.WaveformMode;
+                    waveformCheck.CheckedChanged += (s, e) => { visualizer.Logic.WaveformMode = waveformCheck.Checked; visualizer.Invalidate(); };
+                    gy += 35;
+
                     currentTabPanel.Controls.Add(vizGroup);
                     break;
 
