@@ -68,7 +68,7 @@ namespace NekoBeats
 
         private void InitializeForm()
         {
-            this.Text = "NekoBeats V2.3.3";
+            this.Text = "NekoBeats V2.3.4";
 
             if (File.Exists("NekoBeatsLogo.ico"))
             {
@@ -77,7 +77,10 @@ namespace NekoBeats
 
             this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
+            this.BackColor = Color.Magenta;
+            this.TransparencyKey = Color.Magenta;
             this.TopMost = true;
+            this.DoubleBuffered = true;
             this.ShowInTaskbar = false;
             this.Paint += OnPaint;
             this.FormClosing += OnFormClosing;
@@ -136,74 +139,26 @@ namespace NekoBeats
             }
         }
 
-        public void SetStreamingMode(bool enable)
-        {
-            streamingMode = enable;
-
-            if (enable)
-            {
-                this.FormBorderStyle = FormBorderStyle.Sizable;
-                this.ShowInTaskbar = true;
-                this.TopMost = false;
-                this.BackColor = Color.Black;
-                this.TransparencyKey = Color.Empty;
-                this.WindowState = FormWindowState.Normal;
-                this.Size = new Size(1280, 720);
-                this.Text = "NekoBeats V2.3.3 - Streaming Mode";
-                SetClickThrough(false);
-                
-                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
-                
-                this.Show();
-                this.BringToFront();
-                this.Invalidate();
-            }
-            else
-            {
-                this.FormBorderStyle = FormBorderStyle.None;
-                this.ShowInTaskbar = false;
-                this.TopMost = true;
-                this.BackColor = Color.Magenta;
-                this.TransparencyKey = Color.Magenta;
-                this.WindowState = FormWindowState.Maximized;
-                this.Text = "NekoBeats V2.3.3";
-                SetClickThrough(true);
-                
-                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED);
-                
-                this.Show();
-                this.BringToFront();
-                this.Invalidate();
-            }
-        }
-
         private void OnPaint(object sender, PaintEventArgs e)
         {
-            if (streamingMode)
-            {
-                e.Graphics.Clear(Color.Black);
-                logic.RenderCustomBackground(e.Graphics, this.ClientSize);
-                logic.Render(e.Graphics, this.ClientSize);
-            }
-            else
-            {
-                DrawWithLayeredWindow();
-            }
+            // Overlay mode: layered window with per-pixel alpha
+            DrawWithLayeredWindow();
         }
 
         private void DrawWithLayeredWindow()
         {
-            if (this.ClientSize.Width <= 0 || this.ClientSize.Height <= 0)
-                return;
-                
+            // Create bitmap with alpha channel
             using (Bitmap bitmap = new Bitmap(this.ClientSize.Width, this.ClientSize.Height, PixelFormat.Format32bppArgb))
             using (Graphics g = Graphics.FromImage(bitmap))
             {
+                // Clear to fully transparent
                 g.Clear(Color.Transparent);
+                
+                // Draw everything
                 logic.RenderCustomBackground(g, this.ClientSize);
                 logic.Render(g, this.ClientSize);
+                
+                // Update layered window
                 UpdateLayeredWindow(bitmap);
             }
         }
@@ -220,10 +175,10 @@ namespace NekoBeats
             Point topPos = new Point(this.Left, this.Top);
             
             BLENDFUNCTION blend = new BLENDFUNCTION();
-            blend.BlendOp = 0;
+            blend.BlendOp = 0; // AC_SRC_OVER
             blend.BlendFlags = 0;
             blend.SourceConstantAlpha = (byte)(logic.opacity * 255);
-            blend.AlphaFormat = 1;
+            blend.AlphaFormat = 1; // AC_SRC_ALPHA
             
             UpdateLayeredWindow(this.Handle, screenDc, ref topPos, ref size, memDc, ref pointSource, 0, ref blend, 2);
             
@@ -240,7 +195,7 @@ namespace NekoBeats
 
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
-            if (logic.draggable && e.Button == MouseButtons.Left && !streamingMode)
+            if (logic.draggable && e.Button == MouseButtons.Left)
             {
                 SetClickThrough(false);
                 
