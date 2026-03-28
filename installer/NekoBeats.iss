@@ -29,8 +29,8 @@ Name: "{group}\Uninstall NekoBeats"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\NekoBeats"; Filename: "{app}\NekoBeats.exe"; IconFilename: "{app}\NekoBeatsLogo.ico"
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "DisplayName"; ValueData: "NekoBeats v2.3"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "DisplayVersion"; ValueData: "2.3"
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "DisplayName"; ValueData: "NekoBeats v2.3.4"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "DisplayVersion"; ValueData: "2.3.4"
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "InstallLocation"; ValueData: "{app}"
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "UninstallString"; ValueData: "{uninstallexe}"
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\NekoBeats"; ValueType: string; ValueName: "DisplayIcon"; ValueData: "{app}\NekoBeatsLogo.ico"
