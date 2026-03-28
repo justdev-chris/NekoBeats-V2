@@ -257,26 +257,6 @@ namespace NekoBeats
                     vizGroup.Controls.Add(spacingTrack);
                     gy += 45;
 
-                    mirrorModeCheck = new CheckBox { Text = LanguageManager.Get("MirrorMode"), Location = new Point(20, gy), Size = new Size(200, 25), ForeColor = neonCyan, BackColor = boxBg, Checked = visualizer.Logic.MirrorMode };
-                    mirrorModeCheck.CheckedChanged += (s, e) => { visualizer.Logic.MirrorMode = mirrorModeCheck.Checked; visualizer.Invalidate(); };
-                    vizGroup.Controls.Add(mirrorModeCheck);
-                    gy += 35;
-
-                    waveformCheck = new CheckBox { Text = LanguageManager.Get("WaveformView"), Location = new Point(20, gy), Size = new Size(200, 25), ForeColor = neonCyan, BackColor = boxBg, Checked = visualizer.Logic.WaveformMode };
-                    waveformCheck.CheckedChanged += (s, e) => { visualizer.Logic.WaveformMode = waveformCheck.Checked; visualizer.Invalidate(); };
-                    vizGroup.Controls.Add(waveformCheck);
-                    gy += 35;
-
-                    spectrumCheck = new CheckBox { Text = LanguageManager.Get("SpectrumAnalyzer"), Location = new Point(20, gy), Size = new Size(200, 25), ForeColor = neonCyan, BackColor = boxBg, Checked = visualizer.Logic.SpectrumMode };
-                    spectrumCheck.CheckedChanged += (s, e) => { visualizer.Logic.SpectrumMode = spectrumCheck.Checked; visualizer.Invalidate(); };
-                    vizGroup.Controls.Add(spectrumCheck);
-                    gy += 35;
-
-                    invertColorsCheck = new CheckBox { Text = LanguageManager.Get("InvertColors"), Location = new Point(20, gy), Size = new Size(200, 25), ForeColor = neonCyan, BackColor = boxBg, Checked = visualizer.Logic.InvertColors };
-                    invertColorsCheck.CheckedChanged += (s, e) => { visualizer.Logic.InvertColors = invertColorsCheck.Checked; visualizer.Invalidate(); };
-                    vizGroup.Controls.Add(invertColorsCheck);
-                    gy += 35;
-
                     currentTabPanel.Controls.Add(vizGroup);
                     break;
 
