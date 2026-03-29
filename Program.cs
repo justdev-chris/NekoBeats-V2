@@ -92,8 +92,7 @@ namespace NekoBeats
             pluginLoader = new PluginLoader(pluginHost);
 
             var result = MessageBox.Show(
-                "Load plugins? (Security Warning: Only load plugins you trust)",
-                "NekoBeats Plugin System",
+                LanguageManager.Get("PluginWarningMessage"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning
             );
@@ -204,8 +203,7 @@ namespace NekoBeats
                             if (IsNewerVersion(latestVersion, CURRENT_VERSION))
                             {
                                 DialogResult result = MessageBox.Show(
-                                    $"New version available: v{latestVersion}\n\nCurrent: v{CURRENT_VERSION}",
-                                    "Update Available",
+                                    LanguageManager.Get("UpdateAvailable"),
                                     MessageBoxButtons.OKCancel,
                                     MessageBoxIcon.Information
                                 );
