@@ -50,10 +50,8 @@ namespace NekoBeats
         public float circleRadius = 200f;
         
         // v2.3.4 properties
-        public bool MirrorMode { get; set; } = false;
         public bool WaveformMode { get; set; } = false;
         public bool SpectrumMode { get; set; } = false;
-        public bool InvertColors { get; set; } = false;
         
         // Bar Preset System
         public BarPreset barPreset { get; private set; } = null;
@@ -243,10 +241,8 @@ namespace NekoBeats
             barLogic.barRenderer.useGradient = useGradient;
             barLogic.barRenderer.gradientColors = gradientColors;
             barLogic.barRenderer.currentTheme = barLogic.currentTheme;
-            barLogic.barRenderer.mirrorMode = MirrorMode;
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
-            barLogic.barRenderer.invertColors = InvertColors;
             barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
             
             barLogic.Update();
@@ -324,10 +320,8 @@ namespace NekoBeats
             barLogic.barRenderer.fadeEffectSpeed = fadeEffectSpeed;
             barLogic.barRenderer.useGradient = useGradient;
             barLogic.barRenderer.gradientColors = gradientColors;
-            barLogic.barRenderer.mirrorMode = MirrorMode;
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
-            barLogic.barRenderer.invertColors = InvertColors;
             barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
             
             if (useGradient && gradientColors != null)
@@ -456,10 +450,8 @@ namespace NekoBeats
             gradientColors = null;
             barPreset = null;
             hue = 0;
-            MirrorMode = false;
             WaveformMode = false;
             SpectrumMode = false;
-            InvertColors = false;
         }
 
         public void SetCustomBackground(string imagePath)
@@ -590,10 +582,8 @@ namespace NekoBeats
                     useGradient,
                     gradientColors = gradientColors?.Select(c => c.ToArgb()).ToArray(),
                     barTheme = (int)barLogic.currentTheme,
-                    mirrorMode = MirrorMode,
                     waveformMode = WaveformMode,
-                    spectrumMode = SpectrumMode,
-                    invertColors = InvertColors
+                    spectrumMode = SpectrumMode
                 };
 
                 string json = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
@@ -667,17 +657,11 @@ namespace NekoBeats
                         gradientColors = colors.ToArray();
                 }
                 
-                if (root.TryGetProperty("mirrorMode", out var mirrorProp))
-                    MirrorMode = mirrorProp.GetBoolean();
-                    
                 if (root.TryGetProperty("waveformMode", out var waveformProp))
                     WaveformMode = waveformProp.GetBoolean();
                     
                 if (root.TryGetProperty("spectrumMode", out var spectrumProp))
                     SpectrumMode = spectrumProp.GetBoolean();
-                    
-                if (root.TryGetProperty("invertColors", out var invertProp))
-                    InvertColors = invertProp.GetBoolean();
             } 
             catch (Exception ex)
             {
