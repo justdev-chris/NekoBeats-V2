@@ -247,6 +247,7 @@ namespace NekoBeats
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
             barLogic.barRenderer.invertColors = InvertColors;
+            barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
             
             barLogic.Update();
             
@@ -327,6 +328,7 @@ namespace NekoBeats
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
             barLogic.barRenderer.invertColors = InvertColors;
+            barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
             
             if (useGradient && gradientColors != null)
                 barLogic.SetGradient(gradientColors);
