@@ -38,6 +38,9 @@ namespace NekoBeats
         public bool spectrumMode = false;
         public bool invertColors = false;
 
+        // Raw waveform samples (time-domain) — set each frame from AudioCapture
+        public float[] waveformData = null;
+
         public BarRenderer(float[] smoothedValues, Color color, float sens, int height, int count, int spacing, bool rainbow)
         {
             smoothedBarValues = smoothedValues;
@@ -78,6 +81,13 @@ namespace NekoBeats
                     DrawRectangle(g, clientSize);
                     break;
             }
+
+            // Overlay waveform and/or spectrum line on top of bars
+            if (waveformMode && waveformData != null && waveformData.Length > 1)
+                DrawWaveform(g, clientSize);
+
+            if (spectrumMode && smoothedBarValues != null && smoothedBarValues.Length > 1)
+                DrawSpectrumLine(g, clientSize);
         }
 
         public Color GetBarColor(float h, float clientHeight, int barIndex)
@@ -353,6 +363,104 @@ namespace NekoBeats
                         g.FillPath(brush, path);
                     }
                 }
+            }
+        }
+
+        private void DrawWaveform(Graphics g, Size clientSize)
+        {
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            int w = clientSize.Width;
+            int h = clientSize.Height;
+            float midY = h * 0.5f;
+            float amplitude = h * 0.35f;
+
+            int samples = waveformData.Length;
+
+            Color lineColor = GetBarColor(amplitude, h, 0);
+            Color glowColor = Color.FromArgb(60, lineColor);
+
+            // Build polyline points — one per pixel column
+            var points = new System.Collections.Generic.List<PointF>(w + 2);
+            for (int px = 0; px < w; px++)
+            {
+                int idx = (int)((float)px / w * (samples - 1));
+                float sample = waveformData[Math.Min(idx, samples - 1)];
+                float py = midY - sample * amplitude;
+                points.Add(new PointF(px, py));
+            }
+
+            if (points.Count < 2) return;
+            PointF[] pts = points.ToArray();
+
+            // Glow pass (thick, semi-transparent)
+            using (Pen glowPen = new Pen(glowColor, 6f))
+            {
+                glowPen.LineJoin = LineJoin.Round;
+                g.DrawLines(glowPen, pts);
+            }
+
+            // Main crisp line
+            using (Pen linePen = new Pen(lineColor, 1.5f))
+            {
+                linePen.LineJoin = LineJoin.Round;
+                g.DrawLines(linePen, pts);
+            }
+
+            // Faint center baseline
+            using (Pen basePen = new Pen(Color.FromArgb(40, lineColor), 1f))
+            {
+                g.DrawLine(basePen, 0, midY, w, midY);
+            }
+        }
+
+        private void DrawSpectrumLine(Graphics g, Size clientSize)
+        {
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            int w = clientSize.Width;
+            int h = clientSize.Height;
+            float heightMultiplier = barHeight / 100f;
+
+            int count = Math.Min(barCount, smoothedBarValues.Length);
+            if (count < 2) return;
+
+            var points = new PointF[count];
+            for (int i = 0; i < count; i++)
+            {
+                float val = GetBarHeight(i) * (h * heightMultiplier);
+                float x = (float)i / (count - 1) * w;
+                float y = h - val;
+                points[i] = new PointF(x, y);
+            }
+
+            // Filled gradient area under the line
+            var fillPoints = new PointF[count + 2];
+            fillPoints[0] = new PointF(0, h);
+            for (int i = 0; i < count; i++) fillPoints[i + 1] = points[i];
+            fillPoints[count + 1] = new PointF(w, h);
+
+            Color lineColor = GetBarColor(h * 0.5f, h, 0);
+            using (LinearGradientBrush fillBrush = new LinearGradientBrush(
+                new PointF(0, 0), new PointF(0, h),
+                Color.FromArgb(60, lineColor),
+                Color.FromArgb(0, lineColor)))
+            {
+                g.FillPolygon(fillBrush, fillPoints);
+            }
+
+            // Glow pass
+            using (Pen glowPen = new Pen(Color.FromArgb(50, lineColor), 8f))
+            {
+                glowPen.LineJoin = LineJoin.Round;
+                g.DrawLines(glowPen, points);
+            }
+
+            // Main line
+            using (Pen linePen = new Pen(lineColor, 2f))
+            {
+                linePen.LineJoin = LineJoin.Round;
+                g.DrawLines(linePen, points);
             }
         }
 
