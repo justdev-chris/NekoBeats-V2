@@ -88,5 +88,7 @@
   "CreatedBy": "Created by: justdev-chris",
   "Version": "NekoBeats V2.3.4",
   "GitHub": "github.com/justdev-chris/NekoBeats-V2",
-  "Uninstall": "Uninstall NekoBeats"
+  "Uninstall": "Uninstall NekoBeats",
+  "UpdateAvailable": "New version available: v{0}\n\nCurrent: v{1}",
+  "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system."
 }
