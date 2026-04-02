@@ -390,22 +390,16 @@ namespace NekoBeats
                     var audioGroup = CreateGroupBox(LanguageManager.Get("AudioSettings"), 10, y, 900, 350);
                     gy = 25;
 
-                    var deviceLabel = new Label { Text = LanguageManager.Get("AudioDevice"), Location = new Point(20, gy + 5), Size = new Size(140, 20), ForeColor = dimText };
-                    audioGroup.Controls.Add(deviceLabel);
-                    var audioDeviceCombo = new ComboBox { Location = new Point(170, gy), Size = new Size(320, 25), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(30, 30, 40), ForeColor = neonCyan, FlatStyle = FlatStyle.Flat };
-                    var devices = visualizer.Logic.GetAudioDevices();
-                    foreach (var device in devices)
-                        audioDeviceCombo.Items.Add(device);
-                    audioDeviceCombo.SelectedIndex = 0;
-                    audioDeviceCombo.SelectedIndexChanged += (s, e) => visualizer.Logic.SetAudioDevice(audioDeviceCombo.SelectedIndex);
-                    audioGroup.Controls.Add(audioDeviceCombo);
+                    // REMOVED audio device selection - using system default only
+                    var systemAudioLabel = new Label { Text = LanguageManager.Get("UsingSystemAudio"), Location = new Point(20, gy), Size = new Size(860, 25), ForeColor = neonCyan, TextAlign = ContentAlignment.MiddleLeft };
+                    audioGroup.Controls.Add(systemAudioLabel);
                     gy += 45;
 
                     var sensitivityLabel = new Label { Text = LanguageManager.Get("Sensitivity"), Location = new Point(20, gy), Size = new Size(140, 20), ForeColor = dimText };
                     audioGroup.Controls.Add(sensitivityLabel);
                     var sensitivityValue = new Label { Text = ((int)(visualizer.Logic.sensitivity * 100)).ToString(), Location = new Point(800, gy), Size = new Size(70, 20), ForeColor = neonCyan, TextAlign = ContentAlignment.TopRight };
                     audioGroup.Controls.Add(sensitivityValue);
-                    sensitivityTrack = new TrackBar { Location = new Point(170, gy - 5), Size = new Size(620, 45), Minimum = 1, Maximum = 300, Value = (int)(visualizer.Logic.sensitivity * 100), TickStyle = TickStyle.None, BackColor = boxBg };
+                    sensitivityTrack = new TrackBar { Location = new Point(170, gy - 5), Size = new Size(620, 45), Minimum = 1, Maximum = 500, Value = (int)(visualizer.Logic.sensitivity * 100), TickStyle = TickStyle.None, BackColor = boxBg };
                     sensitivityTrack.ValueChanged += (s, e) => { visualizer.Logic.sensitivity = sensitivityTrack.Value / 100f; sensitivityValue.Text = sensitivityTrack.Value.ToString(); visualizer.Invalidate(); };
                     audioGroup.Controls.Add(sensitivityTrack);
                     gy += 45;
@@ -461,7 +455,7 @@ namespace NekoBeats
                         var screen = Screen.AllScreens[i];
                         monitorCombo.Items.Add($"{screen.DeviceName} - {screen.Bounds.Width}x{screen.Bounds.Height}");
                     }
-                    monitorCombo.SelectedIndex = 0;
+                    if (monitorCombo.Items.Count > 0) monitorCombo.SelectedIndex = 0;
                     monitorCombo.SelectedIndexChanged += (s, e) => { visualizer.SetMonitor(monitorCombo.SelectedIndex); };
                     windowGroup.Controls.Add(monitorCombo);
                     gy += 45;
@@ -476,7 +470,7 @@ namespace NekoBeats
                     {
                         foreach (var screen in Screen.AllScreens)
                         {
-                            var clone = new VisualizerForm(null);
+                            var clone = new VisualizerForm(pluginLoader);
                             clone.SetMonitor(Array.IndexOf(Screen.AllScreens, screen));
                             clone.Show();
                         }
