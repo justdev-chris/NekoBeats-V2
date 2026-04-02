@@ -33,10 +33,8 @@ namespace NekoBeats
         public bool fadeEffectEnabled = false;
         public float fadeEffectSpeed = 0.5f;
         private float[] fadeValues = new float[512];
-        public bool mirrorMode = false;
         public bool waveformMode = false;
         public bool spectrumMode = false;
-        public bool invertColors = false;
 
         // Raw waveform samples (time-domain) — set each frame from AudioCapture
         public float[] waveformData = null;
@@ -380,7 +378,6 @@ namespace NekoBeats
             Color lineColor = GetBarColor(amplitude, h, 0);
             Color glowColor = Color.FromArgb(60, lineColor);
 
-            // Build polyline points — one per pixel column
             var points = new System.Collections.Generic.List<PointF>(w + 2);
             for (int px = 0; px < w; px++)
             {
@@ -393,21 +390,18 @@ namespace NekoBeats
             if (points.Count < 2) return;
             PointF[] pts = points.ToArray();
 
-            // Glow pass (thick, semi-transparent)
             using (Pen glowPen = new Pen(glowColor, 6f))
             {
                 glowPen.LineJoin = LineJoin.Round;
                 g.DrawLines(glowPen, pts);
             }
 
-            // Main crisp line
             using (Pen linePen = new Pen(lineColor, 1.5f))
             {
                 linePen.LineJoin = LineJoin.Round;
                 g.DrawLines(linePen, pts);
             }
 
-            // Faint center baseline
             using (Pen basePen = new Pen(Color.FromArgb(40, lineColor), 1f))
             {
                 g.DrawLine(basePen, 0, midY, w, midY);
@@ -434,7 +428,6 @@ namespace NekoBeats
                 points[i] = new PointF(x, y);
             }
 
-            // Filled gradient area under the line
             var fillPoints = new PointF[count + 2];
             fillPoints[0] = new PointF(0, h);
             for (int i = 0; i < count; i++) fillPoints[i + 1] = points[i];
@@ -449,14 +442,12 @@ namespace NekoBeats
                 g.FillPolygon(fillBrush, fillPoints);
             }
 
-            // Glow pass
             using (Pen glowPen = new Pen(Color.FromArgb(50, lineColor), 8f))
             {
                 glowPen.LineJoin = LineJoin.Round;
                 g.DrawLines(glowPen, points);
             }
 
-            // Main line
             using (Pen linePen = new Pen(lineColor, 2f))
             {
                 linePen.LineJoin = LineJoin.Round;
