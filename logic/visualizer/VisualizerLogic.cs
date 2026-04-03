@@ -324,6 +324,7 @@ namespace NekoBeats
             barLogic.barRenderer.gradientColors = gradientColors;
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
+            barLogic.barRenderer.waveformData = GetWaveformData();
             
             if (useGradient && gradientColors != null)
                 barLogic.SetGradient(gradientColors);
@@ -336,13 +337,13 @@ namespace NekoBeats
             // Render visualization
             barLogic.Render(g, clientSize);
             
-            // Draw particles if enabled (on top of bars)
+            // Draw particles if enabled
             if (particlesEnabled && particles.Count > 0)
                 DrawParticles(g, clientSize);
             
             if (bloomEnabled)
                 ApplyBloomEffect(g, clientSize);
-        }
+            
             // FPS counter
             if (showFPS)
             {
@@ -361,6 +362,7 @@ namespace NekoBeats
                     g.DrawString(fpsText, font, textBrush, 10, 10);
                 }
             }
+        }
         
         private void DrawParticles(Graphics g, Size clientSize)
         {
