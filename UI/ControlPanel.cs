@@ -476,6 +476,10 @@ namespace NekoBeats
                     };
                     windowGroup.Controls.Add(fpsCounterCheck);
                     gy += 35;
+                    }
+                    currentTabPanel.Controls.Add(windowGroup);
+                    break; 
+
 
                 case "PRESETS":
                     var presetsGroup = CreateGroupBox(LanguageManager.Get("PresetsPlugins"), 10, y, 900, 650);
