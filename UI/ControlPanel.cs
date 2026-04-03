@@ -476,34 +476,6 @@ namespace NekoBeats
                     };
                     windowGroup.Controls.Add(fpsCounterCheck);
                     gy += 35;
-                
-                    var monitorLabel = new Label { Text = LanguageManager.Get("ActiveMonitors"), Location = new Point(20, gy), Size = new Size(200, 20), ForeColor = dimText };
-                    windowGroup.Controls.Add(monitorLabel);
-                    gy += 30;
-                
-                    for (int i = 0; i < Screen.AllScreens.Length; i++)
-                    {
-                        var screen = Screen.AllScreens[i];
-                        int idx = i;
-                        var toggle = new CheckBox 
-                        { 
-                            Text = $"{screen.DeviceName} - {screen.Bounds.Width}x{screen.Bounds.Height}",
-                            Location = new Point(40, gy),
-                            Size = new Size(450, 25),
-                            ForeColor = neonCyan,
-                            BackColor = boxBg,
-                            Checked = visualizer.IsMonitorActive(idx)
-                        };
-                        toggle.CheckedChanged += (s, e) => 
-                        {
-                            visualizer.ToggleMonitor(idx, toggle.Checked);
-                        };
-                        windowGroup.Controls.Add(toggle);
-                        gy += 30;
-                    }
-                
-                    currentTabPanel.Controls.Add(windowGroup);
-                    break;
 
                 case "PRESETS":
                     var presetsGroup = CreateGroupBox(LanguageManager.Get("PresetsPlugins"), 10, y, 900, 650);
