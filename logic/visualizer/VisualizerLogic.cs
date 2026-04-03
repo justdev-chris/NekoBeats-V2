@@ -343,6 +343,24 @@ namespace NekoBeats
             if (bloomEnabled)
                 ApplyBloomEffect(g, clientSize);
         }
+            // FPS counter
+            if (showFPS)
+            {
+                frameCount++;
+                if ((DateTime.Now - lastFPSTime).TotalSeconds >= 1)
+                {
+                    currentFPS = frameCount;
+                    frameCount = 0;
+                    lastFPSTime = DateTime.Now;
+                }
+                
+                string fpsText = $"FPS: {currentFPS}";
+                using (Font font = new Font("Courier New", 12, FontStyle.Bold))
+                using (Brush textBrush = new SolidBrush(Color.FromArgb(200, Color.White)))
+                {
+                    g.DrawString(fpsText, font, textBrush, 10, 10);
+                }
+            }
         
         private void DrawParticles(Graphics g, Size clientSize)
         {
