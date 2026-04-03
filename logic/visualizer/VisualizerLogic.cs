@@ -240,6 +240,8 @@ namespace NekoBeats
             barLogic.barRenderer.useGradient = useGradient;
             barLogic.barRenderer.gradientColors = gradientColors;
             barLogic.barRenderer.currentTheme = barLogic.currentTheme;
+            barLogic.barRenderer.waveformMode = WaveformMode;
+            barLogic.barRenderer.waveformData = GetWaveformData();  // ADD THIS LINE
             
             barLogic.Update();
             
@@ -268,9 +270,17 @@ namespace NekoBeats
         
         private void UpdateParticles()
         {
+            // Remove excess particles if count lowered
+            while (particles.Count > particleCount && particles.Count > 0)
+            {
+                particles.RemoveAt(0);
+            }
+            
+            // Only spawn if under limit
             if (particles.Count < particleCount && random.Next(100) < 15)
             {
-                for (int i = 0; i < 2; i++)
+                int canSpawn = Math.Min(2, particleCount - particles.Count);
+                for (int i = 0; i < canSpawn; i++)
                 {
                     particles.Add(new Particle
                     {
@@ -359,6 +369,7 @@ namespace NekoBeats
                 }
             }
         }
+
         private float GetBassLevel()
         {
             float sum = 0;
