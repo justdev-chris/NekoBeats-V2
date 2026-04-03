@@ -455,6 +455,19 @@ namespace NekoBeats
                     clearBgBtn.Click += (s, e) => { visualizer.Logic.ClearCustomBackground(); MessageBox.Show(LanguageManager.Get("BackgroundCleared")); };
                     windowGroup.Controls.Add(clearBgBtn);
 
+                    var fpsCounterCheck = new CheckBox 
+                    { 
+                        Text = "Show FPS Counter", 
+                        Location = new Point(20, gy), 
+                        Size = new Size(200, 25), 
+                        ForeColor = neonCyan, 
+                        BackColor = boxBg,
+                        Checked = visualizer.Logic.showFPS
+                    };
+                    fpsCounterCheck.CheckedChanged += (s, e) => { visualizer.Logic.showFPS = fpsCounterCheck.Checked; visualizer.Invalidate(); };
+                    windowGroup.Controls.Add(fpsCounterCheck);
+                    gy += 35;
+
                     currentTabPanel.Controls.Add(windowGroup);
                     break;
 
