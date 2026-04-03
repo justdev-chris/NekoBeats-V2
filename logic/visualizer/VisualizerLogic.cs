@@ -360,21 +360,17 @@ namespace NekoBeats
         }
         
         private void DrawParticles(Graphics g, Size clientSize)
+{
+    foreach (var p in particles)
+    {
+        int alpha = (int)(p.Life * 200);
+        alpha = Math.Clamp(alpha, 0, 255);  // ONLY ADD THIS LINE
+        using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, barColor)))
         {
-            foreach (var p in particles)
-            {
-                int alpha = (int)(p.Life * 255);
-                alpha = Math.Clamp(alpha, 0, 255);
-                
-                if (alpha > 0)
-                {
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, barColor)))
-                    {
-                        g.FillEllipse(brush, p.X - p.Size / 2, p.Y - p.Size / 2, p.Size, p.Size);
-                    }
-                }
-            }
+            g.FillEllipse(brush, p.X - 2, p.Y - 2, p.Size, p.Size);
         }
+    }
+}
         
         private void ApplyBloomEffect(Graphics g, Size clientSize)
         {
