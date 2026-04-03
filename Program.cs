@@ -79,10 +79,10 @@ namespace NekoBeats
 
         private static void InitializeVisualizer()
         {
-            var tempForm = new VisualizerForm(null);
+            var tempForm = new VisualizerForm(null, -1, true);
             tempForm.Icon = nekoIcon;
 
-            visualizerForm = new VisualizerForm(null);
+            visualizerForm = new VisualizerForm(null, 0, false);
             visualizerForm.Icon = nekoIcon;
 
             controlPanel = new ControlPanel(visualizerForm, null);
@@ -104,7 +104,7 @@ namespace NekoBeats
             tempForm.Dispose();
 
             visualizerForm.Dispose();
-            visualizerForm = new VisualizerForm(pluginLoader);
+            visualizerForm = new VisualizerForm(pluginLoader, 0, false);
             visualizerForm.Icon = nekoIcon;
 
             controlPanel.Dispose();
