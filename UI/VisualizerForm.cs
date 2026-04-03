@@ -59,10 +59,6 @@ namespace NekoBeats
         private bool isDragging = false;
 
         public bool streamingMode = false;
-        
-        // Multi-monitor spanning
-        private List<int> activeMonitors = new List<int>();
-        private Rectangle totalBounds;
 
         public VisualizerForm(PluginLoader loader)
         {
@@ -70,10 +66,6 @@ namespace NekoBeats
             InitializeForm();
             InitializeLogic();
             InitializeTimer();
-            
-            // Start with primary monitor active
-            activeMonitors.Add(0);
-            UpdateSpanBounds();
         }
 
         private void InitializeForm()
@@ -85,6 +77,7 @@ namespace NekoBeats
                 this.Icon = new Icon("NekoBeatsLogo.ico");
             }
 
+            this.WindowState = FormWindowState.Maximized;
             this.FormBorderStyle = FormBorderStyle.None;
             this.TopMost = true;
             this.ShowInTaskbar = false;
@@ -95,13 +88,8 @@ namespace NekoBeats
             this.MouseMove += OnMouseMove;
             this.MouseUp += OnMouseUp;
 
-            if (!streamingMode)
-            {
-                int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
-                SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-                this.BackColor = Color.Magenta;
-                this.TransparencyKey = Color.Magenta;
-            }
+            int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
+            SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED | WS_EX_TRANSPARENT);
         }
 
         private void InitializeLogic()
@@ -139,8 +127,6 @@ namespace NekoBeats
 
         public void SetClickThrough(bool enable)
         {
-            if (streamingMode) return;
-            
             int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
             if (enable)
             {
@@ -182,55 +168,17 @@ namespace NekoBeats
                 this.TopMost = true;
                 this.BackColor = Color.Magenta;
                 this.TransparencyKey = Color.Magenta;
+                this.WindowState = FormWindowState.Maximized;
                 this.Text = LanguageManager.Get("VisualizerTitle");
                 SetClickThrough(true);
                 
                 int style = GetWindowLong(this.Handle, GWL_EXSTYLE);
                 SetWindowLong(this.Handle, GWL_EXSTYLE, style | WS_EX_LAYERED);
                 
-                UpdateSpanBounds();
                 this.Show();
                 this.BringToFront();
                 this.Invalidate();
             }
-        }
-
-        // Monitor spanning methods
-        public void ToggleMonitor(int monitorIndex, bool active)
-        {
-            if (active && !activeMonitors.Contains(monitorIndex))
-            {
-                activeMonitors.Add(monitorIndex);
-            }
-            else if (!active && activeMonitors.Contains(monitorIndex))
-            {
-                activeMonitors.Remove(monitorIndex);
-            }
-            
-            if (activeMonitors.Count == 0)
-            {
-                activeMonitors.Add(0);
-            }
-            
-            UpdateSpanBounds();
-        }
-
-        public bool IsMonitorActive(int monitorIndex)
-        {
-            return activeMonitors.Contains(monitorIndex);
-        }
-
-        private void UpdateSpanBounds()
-        {
-            totalBounds = Rectangle.Empty;
-            foreach (int idx in activeMonitors)
-            {
-                totalBounds = Rectangle.Union(totalBounds, Screen.AllScreens[idx].Bounds);
-            }
-            
-            this.Location = totalBounds.Location;
-            this.Size = totalBounds.Size;
-            this.Invalidate();
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
@@ -256,33 +204,8 @@ namespace NekoBeats
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Color.Transparent);
-                
-                // Render to each active monitor region
-                foreach (int idx in activeMonitors)
-                {
-                    var screen = Screen.AllScreens[idx];
-                    var relativeBounds = new Rectangle(
-                        screen.Bounds.X - this.Location.X,
-                        screen.Bounds.Y - this.Location.Y,
-                        screen.Bounds.Width,
-                        screen.Bounds.Height
-                    );
-                    
-                    g.SetClip(relativeBounds);
-                    
-                    // Create bitmap for this monitor
-                    using (Bitmap monitorBitmap = new Bitmap(screen.Bounds.Width, screen.Bounds.Height, PixelFormat.Format32bppArgb))
-                    using (Graphics monitorG = Graphics.FromImage(monitorBitmap))
-                    {
-                        monitorG.Clear(Color.Transparent);
-                        logic.RenderCustomBackground(monitorG, screen.Bounds.Size);
-                        logic.Render(monitorG, screen.Bounds.Size);
-                        g.DrawImage(monitorBitmap, relativeBounds.Location);
-                    }
-                    
-                    g.ResetClip();
-                }
-                
+                logic.RenderCustomBackground(g, this.ClientSize);
+                logic.Render(g, this.ClientSize);
                 UpdateLayeredWindow(bitmap);
             }
         }
@@ -326,6 +249,7 @@ namespace NekoBeats
                 if (this.WindowState == FormWindowState.Maximized)
                 {
                     this.WindowState = FormWindowState.Normal;
+                    this.Size = new Size(1920, 1080);
                 }
 
                 isDragging = true;
