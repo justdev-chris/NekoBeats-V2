@@ -229,6 +229,7 @@ jobs:
             "Uninstall": "Uninstall NekoBeats",
             "UpdateAvailable": "New version available: v{0}\n\nCurrent: v{1}",
             "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system."
+            "UsingSystemAudio": "NekoBeats automatically uses your system audio for visualization."
           }
           EOF
       
