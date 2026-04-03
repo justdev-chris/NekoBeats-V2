@@ -19,7 +19,7 @@
   "FinishContent": "Spielen Sie etwas Musik und beobachten Sie, wie die Magie passiert!\n\nHergestellt mit \u2764\uFE0F von justdev-chris",
   "Next": "WEITER",
   "Back": "zur\u00FCck",
-  "LetsGo": "Auf geht\u2019s!",
+  "LetsGo": "LOS GEHT\u0027S!",
   "DontShowAgain": "Nicht mehr anzeigen",
   "VIZTab": "Viz.",
   "COLORSTab": "FARBEN",
@@ -91,5 +91,7 @@
   "Uninstall": "NekoBeats deinstallieren",
   "UpdateAvailable": "Neue Version verf\u00FCgbar: v {0}\n\nAktuell: v {1}",
   "PluginWarningMessage": "WARNUNG: Laden Sie nur Plugins aus vertrauensw\u00FCrdigen Quellen!\n\nSch\u00E4dliche Plugins k\u00F6nnen Ihr System sch\u00E4digen.",
-  "UsingSystemAudio": "NekoBeats verwendet automatisch Ihr Systemaudio zur Visualisierung."
+  "UsingSystemAudio": "NekoBeats verwendet automatisch Ihr Systemaudio zur Visualisierung.",
+  "ShowFPS": "FPS anzeigen",
+  "ActiveMonitors": "Aktive Monitore:"
 }

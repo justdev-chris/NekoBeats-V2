@@ -68,7 +68,7 @@
   "SetBackground": "D\u00E9finir l\u0027arri\u00E8re-plan",
   "ClearBackground": "Effacer le \u0026fond",
   "PresetsPlugins": "Pr\u00E9r\u00E9glages et extensions",
-  "Plugins": "Extensions",
+  "Plugins": "Plugins",
   "NoPlugins": "Aucune extension charg\u00E9e",
   "NBPPresets": "Pr\u00E9r\u00E9glages NBP (Param\u00E8tres)",
   "NoNBPPresets": "Aucun pr\u00E9r\u00E9glage trouv\u00E9",
@@ -91,5 +91,7 @@
   "Uninstall": "D\u00E9sinstaller NekoBeats",
   "UpdateAvailable": "Nouvelle version disponible\u00A0: v {0}\n\nCourant\u00A0: v {1}",
   "PluginWarningMessage": "AVERTISSEMENT\u00A0: chargez uniquement les plugins provenant de sources fiables\u00A0!\n\nLes plugins malveillants peuvent endommager votre syst\u00E8me.",
-  "UsingSystemAudio": "NekoBeats utilise automatiquement l\u0027audio de votre syst\u00E8me pour la visualisation."
+  "UsingSystemAudio": "NekoBeats utilise automatiquement l\u0027audio de votre syst\u00E8me pour la visualisation.",
+  "ShowFPS": "Afficher le compteur FPS",
+  "ActiveMonitors": "Moniteurs actifs\u00A0:"
 }

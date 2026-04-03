@@ -18,7 +18,7 @@
   "FinishTitle": "Ya est\u00E1 preparado.",
   "FinishContent": "\u00A1Ponga un poco de m\u00FAsica y vea c\u00F3mo sucede la magia!\n\nHecho con \u2764\uFE0F por justdev-chris",
   "Next": "SIGUIENTE",
-  "Back": "atr\u00E1s",
+  "Back": "Atr\u00E1s",
   "LetsGo": "\u00A1Vamos!",
   "DontShowAgain": "No mostrar esto de neuvo",
   "VIZTab": "ZIV",
@@ -84,12 +84,14 @@
   "UninstallConfirm": "\u00BFEst\u00E1 seguro de que lo quiere desinstalar?",
   "NotFound": "No encontrado",
   "UninstallNotFound": "No se ha encontrado el desinstalador. Intente desinstalar a trav\u00E9s de la configuraci\u00F3n de Windows.",
-  "About": "Acerca de",
+  "About": "Sobre nosotros",
   "CreatedBy": "Creado por: justdev-chris",
   "Version": "NekoBeats V2.3.4",
   "GitHub": "github.com/justdev-chris/NekoBeats-V2",
   "Uninstall": "Desinstalar NekoBeats",
   "UpdateAvailable": "Nueva versi\u00F3n disponible: v {0}\n\nCorriente: v {1}",
   "PluginWarningMessage": "ADVERTENCIA: \u00A1Cargue solo plugins de fuentes confiables!\n\nLos plugins maliciosos pueden da\u00F1ar tu sistema.",
-  "UsingSystemAudio": "NekoBeats utiliza autom\u00E1ticamente el audio de su sistema para la visualizaci\u00F3n."
+  "UsingSystemAudio": "NekoBeats utiliza autom\u00E1ticamente el audio de su sistema para la visualizaci\u00F3n.",
+  "ShowFPS": "Mostrar contador FPS",
+  "ActiveMonitors": "Monitores activos:"
 }

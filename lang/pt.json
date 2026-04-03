@@ -5,8 +5,8 @@
   "WelcomeDesc": "Um visualizador de \u00E1udio elegante que transforma a sua m\u00FAsica\nem barras de luz flutuantes.",
   "WelcomeSetup": "Vamos configurar a sua conta",
   "Tut1Title": "Come\u00E7ar",
-  "Tut1Content": "1. Toque alguma m\u00FAsica atrav\u00E9s dos seus altifalantes ou auscultadores.\n\n2. O NekoBeats captura automaticamente o \u00E1udio do seu sistema \u2014 sem necessidade de configura\u00E7\u00E3o!\n\n3. As barras flutuantes aparecer\u00E3o no seu ecr\u00E3, reagindo \u00E0 m\u00FAsica em tempo real.\n\n4. O painel de controle permite personalizar tudo \u2014 cores, contagem de barras, altura, efeitos e muito mais.",
-  "Tut2Title": "Personaliza\u00E7\u00E3o",
+  "Tut1Content": "1. Play some music through your speakers or headphones.\n\n2. NekoBeats automatically captures your system audio \u2014 no setup needed!\n\n3. The floating bars will appear on your screen, reacting to the music in real time.\n\n4. The control panel lets you customize everything \u2014 colors, bar count, height, effects and more.",
+  "Tut2Title": "\uD83C\uDFA8 Customization",
   "Tip1": "VIZ tab \u2014 adjust bar count, height, opacity and spacing",
   "Tip2": "COLORS tab \u2014 pick bar colors, enable rainbow or gradient",
   "Tip3": "FX tab \u2014 bloom, particles, circle mode, fade effect",
@@ -91,5 +91,7 @@
   "Uninstall": "Uninstall NekoBeats",
   "UpdateAvailable": "New version available: v{0}\n\nCurrent: v{1}",
   "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system.",
-  "UsingSystemAudio": "NekoBeats automatically uses your system audio for visualization."
+  "UsingSystemAudio": "NekoBeats automatically uses your system audio for visualization.",
+  "ShowFPS": "Show FPS Counter",
+  "ActiveMonitors": "Active Monitors:"
 }
