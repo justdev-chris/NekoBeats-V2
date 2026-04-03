@@ -446,18 +446,35 @@ namespace NekoBeats
                     windowGroup.Controls.Add(draggableCheck);
                     gy += 45;
 
-                    var bgBtn = new Button { Text = LanguageManager.Get("SetBackground"), Location = new Point(20, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat };
-                    bgBtn.Click += (s, e) => { var dialog = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp" }; if (dialog.ShowDialog() == DialogResult.OK) { visualizer.Logic.SetCustomBackground(dialog.FileName); MessageBox.Show(LanguageManager.Get("BackgroundSet")); } };
-                    windowGroup.Controls.Add(bgBtn);
-                    gy += 45;
-
-                    var clearBgBtn = new Button { Text = LanguageManager.Get("ClearBackground"), Location = new Point(180, gy), Size = new Size(150, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat };
-                    clearBgBtn.Click += (s, e) => { visualizer.Logic.ClearCustomBackground(); MessageBox.Show(LanguageManager.Get("BackgroundCleared")); };
-                    windowGroup.Controls.Add(clearBgBtn);
+                    // Monitor toggles
+                    var monitorLabel = new Label { Text = LanguageManager.Get("ActiveMonitors"), Location = new Point(20, gy), Size = new Size(200, 20), ForeColor = dimText };
+                    windowGroup.Controls.Add(monitorLabel);
+                    gy += 30;
+                    
+                    for (int i = 0; i < Screen.AllScreens.Length; i++)
+                    {
+                        var screen = Screen.AllScreens[i];
+                        var toggle = new CheckBox 
+                        { 
+                            Text = $"{screen.DeviceName} - {screen.Bounds.Width}x{screen.Bounds.Height}",
+                            Location = new Point(40, gy),
+                            Size = new Size(450, 25),
+                            ForeColor = neonCyan,
+                            BackColor = boxBg,
+                            Tag = i,
+                            Checked = VisualizerForm.IsMonitorActive(i)
+                        };
+                        toggle.CheckedChanged += (s, e) => 
+                        {
+                            VisualizerForm.ToggleMonitor((int)toggle.Tag, toggle.Checked);
+                        };
+                        windowGroup.Controls.Add(toggle);
+                        gy += 30;
+                    }
 
                     var fpsCounterCheck = new CheckBox 
                     { 
-                        Text = "Show FPS Counter", 
+                        Text = LanguageManager.Get("ShowFPS"),
                         Location = new Point(20, gy), 
                         Size = new Size(200, 25), 
                         ForeColor = neonCyan, 
