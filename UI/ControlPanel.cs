@@ -260,7 +260,7 @@ namespace NekoBeats
 
                 case "COLORS":
                     var colorGroup = CreateGroupBox(LanguageManager.Get("ColorsEffects"), 10, y, 900, 450);
-                    gy = 25;
+                    int gy = 25;
 
                     var colorBtn = new Button { Text = LanguageManager.Get("BarColor"), Location = new Point(20, gy), Size = new Size(100, 32), BackColor = neonCyan, ForeColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Courier New", 9, FontStyle.Bold), Cursor = Cursors.Hand };
                     colorBtn.Click += (s, e) => ShowColorDialog();
@@ -316,7 +316,7 @@ namespace NekoBeats
 
                 case "FX":
                     var fxGroup = CreateGroupBox(LanguageManager.Get("Effects"), 10, y, 900, 750);
-                    gy = 25;
+                    int gy = 25;
                 
                     bloomCheck = new CheckBox { Text = LanguageManager.Get("Bloom"), Location = new Point(20, gy), Size = new Size(200, 25), ForeColor = neonCyan, BackColor = boxBg, Checked = visualizer.Logic.bloomEnabled };
                     bloomCheck.CheckedChanged += (s, e) => { visualizer.Logic.bloomEnabled = bloomCheck.Checked; visualizer.Invalidate(); };
@@ -403,7 +403,7 @@ namespace NekoBeats
 
                 case "AUDIO":
                     var audioGroup = CreateGroupBox(LanguageManager.Get("AudioSettings"), 10, y, 900, 350);
-                    gy = 25;
+                    int gy = 25;
 
                     var systemAudioLabel = new Label { Text = LanguageManager.Get("UsingSystemAudio"), Location = new Point(20, gy), Size = new Size(860, 25), ForeColor = neonCyan, TextAlign = ContentAlignment.MiddleLeft };
                     audioGroup.Controls.Add(systemAudioLabel);
@@ -482,7 +482,7 @@ namespace NekoBeats
 
                 case "PRESETS":
                     var presetsGroup = CreateGroupBox(LanguageManager.Get("PresetsPlugins"), 10, y, 900, 650);
-                    gy = 25;
+                    int gy = 25;
 
                     var pluginLabel = new Label { Text = LanguageManager.Get("Plugins"), Location = new Point(20, gy), Size = new Size(860, 20), ForeColor = neonCyan, Font = new Font("Courier New", 10, FontStyle.Bold) };
                     presetsGroup.Controls.Add(pluginLabel);
@@ -613,7 +613,7 @@ namespace NekoBeats
 
                 case "CREDITS":
                     var creditsGroup = CreateGroupBox(LanguageManager.Get("About"), 10, y, 900, 340);
-                    gy = 25;
+                    int gy = 25;
 
                     if (File.Exists("NekoBeatsLogo.png"))
                     {
