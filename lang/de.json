@@ -19,7 +19,7 @@
   "FinishContent": "Spielen Sie etwas Musik und beobachten Sie, wie die Magie passiert!\n\nHergestellt mit \u2764\uFE0F von justdev-chris",
   "Next": "WEITER",
   "Back": "zur\u00FCck",
-  "LetsGo": "LOS GEHT\u0027S!",
+  "LetsGo": "Auf geht\u2019s!",
   "DontShowAgain": "Nicht mehr anzeigen",
   "VIZTab": "Viz.",
   "COLORSTab": "FARBEN",
@@ -93,5 +93,6 @@
   "PluginWarningMessage": "WARNUNG: Laden Sie nur Plugins aus vertrauensw\u00FCrdigen Quellen!\n\nSch\u00E4dliche Plugins k\u00F6nnen Ihr System sch\u00E4digen.",
   "UsingSystemAudio": "NekoBeats verwendet automatisch Ihr Systemaudio zur Visualisierung.",
   "ShowFPS": "FPS anzeigen",
-  "ActiveMonitors": "Aktive Monitore:"
+  "ActiveMonitors": "Aktive Monitore:",
+  "BPMAutoSmoothing": "BPM Automatische Gl\u00E4ttung"
 }

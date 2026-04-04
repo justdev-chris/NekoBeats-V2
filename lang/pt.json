@@ -93,5 +93,6 @@
   "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system.",
   "UsingSystemAudio": "NekoBeats automatically uses your system audio for visualization.",
   "ShowFPS": "Show FPS Counter",
-  "ActiveMonitors": "Active Monitors:"
+  "ActiveMonitors": "Active Monitors:",
+  "BPMAutoSmoothing": "BPM Auto Smoothing"
 }
