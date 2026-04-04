@@ -59,6 +59,9 @@ namespace NekoBeats
         // v2.3.4 properties
         public bool WaveformMode { get; set; } = false;
         public bool SpectrumMode { get; set; } = false;
+        public bool barFlashEnabled = false;
+        public float barFlashIntensity = 0.5f;
+        private float currentFlashAlpha = 0f;
         
         // Bar Preset System
         public BarPreset barPreset { get; private set; } = null;
@@ -255,6 +258,8 @@ namespace NekoBeats
             // Update particles
             if (particlesEnabled)
                 UpdateParticles();
+
+            UpdateBarFlash();
             
             // Update color cycling
             if (colorCycling)
@@ -301,15 +306,32 @@ namespace NekoBeats
                 }
             }
         }
+
+        private void UpdateBarFlash()
+        {
+            if (!barFlashEnabled) return;
+            
+            float bass = 0;
+            for (int i = 0; i < Math.Min(12, barCount); i++)
+                bass += smoothedBarValues[i];
+            bass /= Math.Min(12, barCount);
+            
+            if (bass > 0.4f)
+            {
+                currentFlashAlpha = barFlashIntensity;
+            }
+            else
+            {
+                currentFlashAlpha = Math.Max(0f, currentFlashAlpha - 0.05f);
+            }
+}
         
         public void Render(Graphics g, Size clientSize)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             
-            // Render custom background first
             RenderCustomBackground(g, clientSize);
             
-            // Sync all properties to BarLogic
             barLogic.barColor = barColor;
             barLogic.sensitivity = sensitivity;
             barLogic.barHeight = barHeight;
@@ -328,6 +350,7 @@ namespace NekoBeats
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
             barLogic.barRenderer.waveformData = GetWaveformData();
+            barLogic.barRenderer.currentFlashAlpha = currentFlashAlpha;
             
             if (useGradient && gradientColors != null)
                 barLogic.SetGradient(gradientColors);
@@ -337,17 +360,15 @@ namespace NekoBeats
             
             barLogic.UpdateFadeEffect();
             
-            // Render visualization
             barLogic.Render(g, clientSize);
             
-            // Draw particles if enabled
             if (particlesEnabled && particles.Count > 0)
                 DrawParticles(g, clientSize);
             
             if (bloomEnabled)
                 ApplyBloomEffect(g, clientSize);
             
-            // FPS counter
+            // i wasted my time for nothing
             if (showFPS)
             {
                 frameCount++;
@@ -358,11 +379,10 @@ namespace NekoBeats
                     lastFPSTime = DateTime.Now;
                 }
                 
-                string fpsText = $"FPS: {currentFPS}";
                 using (Font font = new Font("Courier New", 12, FontStyle.Bold))
                 using (Brush textBrush = new SolidBrush(Color.FromArgb(200, Color.White)))
                 {
-                    g.DrawString(fpsText, font, textBrush, 10, 10);
+                    g.DrawString($"FPS: {currentFPS}", font, textBrush, 10, 10);
                 }
             }
         }
