@@ -441,6 +441,25 @@ namespace NekoBeats
                         latencyTrack.ValueChanged += (s, e) => { visualizer.Logic.SetLatencyCompensation(latencyTrack.Value); latencyValue.Text = latencyTrack.Value.ToString(); };
                         audioGroup.Controls.Add(latencyTrack);
 
+                        // BPM Auto Smoothing toggle
+                        var bpmSmoothingCheck = new CheckBox 
+                        { 
+                            Text = LanguageManager.Get("BPMAutoSmoothing"), 
+                            Location = new Point(20, gy), 
+                            Size = new Size(200, 25), 
+                            ForeColor = neonCyan, 
+                            BackColor = boxBg, 
+                            Checked = visualizer.Logic.bpmSmoothing 
+                        };
+                        bpmSmoothingCheck.CheckedChanged += (s, e) => 
+                        { 
+                            visualizer.Logic.bpmSmoothing = bpmSmoothingCheck.Checked;
+                            if (!bpmSmoothingCheck.Checked)
+                                visualizer.Logic.smoothSpeed = 0.15f;
+                        };
+                        audioGroup.Controls.Add(bpmSmoothingCheck);
+                        gy += 35;
+
                         currentTabPanel.Controls.Add(audioGroup);
                         break;
                     }
