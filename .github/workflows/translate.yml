@@ -228,9 +228,19 @@ jobs:
             "GitHub": "github.com/justdev-chris/NekoBeats-V2",
             "Uninstall": "Uninstall NekoBeats",
             "UpdateAvailable": "New version available: v{0}\n\nCurrent: v{1}",
-            "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system."
+            "PluginWarningMessage": "WARNING: Only load plugins from trusted sources!\n\nMalicious plugins can harm your system.",
+            "UsingSystemAudio": "NekoBeats automatically uses your system audio for visualization.",
+            "ShowFPS": "Show FPS Counter",
+            "ActiveMonitors": "Active Monitors:",
+            "BPMAutoSmoothing": "BPM Auto Smoothing"
           }
           EOF
+
+      - name: Remove incomplete translations
+        run: |
+          cd lang
+          find . -type f -name "*.json" ! -name "en.json" -delete
+          echo "Removed all translations except en.json"
       
       - name: Run translation generator
         run: |

@@ -27,6 +27,7 @@ namespace NekoBeats
         public int barSpacing;
         public bool rainbowBars;
         public float opacity = 1.0f;
+        public float currentFlashAlpha = 0f;
         
         public Color[] gradientColors;
         public bool useGradient = false;
@@ -36,7 +37,6 @@ namespace NekoBeats
         public bool waveformMode = false;
         public bool spectrumMode = false;
 
-        // Raw waveform samples (time-domain) — set each frame from AudioCapture
         public float[] waveformData = null;
 
         public BarRenderer(float[] smoothedValues, Color color, float sens, int height, int count, int spacing, bool rainbow)
@@ -80,7 +80,6 @@ namespace NekoBeats
                     break;
             }
 
-            // Overlay waveform and/or spectrum line on top of bars
             if (waveformMode && waveformData != null && waveformData.Length > 1)
                 DrawWaveform(g, clientSize);
 
@@ -113,6 +112,14 @@ namespace NekoBeats
             if (baseColor == Color.Magenta || (baseColor.R == 255 && baseColor.G == 0 && baseColor.B == 255))
             {
                 baseColor = Color.Cyan;
+            }
+            
+            if (currentFlashAlpha > 0)
+            {
+                int r = Math.Min(255, baseColor.R + (int)((255 - baseColor.R) * currentFlashAlpha));
+                int g = Math.Min(255, baseColor.G + (int)((255 - baseColor.G) * currentFlashAlpha));
+                int b = Math.Min(255, baseColor.B + (int)((255 - baseColor.B) * currentFlashAlpha));
+                baseColor = Color.FromArgb(baseColor.A, r, g, b);
             }
             
             int alpha = (int)(255 * opacity);

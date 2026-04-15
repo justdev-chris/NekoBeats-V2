@@ -40,7 +40,7 @@ namespace NekoBeats
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", "NekoBeats Error");
+                MessageBox.Show($"Error: {ex.Message}", "NekoBeats Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 ExitApplication();
             }
 
@@ -93,6 +93,7 @@ namespace NekoBeats
 
             var result = MessageBox.Show(
                 LanguageManager.Get("PluginWarningMessage"),
+                "NekoBeats",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning
             );
@@ -204,6 +205,7 @@ namespace NekoBeats
                             {
                                 DialogResult result = MessageBox.Show(
                                     LanguageManager.Get("UpdateAvailable"),
+                                    "Update Available",
                                     MessageBoxButtons.OKCancel,
                                     MessageBoxIcon.Information
                                 );
@@ -250,7 +252,7 @@ namespace NekoBeats
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open releases page: {ex.Message}");
+                MessageBox.Show($"Failed to open releases page: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

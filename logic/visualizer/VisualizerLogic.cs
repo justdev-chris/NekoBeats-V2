@@ -13,7 +13,7 @@ namespace NekoBeats
 {
     public class VisualizerLogic : IDisposable
     {
-        // Audio
+        // Audio - Using system default audio output
         private WasapiLoopbackCapture capture;
         private float[] fftBuffer = new float[2048];
         private Complex[] fftComplex = new Complex[2048];
@@ -35,6 +35,10 @@ namespace NekoBeats
         public int fpsLimit = 60;
         public bool colorCycling = false;
         public float colorSpeed = 1.0f;
+        public bool showFPS = false;
+        public int currentFPS = 60;
+        private DateTime lastFPSTime = DateTime.Now;
+        private int frameCount = 0;
         
         // Bar themes & animations
         public bool rainbowBars = true;
@@ -48,10 +52,21 @@ namespace NekoBeats
         public bool particlesEnabled = false;
         public int particleCount = 100;
         public float circleRadius = 200f;
+        public bool beatPulseEnabled = false;
+        public float beatPulseIntensity = 0.2f;
+        private float beatPulseAlpha = 0f;
         
         // v2.3.4 properties
         public bool WaveformMode { get; set; } = false;
         public bool SpectrumMode { get; set; } = false;
+        public bool barFlashEnabled = false;
+        public float barFlashIntensity = 0.5f;
+        private float currentFlashAlpha = 0f;
+        public bool bpmSmoothing = false;
+        private float detectedBPM = 120f;
+        private float[] beatIntervals = new float[10];
+        private int beatIndex = 0;
+        private DateTime lastBeatTime = DateTime.Now;
         
         // Bar Preset System
         public BarPreset barPreset { get; private set; } = null;
@@ -80,7 +95,7 @@ namespace NekoBeats
             }
         }
         
-        // V2.3.2 NEW FEATURES
+        // V2.3.2 FEATURES
         public int latencyCompensationMs = 0;
         public bool fadeEffectEnabled = false;
         public float fadeEffectSpeed = 0.5f;
@@ -96,11 +111,11 @@ namespace NekoBeats
         private Random random = new Random();
         private Bitmap bloomBuffer;
         private Graphics bloomGraphics;
-        private AudioCapture audioCapture;
+        private bool isAudioInitialized = false;
+        private Size currentClientSize = new Size(1920, 1080); // Store current size for particles
         
         public VisualizerLogic()
         {
-            audioCapture = new AudioCapture();
             InitializeAudio();
             InitializeParticles();
             animationTimer.Start();
@@ -109,22 +124,25 @@ namespace NekoBeats
         
         public void Initialize(Size clientSize)
         {
+            currentClientSize = clientSize;
             InitializeBloomBuffer(clientSize);
-            audioCapture.BarCount = barCount;
-            audioCapture.Start();
+            ResetParticles(clientSize);
         }
         
         private void InitializeAudio()
         {
             try 
             {
+                // Use system default audio output (what the user hears)
                 capture = new WasapiLoopbackCapture();
                 capture.DataAvailable += OnData;
                 capture.StartRecording();
+                isAudioInitialized = true;
             } 
             catch (Exception ex) 
             {
-                MessageBox.Show("Audio init failed: " + ex.Message);
+                Console.WriteLine($"Audio init failed: {ex.Message}");
+                isAudioInitialized = false;
             }
         }
         
@@ -147,11 +165,12 @@ namespace NekoBeats
         
         public void Resize(Size clientSize)
         {
+            currentClientSize = clientSize;
             InitializeBloomBuffer(clientSize);
             if (particlesEnabled) ResetParticles(clientSize);
         }
         
-        public void ResetParticles(Size clientSize)
+        private void ResetParticles(Size clientSize)
         {
             particles.Clear();
             for (int i = 0; i < particleCount; i++)
@@ -195,17 +214,53 @@ namespace NekoBeats
             }
             fftPos = 0;
         }
+        private void UpdateBPMSmoothing()
+        {
+            if (!bpmSmoothing) return;
+            
+            float bass = 0;
+            for (int i = 0; i < Math.Min(12, barCount); i++)
+                bass += smoothedBarValues[i];
+            bass /= Math.Min(12, barCount);
+            
+            if (bass > 0.5f && (DateTime.Now - lastBeatTime).TotalSeconds > 0.3f)
+            {
+                float interval = (float)(DateTime.Now - lastBeatTime).TotalSeconds;
+                if (interval > 0.2f && interval < 2f)
+                {
+                    beatIntervals[beatIndex] = interval;
+                    beatIndex = (beatIndex + 1) % beatIntervals.Length;
+                    
+                    float sum = 0;
+                    int count = 0;
+                    for (int i = 0; i < beatIntervals.Length; i++)
+                    {
+                        if (beatIntervals[i] > 0)
+                        {
+                            sum += beatIntervals[i];
+                            count++;
+                        }
+                    }
+                    
+                    if (count > 0)
+                    {
+                        float avgInterval = sum / count;
+                        detectedBPM = 60f / avgInterval;
+                        detectedBPM = Math.Clamp(detectedBPM, 60f, 180f);
+                        
+                        float t = (detectedBPM - 60f) / 120f;
+                        smoothSpeed = 0.25f + (0.95f - 0.25f) * t;
+                    }
+                }
+                lastBeatTime = DateTime.Now;
+            }
+        }
         
         public void UpdateSmoothing()
         {
-            // Get fresh audio data from AudioCapture
-            float[] rawValues = audioCapture.SmoothedBarValues;
-            
-            for (int i = 0; i < barCount && i < rawValues.Length; i++)
+            for (int i = 0; i < 512; i++)
             {
-                float raw = rawValues[i] * sensitivity;
-                raw = Math.Min(1f, raw);
-                smoothedBarValues[i] = smoothedBarValues[i] * (1 - smoothSpeed) + raw * smoothSpeed;
+                smoothedBarValues[i] += (barValues[i] - smoothedBarValues[i]) * smoothSpeed;
             }
             
             // Update fade effect
@@ -243,13 +298,16 @@ namespace NekoBeats
             barLogic.barRenderer.currentTheme = barLogic.currentTheme;
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
-            barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
+            barLogic.barRenderer.waveformData = GetWaveformData();
             
             barLogic.Update();
             
             // Update particles
             if (particlesEnabled)
                 UpdateParticles();
+            
+            // Update BPM smoothing
+            UpdateBPMSmoothing();
             
             // Update color cycling
             if (colorCycling)
@@ -260,51 +318,68 @@ namespace NekoBeats
             }
         }
         
+        private float[] GetWaveformData()
+        {
+            float[] waveform = new float[512];
+            for (int i = 0; i < 512 && i < barValues.Length; i++)
+            {
+                waveform[i] = barValues[i];
+            }
+            return waveform;
+        }
+        
         private void UpdateParticles()
         {
-            float audioLevel = 0;
-            for (int i = 0; i < Math.Min(12, smoothedBarValues.Length); i++)
-                audioLevel += smoothedBarValues[i];
-            audioLevel /= 12;
-            
-            if (audioLevel > 0.5f && random.Next(100) < 20)
+            // Remove excess particles if count lowered
+            while (particles.Count > particleCount && particles.Count > 0)
             {
-                for (int i = 0; i < 3; i++)
+                particles.RemoveAt(0);
+            }
+            
+            // Only spawn if under limit
+            if (particles.Count < particleCount && random.Next(100) < 15)
+            {
+                int canSpawn = Math.Min(2, particleCount - particles.Count);
+                for (int i = 0; i < canSpawn; i++)
                 {
                     particles.Add(new Particle
                     {
-                        X = random.Next(0, Math.Max(1, 800)),
+                        X = random.Next(0, 1920),
                         Y = 600 - random.Next(100),
-                        SpeedX = (random.NextSingle() - 0.5f) * 2,
-                        SpeedY = (random.NextSingle() - 1.0f) * 2,
-                        Size = random.Next(2, 5),
-                        Life = 1.0f
+                        SpeedX = (random.NextSingle() - 0.5f) * 2f,
+                        SpeedY = (random.NextSingle() - 1.0f) * 2f,
+                        Size = random.Next(2, 6),
+                        Life = random.Next(50, 200)
                     });
                 }
             }
-            
-            for (int i = particles.Count - 1; i >= 0; i--)
-            {
-                Particle p = particles[i];
-                p.X += p.SpeedX;
-                p.Y += p.SpeedY;
-                p.Life -= 0.02f;
-                
-                if (p.Life <= 0 || p.Y < 0 || p.X < 0 || p.X > 800)
-                    particles.RemoveAt(i);
-                else
-                    particles[i] = p;
-            }
         }
+
+        private void UpdateBarFlash()
+        {
+            if (!barFlashEnabled) return;
+            
+            float bass = 0;
+            for (int i = 0; i < Math.Min(12, barCount); i++)
+                bass += smoothedBarValues[i];
+            bass /= Math.Min(12, barCount);
+            
+            if (bass > 0.4f)
+            {
+                currentFlashAlpha = barFlashIntensity;
+            }
+            else
+            {
+                currentFlashAlpha = Math.Max(0f, currentFlashAlpha - 0.05f);
+            }
+}
         
         public void Render(Graphics g, Size clientSize)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             
-            // Render custom background first
             RenderCustomBackground(g, clientSize);
             
-            // Sync all properties to BarLogic
             barLogic.barColor = barColor;
             barLogic.sensitivity = sensitivity;
             barLogic.barHeight = barHeight;
@@ -322,7 +397,8 @@ namespace NekoBeats
             barLogic.barRenderer.gradientColors = gradientColors;
             barLogic.barRenderer.waveformMode = WaveformMode;
             barLogic.barRenderer.spectrumMode = SpectrumMode;
-            barLogic.barRenderer.waveformData = audioCapture.GetWaveformData();
+            barLogic.barRenderer.waveformData = GetWaveformData();
+            barLogic.barRenderer.currentFlashAlpha = currentFlashAlpha;
             
             if (useGradient && gradientColors != null)
                 barLogic.SetGradient(gradientColors);
@@ -332,27 +408,70 @@ namespace NekoBeats
             
             barLogic.UpdateFadeEffect();
             
-            // Render visualization
             barLogic.Render(g, clientSize);
             
-            // Draw particles if enabled
             if (particlesEnabled && particles.Count > 0)
                 DrawParticles(g, clientSize);
             
             if (bloomEnabled)
                 ApplyBloomEffect(g, clientSize);
+            
+            // i wasted my time for nothing
+            if (showFPS)
+            {
+                frameCount++;
+                if ((DateTime.Now - lastFPSTime).TotalSeconds >= 1)
+                {
+                    currentFPS = frameCount;
+                    frameCount = 0;
+                    lastFPSTime = DateTime.Now;
+                }
+                
+                using (Font font = new Font("Courier New", 12, FontStyle.Bold))
+                using (Brush textBrush = new SolidBrush(Color.FromArgb(200, Color.White)))
+                {
+                    g.DrawString($"FPS: {currentFPS}", font, textBrush, 10, 10);
+                }
+            }
         }
         
         private void DrawParticles(Graphics g, Size clientSize)
         {
-            foreach (var p in particles)
+            float bass = GetBassLevel();
+            using (SolidBrush brush = new SolidBrush(Color.FromArgb(180, Color.Purple)))
             {
-                int alpha = (int)(p.Life * 200);
-                using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, barColor)))
+                for (int i = 0; i < particles.Count; i++)
                 {
-                    g.FillEllipse(brush, p.X - 2, p.Y - 2, p.Size, p.Size);
+                    Particle p = particles[i];
+                    
+                    if (bass > 0.15f) p.SpeedY -= bass * 2.5f;
+                    
+                    p.X += p.SpeedX;
+                    p.Y += p.SpeedY;
+                    p.Life--;
+                    
+                    if (p.Life <= 0 || p.Y < -20 || p.X < -20 || p.X > clientSize.Width + 20)
+                    {
+                        p.X = random.Next(0, clientSize.Width);
+                        p.Y = clientSize.Height + 10;
+                        p.Life = random.Next(50, 200);
+                        p.SpeedY = (random.NextSingle() - 1.0f) * 2.0f;
+                        p.SpeedX = (random.NextSingle() - 0.5f) * 2.0f;
+                    }
+                    
+                    particles[i] = p;
+                    g.FillEllipse(brush, p.X, p.Y, p.Size, p.Size);
                 }
             }
+        }
+
+        private float GetBassLevel()
+        {
+            float sum = 0;
+            int count = Math.Min(12, barCount);
+            for (int i = 0; i < count; i++) 
+                sum += smoothedBarValues[i];
+            return sum / count;
         }
         
         private void ApplyBloomEffect(Graphics g, Size clientSize)
@@ -411,17 +530,8 @@ namespace NekoBeats
 
         public void SaveBarPreset(string filePath)
         {
-            barPreset.SaveToFile(filePath);
-        }
-        
-        public List<string> GetAudioDevices()
-        {
-            return audioCapture.GetAudioDevices();
-        }
-        
-        public void SetAudioDevice(int deviceIndex)
-        {
-            audioCapture.SetDevice(deviceIndex);
+            if (barPreset != null)
+                barPreset.SaveToFile(filePath);
         }
         
         public void ResetToDefault()
@@ -662,6 +772,10 @@ namespace NekoBeats
                     
                 if (root.TryGetProperty("spectrumMode", out var spectrumProp))
                     SpectrumMode = spectrumProp.GetBoolean();
+                    
+                // Reset particles with new size after loading preset
+                if (particlesEnabled && currentClientSize.Width > 0)
+                    ResetParticles(currentClientSize);
             } 
             catch (Exception ex)
             {
@@ -671,7 +785,6 @@ namespace NekoBeats
         
         public void Dispose()
         {
-            audioCapture?.Dispose();
             if (capture != null)
             {
                 capture.StopRecording();
