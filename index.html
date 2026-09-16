@@ -177,10 +177,6 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: calc(100vw - 40px);
-      gap: 0;
       background: rgba(10, 10, 10, 0.8);
       backdrop-filter: blur(10px);
       border-radius: 12px;
@@ -188,6 +184,7 @@
       z-index: 999;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       overflow: hidden;
+      white-space: nowrap;
     }
 
     nav a {
@@ -202,7 +199,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      white-space: nowrap;
     }
 
     nav a:last-child {
@@ -569,13 +565,9 @@
         left: 12px;
         right: 12px;
         transform: none;
-        max-width: none;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
         overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
       }
 
       nav::-webkit-scrollbar {
@@ -586,6 +578,10 @@
         flex-shrink: 0;
         padding: 12px 14px;
         font-size: 12px;
+      }
+
+      nav a i {
+        display: none;
       }
 
       .logo {
