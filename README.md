@@ -64,7 +64,7 @@ Load presets in NekoBeats via Load Bar button in the control panel. Share your c
 
 ## Installation ⚡
 
-1. Download `NekoBeats-2.3.3-Installer.exe` from Releases
+1. Download `NekoBeats-2.3.4-Installer.exe` from Releases
 2. Run the installer and follow the setup wizard
 3. Play some music 🎶
 4. Adjust settings in the control panel
