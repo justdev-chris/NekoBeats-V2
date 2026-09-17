@@ -66,7 +66,7 @@ namespace NekoBeats
         {
             try
             {
-                discordRpc = new DiscordRpcClient("1483867520665387178");
+                discordRpc = new DiscordRpcClient("1549939271190712431");
                 discordRpc.Initialize();
                 UpdateDiscordStatus();
             }
