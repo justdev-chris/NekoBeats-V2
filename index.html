@@ -42,6 +42,18 @@
       scroll-margin-bottom: 140px;
     }
 
+    /* Hero Background Video */
+    #bg-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     /* Hero */
     .hero {
       min-height: 100vh;
@@ -51,7 +63,7 @@
       padding: 40px 20px;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+      background: linear-gradient(135deg, rgba(10,10,10,0.55) 0%, rgba(26,10,46,0.55) 100%);
     }
 
     .hero::before {
@@ -64,6 +76,7 @@
       background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
       border-radius: 50%;
       animation: float 6s ease-in-out infinite;
+      z-index: 1;
     }
 
     .hero::after {
@@ -76,6 +89,7 @@
       background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
       border-radius: 50%;
       animation: float 8s ease-in-out infinite reverse;
+      z-index: 1;
     }
 
     @keyframes float {
@@ -623,6 +637,11 @@
   </style>
 </head>
 <body>
+  <!-- Hero Background Video -->
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="NekoBeatsBackground.webm" type="video/webm">
+  </video>
+
   <!-- Hero -->
   <section class="hero">
     <div class="hero-content">
@@ -740,10 +759,10 @@
 
       <div class="feature-card">
         <div class="feature-icon">
-          <i class="fas fa-video"></i>
+          <i class="fas fa-layer-group"></i>
         </div>
-        <h3>Recording Mode</h3>
-        <p>Optimized for streaming and recording with OBS Studio</p>
+        <h3>Up to 512 Bars</h3>
+        <p>Detailed spectrum with adjustable bar count, height, spacing, and opacity</p>
       </div>
     </div>
   </section>
@@ -791,8 +810,8 @@
           <p>Load custom bar presets with different shapes, animations, and colors</p>
         </div>
         <div class="control-item">
-          <h4><i class="fas fa-video"></i> Recording Mode</h4>
-          <p>Enable streaming mode for optimal OBS integration</p>
+          <h4><i class="fas fa-desktop"></i> FPS Cap</h4>
+          <p>Lock rendering to 30, 60, 120 FPS, or uncapped for maximum smoothness</p>
         </div>
       </div>
     </div>
@@ -982,12 +1001,6 @@ public class MyPlugin : INekoBeatsPlugin<br>
         <h4><i class="fas fa-question-circle"></i> Plugin not loading?</h4>
         <p>• Make sure the file has the .nbplugin extension</p>
         <p>• Verify the plugin implements INekoBeatsPlugin and was built against the matching SDK</p>
-      </div>
-
-      <div class="trouble-item">
-        <h4><i class="fas fa-question-circle"></i> Recording issues?</h4>
-        <p>• Enable "Recording Mode" in the control panel</p>
-        <p>• Check OBS audio settings and make sure NekoBeats audio is routed correctly</p>
       </div>
     </div>
   </section>
