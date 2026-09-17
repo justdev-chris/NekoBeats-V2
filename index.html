@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NekoBeats - A sleek audio visualizer that turns your music into floating light bars. Real-time spectrum analysis with customizable themes.">
-  <title>NekoBeats-V2.3.3 | Audio Visualizer</title>
+  <meta name="description" content="NekoBeats - A sleek audio visualizer that turns your music into floating light bars. Real-time spectrum analysis with customizable themes, plugins, and presets.">
+  <title>NekoBeats-V2.3.4 | Audio Visualizer</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
     * {
@@ -275,6 +275,19 @@
       line-height: 1.6;
     }
 
+    .badge-new {
+      display: inline-block;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+      text-transform: uppercase;
+    }
+
     /* Controls Section */
     .controls {
       padding: 100px 20px;
@@ -424,6 +437,24 @@
     .improvement-content p {
       color: #aaa;
       font-size: 13px;
+    }
+
+    /* Plugins Section */
+    .plugins {
+      padding: 100px 20px;
+      background: linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, transparent 100%);
+    }
+
+    .plugins-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .plugins-container p {
+      color: #aaa;
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 20px;
     }
 
     /* Community Themes */
@@ -600,12 +631,12 @@
           <img src="NekoBeatsLogo.png" alt="NekoBeats Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
       </div>
-      <span class="version-badge">V2.3.3</span>
+      <span class="version-badge">V2.3.4</span>
       <h1>NekoBeats</h1>
-      <p>A sleek audio visualizer that turns your music into floating light bars. Revived and better than ever.</p>
+      <p>A sleek audio visualizer that turns your music into floating light bars. Now with waveforms, plugins, presets, and a whole lot more.</p>
       <div class="cta">
-        <a href="https://github.com/justdev-chris/NekoBeats-V2/releases/download/v2.3.3/NekoBeats-2.3.3-installer.exe" class="btn btn-primary">
-          <i class="fas fa-download"></i> Download V2.3.3
+        <a href="https://github.com/justdev-chris/NekoBeats-V2/releases/download/v2.3.4/NekoBeats-2.3.4-installer.exe" class="btn btn-primary">
+          <i class="fas fa-download"></i> Download V2.3.4
         </a>
         <a href="https://github.com/justdev-chris/NekoBeats-V2" class="btn btn-secondary" target="_blank">
           <i class="fab fa-github"></i> View Source
@@ -645,34 +676,66 @@
 
       <div class="feature-card">
         <div class="feature-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Waveform Mode <span class="badge-new">NEW</span></h3>
+        <p>Renders the raw audio waveform as a glowing line across the screen</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-chart-area"></i>
+        </div>
+        <h3>Spectrum Analyzer <span class="badge-new">NEW</span></h3>
+        <p>Filled gradient curve of the current frequency spectrum in real time</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-heartbeat"></i>
+        </div>
+        <h3>Beat Pulse <span class="badge-new">NEW</span></h3>
+        <p>Bars scale with bass hits, with adjustable intensity for every track</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
           <i class="fas fa-palette"></i>
         </div>
         <h3>Custom Themes</h3>
-        <p>Full color picker - customize bars to match any color you want</p>
+        <p>Full color picker, gradients, color cycling, and bloom effects</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">
-          <i class="fas fa-sliders-h"></i>
+          <i class="fas fa-image"></i>
         </div>
-        <h3>Adjustable Settings</h3>
-        <p>Control bar count, height, opacity, and more from the control panel</p>
+        <h3>Custom Backgrounds <span class="badge-new">NEW</span></h3>
+        <p>Load any image as the visualizer's backdrop for a fully personalized look</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">
-          <i class="fas fa-rocket"></i>
+          <i class="fas fa-save"></i>
         </div>
-        <h3>60 FPS Performance</h3>
-        <p>Smooth, responsive visualization with better performance than V1</p>
+        <h3>Preset System <span class="badge-new">NEW</span></h3>
+        <p>Save and load full visualizer states (.nbp) or bar-only configs (.nbbar)</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">
-          <i class="fas fa-shapes"></i>
+          <i class="fas fa-plug"></i>
         </div>
-        <h3>Custom Bar Presets</h3>
-        <p>Create and share custom bar shapes, animations, and colors with JSON presets</p>
+        <h3>Plugin System <span class="badge-new">NEW</span></h3>
+        <p>Drop-in .nbplugin assemblies with full host API and custom control panel tabs</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <h3>BPM Auto-Smoothing <span class="badge-new">NEW</span></h3>
+        <p>Detects beat intervals from bass energy and auto-adjusts bar smoothing per track</p>
       </div>
 
       <div class="feature-card">
@@ -716,6 +779,14 @@
           <p>Move the visualizer window around your screen</p>
         </div>
         <div class="control-item">
+          <h4><i class="fas fa-gauge-high"></i> Latency Comp <span class="badge-new">NEW</span></h4>
+          <p>Offset rendering by up to 200 ms to sync visuals with your output device</p>
+        </div>
+        <div class="control-item">
+          <h4><i class="fas fa-wind"></i> Fade Effect <span class="badge-new">NEW</span></h4>
+          <p>Bars decay with configurable speed instead of snapping to zero</p>
+        </div>
+        <div class="control-item">
           <h4><i class="fas fa-shapes"></i> Bar Presets</h4>
           <p>Load custom bar presets with different shapes, animations, and colors</p>
         </div>
@@ -736,7 +807,7 @@
         <div class="step">
           <div class="step-number">1</div>
           <h3>Download</h3>
-          <p>Get the latest NekoBeats-2.3.3-installer.exe from the releases page on GitHub</p>
+          <p>Get the latest NekoBeats-2.3.4-installer.exe from the releases page on GitHub</p>
         </div>
         <div class="step">
           <div class="step-number">2</div>
@@ -762,59 +833,118 @@
     </div>
   </section>
 
-  <!-- V2.3 Improvements -->
+  <!-- V2.3.4 Improvements -->
   <section class="improvements" id="improvements">
     <div class="improvements-container">
-      <h2 class="section-title">V2.3.3 <span>Improvements</span></h2>
+      <h2 class="section-title">V2.3.4 <span>Improvements</span></h2>
       
       <div class="improvements-list">
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Revamped UI</h4>
-            <p>Cleaner, more intuitive interface with improved visual design</p>
+            <h4>Waveform & Spectrum Modes</h4>
+            <p>Two new visualization styles: glowing waveform line and filled spectrum curve</p>
           </div>
         </div>
 
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Built-in Installer</h4>
-            <p>One-click setup with automatic installation and PATH configuration</p>
+            <h4>BPM Auto-Smoothing</h4>
+            <p>Detects beat intervals from bass energy and auto-adjusts smoothing per track</p>
           </div>
         </div>
 
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Recording Visualizations</h4>
-            <p>Optimized streaming mode for OBS Studio and recording</p>
+            <h4>Latency Compensation</h4>
+            <p>New slider (0-200 ms) to sync visuals with your output device</p>
           </div>
         </div>
 
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Better Performance</h4>
-            <p>Optimizations for smoother bar rendering and faster response times</p>
+            <h4>Fade Effect</h4>
+            <p>Bars decay with configurable speed instead of snapping to zero</p>
           </div>
         </div>
 
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Improved Stability</h4>
-            <p>Better audio handling, memory management, and error handling</p>
+            <h4>Custom Backgrounds & Gradients</h4>
+            <p>Load any image as the backdrop and apply color gradients across bars</p>
           </div>
         </div>
 
         <div class="improvement-item">
           <i class="fas fa-check-circle"></i>
           <div class="improvement-content">
-            <h4>Custom Bar Presets</h4>
-            <p>Create and share custom bar shapes, animations, and colors</p>
+            <h4>Preset System</h4>
+            <p>Save and load full visualizer states (.nbp) or bar-only configs (.nbbar)</p>
           </div>
         </div>
+
+        <div class="improvement-item">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Plugin System</h4>
+            <p>Drop-in .nbplugin assemblies with full host API and custom control panel tabs</p>
+          </div>
+        </div>
+
+        <div class="improvement-item">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Seven-Tab Control Panel</h4>
+            <p>VIZ, COLORS, FX, AUDIO, WINDOW, PRESETS, and CREDITS tabs</p>
+          </div>
+        </div>
+
+        <div class="improvement-item">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>System Tray & Discord RPC</h4>
+            <p>Tray menu with Show, Check for Updates, Show Welcome, Exit, plus Discord presence</p>
+          </div>
+        </div>
+
+        <div class="improvement-item">
+          <i class="fas fa-check-circle"></i>
+          <div class="improvement-content">
+            <h4>Localization & Update Checker</h4>
+            <p>JSON language files with culture auto-detection and in-app GitHub update check</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plugins -->
+  <section class="plugins" id="plugins">
+    <div class="plugins-container">
+      <h2 class="section-title">Write <span>Plugins</span></h2>
+      <p>NekoBeats v2.3.4 ships with a full plugin API. Compile any DLL implementing <code style="color:#a855f7;">INekoBeatsPlugin</code>, rename it to <code style="color:#a855f7;">.nbplugin</code>, and drop it into the <code style="color:#a855f7;">Plugins/</code> folder next to the executable.</p>
+      <p>Plugins can set bar color, height, count, opacity, gradients, custom backgrounds, and latency compensation. They can also read the current audio level and FPS, log messages, and inject their own control panel tabs.</p>
+
+      <div class="code-block">
+using System;<br>
+using System.Drawing;<br>
+using NekoBeats.Plugins;<br><br>
+public class MyPlugin : INekoBeatsPlugin<br>
+{<br>
+&nbsp;&nbsp;private INekoBeatsHost host;<br><br>
+&nbsp;&nbsp;public string Name =&gt; "My Plugin";<br>
+&nbsp;&nbsp;public string Version =&gt; "1.0.0";<br>
+&nbsp;&nbsp;public string Author =&gt; "you";<br><br>
+&nbsp;&nbsp;public void Initialize(INekoBeatsHost host) =&gt; this.host = host;<br>
+&nbsp;&nbsp;public void OnEnable()&nbsp;&nbsp;=&gt; host.Log("enabled");<br>
+&nbsp;&nbsp;public void OnDisable() =&gt; host.Log("disabled");<br>
+&nbsp;&nbsp;public void OnUpdate(float dt) { /* per-frame */ }<br>
+&nbsp;&nbsp;public void Dispose() { }<br>
+}
       </div>
     </div>
   </section>
@@ -843,6 +973,18 @@
       </div>
 
       <div class="trouble-item">
+        <h4><i class="fas fa-question-circle"></i> Visuals out of sync with audio?</h4>
+        <p>• Open the AUDIO tab and adjust Latency Compensation</p>
+        <p>• Enable BPM Auto-Smoothing for tracks with strong bass</p>
+      </div>
+
+      <div class="trouble-item">
+        <h4><i class="fas fa-question-circle"></i> Plugin not loading?</h4>
+        <p>• Make sure the file has the .nbplugin extension</p>
+        <p>• Verify the plugin implements INekoBeatsPlugin and was built against the matching SDK</p>
+      </div>
+
+      <div class="trouble-item">
         <h4><i class="fas fa-question-circle"></i> Recording issues?</h4>
         <p>• Enable "Recording Mode" in the control panel</p>
         <p>• Check OBS audio settings and make sure NekoBeats audio is routed correctly</p>
@@ -855,10 +997,10 @@
     <div class="community-container">
       <h2 class="section-title">Community <span>Themes & Presets</span></h2>
       <p style="text-align: center; color: #aaa; font-size: 16px; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
-        Discover custom visualizer themes and bar presets created by the NekoBeats community. Upload your own creations and share them with thousands of users worldwide.
+        Discover custom visualizer themes, bar presets, and plugins created by the NekoBeats community. Upload your own creations and share them with thousands of users worldwide.
       </p>
       <p style="text-align: center; color: #999; font-size: 14px; margin-bottom: 30px;">
-        <strong>NEW in V2.3:</strong> Recording mode optimized for streaming and custom bar presets!
+        <strong>NEW in V2.3.4:</strong> Plugin system, preset files (.nbp / .nbbar), waveform mode, and BPM auto-smoothing!
       </p>
       <div style="text-align: center;">
         <a href="community-themes.html" class="btn btn-primary" style="display: inline-block;">
@@ -892,7 +1034,8 @@
     <a href="#features" title="Features"><i class="fas fa-star"></i>Features</a>
     <a href="#controls" title="Controls"><i class="fas fa-sliders-h"></i>Controls</a>
     <a href="#install" title="Install"><i class="fas fa-download"></i>Install</a>
-    <a href="#improvements" title="Improvements"><i class="fas fa-rocket"></i>V2.3</a>
+    <a href="#improvements" title="Improvements"><i class="fas fa-rocket"></i>V2.3.4</a>
+    <a href="#plugins" title="Plugins"><i class="fas fa-plug"></i>Plugins</a>
     <a href="#community" title="Community"><i class="fas fa-palette"></i>Themes</a>
     <a href="https://github.com/justdev-chris/NekoBeats-V2" title="GitHub"><i class="fab fa-github"></i>GitHub</a>
   </nav>
